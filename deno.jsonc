@@ -1,0 +1,16 @@
+{
+  "name": "raylib",
+  "version": "0.1.0",
+  "exports": "./raylib.ts",
+  "tasks": {
+    "generate": "cd bindings && deno run --allow-read --allow-write generator.ts && deno fmt"
+  },
+  "compilerOptions": {
+    "types": [
+      "./global.d.ts"
+    ]
+  },
+  "imports": {
+    "raylib": "./raylib.ts"
+  }
+}
