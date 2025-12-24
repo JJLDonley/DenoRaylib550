@@ -604,21 +604,7 @@ export const lib = Deno.dlopen(
     },
     // Get the screen space position for a 3d world space position
     GetWorldToScreen: {
-      parameters: [{ "struct": ["f32", "f32", "f32"] }, {
-        "struct": [
-          "f32",
-          "f32",
-          "f32",
-          "f32",
-          "f32",
-          "f32",
-          "f32",
-          "f32",
-          "f32",
-          "f32",
-          "i32",
-        ],
-      }],
+      parameters: [{ "struct": ["f32", "f32", "f32"] }, "buffer"],
       result: { "struct": ["f32", "f32"] },
     },
     // Get size position for a 3d world space position
@@ -1002,10 +988,10 @@ export const lib = Deno.dlopen(
     // Get gesture pinch angle
     GetGesturePinchAngle: { parameters: [], result: "f32" },
     // Update camera position for selected mode
-    UpdateCamera: { parameters: ["pointer", "i32"], result: "void" },
+    UpdateCamera: { parameters: ["buffer", "i32"], result: "void" },
     // Update camera movement/rotation
     UpdateCameraPro: {
-      parameters: ["pointer", { "struct": ["f32", "f32", "f32"] }, {
+      parameters: ["buffer", { "struct": ["f32", "f32", "f32"] }, {
         "struct": ["f32", "f32", "f32"],
       }, "f32"],
       result: "void",

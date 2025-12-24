@@ -951,45 +951,74 @@ export class Font {
 }
 
 export class Camera3D {
+  #buffer: ArrayBuffer;
+  #view: DataView;
+
   position: Vector3;
   target: Vector3;
   up: Vector3;
-  fovY: number;
+  fovy: number;
   projection: CameraProjection;
 
   constructor(options?: {
     position?: Vector3;
     target?: Vector3;
     up?: Vector3;
-    fovY?: number;
+    fovy?: number;
     projection?: CameraProjection;
   }) {
+    this.#buffer = new ArrayBuffer(44);
+    this.#view = new DataView(this.#buffer);
+
     this.position = options?.position ?? new Vector3(0, 0, 0);
     this.target = options?.target ?? new Vector3(0, 1, 0);
     this.up = options?.up ?? new Vector3(0, 0, 1);
-    this.fovY = options?.fovY ?? 90;
+    this.fovy = options?.fovy ?? 90;
     this.projection = options?.projection ?? CameraProjection.PERSPECTIVE;
+
+    this.syncToBuffer();
   }
 
   get buffer(): ArrayBuffer {
-    const view = new DataView(new ArrayBuffer(44));
+    this.syncToBuffer();
+    return this.#buffer;
+  }
 
-    view.setFloat32(0, this.position.x, littleEndian);
-    view.setFloat32(4, this.position.y, littleEndian);
-    view.setFloat32(8, this.position.z, littleEndian);
+  syncToBuffer(): void {
+    const v = this.#view;
 
-    view.setFloat32(12, this.target.x, littleEndian);
-    view.setFloat32(16, this.target.y, littleEndian);
-    view.setFloat32(20, this.target.z, littleEndian);
+    v.setFloat32(0, this.position.x, littleEndian);
+    v.setFloat32(4, this.position.y, littleEndian);
+    v.setFloat32(8, this.position.z, littleEndian);
 
-    view.setFloat32(24, this.up.x, littleEndian);
-    view.setFloat32(28, this.up.y, littleEndian);
-    view.setFloat32(32, this.up.z, littleEndian);
+    v.setFloat32(12, this.target.x, littleEndian);
+    v.setFloat32(16, this.target.y, littleEndian);
+    v.setFloat32(20, this.target.z, littleEndian);
 
-    view.setFloat32(36, this.fovY, littleEndian);
-    view.setInt32(40, this.projection, littleEndian);
+    v.setFloat32(24, this.up.x, littleEndian);
+    v.setFloat32(28, this.up.y, littleEndian);
+    v.setFloat32(32, this.up.z, littleEndian);
 
-    return view.buffer;
+    v.setFloat32(36, this.fovy, littleEndian);
+    v.setInt32(40, this.projection, littleEndian);
+  }
+  syncFromBuffer(): void {
+    const v = this.#view;
+
+    this.position.x = v.getFloat32(0, littleEndian);
+    this.position.y = v.getFloat32(4, littleEndian);
+    this.position.z = v.getFloat32(8, littleEndian);
+
+    this.target.x = v.getFloat32(12, littleEndian);
+    this.target.y = v.getFloat32(16, littleEndian);
+    this.target.z = v.getFloat32(20, littleEndian);
+
+    this.up.x = v.getFloat32(24, littleEndian);
+    this.up.y = v.getFloat32(28, littleEndian);
+    this.up.z = v.getFloat32(32, littleEndian);
+
+    this.fovy = v.getFloat32(36, littleEndian);
+    this.projection = v.getInt32(40, littleEndian);
   }
 }
 
@@ -2750,17 +2779,8 @@ export function UnloadShader(shader: Shader): void {
 
 export function GetScreenToWorldRay(position: Vector2, camera: Camera): Ray {
   const buf = lib.GetScreenToWorldRay(position.buffer, camera.buffer);
-  const view = new DataView(buf.buffer);
-  const pos3 = new Vector3(
-    view.getFloat32(0),
-    view.getFloat32(4),
-    view.getFloat32(8),
-  );
-  const dir3 = new Vector3(
-    view.getFloat32(12),
-    view.getFloat32(16),
-    view.getFloat32(20),
-  );
+  const pos3 = new Vector3(buf[0], buf[4], buf[8]);
+  const dir3 = new Vector3(buf[12], buf[16], buf[20]);
   return new Ray(pos3, dir3);
 }
 
@@ -2776,27 +2796,14 @@ export function GetScreenToWorldRayEx(
     width,
     height,
   );
-  const view = new DataView(buf.buffer);
-  const pos3 = new Vector3(
-    view.getFloat32(0),
-    view.getFloat32(4),
-    view.getFloat32(8),
-  );
-  const dir3 = new Vector3(
-    view.getFloat32(12),
-    view.getFloat32(16),
-    view.getFloat32(20),
-  );
+  const pos3 = new Vector3(buf[0], buf[4], buf[8]);
+  const dir3 = new Vector3(buf[12], buf[16], buf[20]);
   return new Ray(pos3, dir3);
 }
 
 export function GetWorldToScreen(position: Vector3, camera: Camera): Vector2 {
   const buf = lib.GetWorldToScreen(position.buffer, camera.buffer);
-  const view = new DataView(buf.buffer);
-  return new Vector2(
-    view.getFloat32(0),
-    view.getFloat32(4),
-  );
+  return new Vector2(buf[0], buf[1]);
 }
 
 export function GetWorldToScreenEx(
@@ -2811,11 +2818,7 @@ export function GetWorldToScreenEx(
     width,
     height,
   );
-  const view = new DataView(buf.buffer);
-  return new Vector2(
-    view.getFloat32(0),
-    view.getFloat32(4),
-  );
+  return new Vector2(buf[0], buf[1]);
 }
 
 export function GetWorldToScreen2D(
@@ -2823,11 +2826,7 @@ export function GetWorldToScreen2D(
   camera: Camera2D,
 ): Vector2 {
   const buf = lib.GetWorldToScreen2D(position.buffer, camera.buffer);
-  const view = new DataView(buf.buffer);
-  return new Vector2(
-    view.getFloat32(0),
-    view.getFloat32(4),
-  );
+  return new Vector2(buf[0], buf[1]);
 }
 
 export function GetSCreenToWorld2D(
@@ -2835,56 +2834,50 @@ export function GetSCreenToWorld2D(
   camera: Camera2D,
 ): Vector2 {
   const buf = lib.GetScreenToWorld2D(position.buffer, camera.buffer);
-  const view = new DataView(buf.buffer);
-  return new Vector2(
-    view.getFloat32(0),
-    view.getFloat32(4),
-  );
+  return new Vector2(buf[0], buf[1]);
 }
 
 export function GetCameraMatrix(camera: Camera): Matrix {
   const buf = lib.GetCameraMatrix(camera.buffer);
-  const view = new DataView(buf.buffer);
   return new Matrix(
-    view.getFloat32(0),
-    view.getFloat32(4),
-    view.getFloat32(8),
-    view.getFloat32(12),
-    view.getFloat32(16),
-    view.getFloat32(20),
-    view.getFloat32(24),
-    view.getFloat32(28),
-    view.getFloat32(32),
-    view.getFloat32(36),
-    view.getFloat32(40),
-    view.getFloat32(44),
-    view.getFloat32(48),
-    view.getFloat32(52),
-    view.getFloat32(56),
-    view.getFloat32(60),
+    buf[0],
+    buf[4],
+    buf[8],
+    buf[12],
+    buf[16],
+    buf[20],
+    buf[24],
+    buf[28],
+    buf[32],
+    buf[36],
+    buf[40],
+    buf[44],
+    buf[48],
+    buf[52],
+    buf[56],
+    buf[60],
   );
 }
 
 export function GetCameraMatrix2D(camera: Camera2D): Matrix {
   const buf = lib.GetCameraMatrix2D(camera.buffer);
-  const view = new DataView(buf.buffer);
   return new Matrix(
-    view.getFloat32(0),
-    view.getFloat32(4),
-    view.getFloat32(8),
-    view.getFloat32(12),
-    view.getFloat32(16),
-    view.getFloat32(20),
-    view.getFloat32(24),
-    view.getFloat32(28),
-    view.getFloat32(32),
-    view.getFloat32(36),
-    view.getFloat32(40),
-    view.getFloat32(44),
-    view.getFloat32(48),
-    view.getFloat32(52),
-    view.getFloat32(56),
-    view.getFloat32(60),
+    buf[0],
+    buf[4],
+    buf[8],
+    buf[12],
+    buf[16],
+    buf[20],
+    buf[24],
+    buf[28],
+    buf[32],
+    buf[36],
+    buf[40],
+    buf[44],
+    buf[48],
+    buf[52],
+    buf[56],
+    buf[60],
   );
 }
 
@@ -2956,6 +2949,33 @@ export function SetConfigFlags(flags: ConfigFlags): void {
 export function OpenURL(url: string): void {
   const urlBuf = new TextEncoder().encode(url + "\0");
   lib.OpenURL(urlBuf);
+}
+
+export function isFileDropped(): boolean {
+  return !!lib.IsFileDropped();
+}
+
+export function LoadDroppedFiles(): string[] {
+  const result = lib.LoadDroppedFiles();
+
+  const view = new DataView(result.buffer);
+  const length = view.getUint32(4, littleEndian);
+  const pointer = Deno.UnsafePointer.create(
+    view.getBigInt64(8, littleEndian),
+  );
+
+  const pointerView = new Deno.UnsafePointerView(pointer!);
+
+  const list: string[] = [];
+  for (let i = 0; i < length; i++) {
+    const stringPointer = pointerView.getPointer(i * 8);
+    const stringView = new Deno.UnsafePointerView(stringPointer!);
+    list.push(stringView.getCString());
+  }
+
+  lib.UnloadDroppedFiles(result);
+
+  return list;
 }
 
 export function LoadAutomationEventList(file: string): AutomationEventList {
@@ -3220,21 +3240,24 @@ export function GetGesturePinchAngle(): float {
 }
 
 export function UpdateCamera(camera: Camera, mode: CameraMode): void {
-  lib.UpdateCamera(Deno.UnsafePointer.of(camera.buffer), mode);
+  lib.UpdateCamera(camera.buffer, mode);
+  camera.syncFromBuffer();
 }
 
 export function UpdateCameraPro(
   camera: Camera,
   movement: Vector3,
-  rotation: Vector2,
+  rotation: Vector3,
   zoom: float,
 ): void {
+  camera.syncToBuffer();
   lib.UpdateCameraPro(
-    Deno.UnsafePointer.of(camera.buffer),
+    camera.buffer,
     movement.buffer,
     rotation.buffer,
     zoom,
   );
+  camera.syncFromBuffer();
 }
 
 export function SetShapesTexture(texture: Texture2D, source: Rectangle): void {
@@ -5539,7 +5562,7 @@ export function DrawText(
   color: Color,
 ): void {
   lib.DrawText(
-    new TextEncoder().encode(text + "\0").buffer,
+    new TextEncoder().encode(text + "\0"),
     posX,
     posY,
     fontSize,
