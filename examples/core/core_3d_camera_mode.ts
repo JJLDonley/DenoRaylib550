@@ -8,22 +8,19 @@ const screenHeight = 450;
 RL.InitWindow(
   screenWidth,
   screenHeight,
-  "raylib [core] example - core world screen",
+  "raylib [core] example - 3d camera mode",
 );
 
 // Define the camera to look into our 3d world
 const camera = new RL.Camera3D({
-  position: new RL.Vector3(10.0, 10.0, 10.0), // Camera position
+  position: new RL.Vector3(0.0, 10.0, 10.0), // Camera position
   target: new RL.Vector3(0.0, 0.0, 0.0), // Camera looking at point
   up: new RL.Vector3(0.0, 1.0, 0.0), // Camera up vector (rotation towards target)
   fovy: 45.0, // Camera field-of-view Y
-  projection: RL.CameraProjection.PERSPECTIVE, // Camera projection type
+  projection: RL.CameraProjection.PERSPECTIVE, // Camera mode type
 });
 
 const cubePosition = new RL.Vector3(0.0, 0.0, 0.0);
-let cubeScreenPosition = new RL.Vector2(0.0, 0.0);
-
-RL.DisableCursor(); // Limit cursor to relative movement inside the window
 
 RL.SetTargetFPS(60); // Set our game to run at 60 frames-per-second
 //--------------------------------------------------------------------------------------
@@ -32,13 +29,7 @@ RL.SetTargetFPS(60); // Set our game to run at 60 frames-per-second
 while (!RL.WindowShouldClose()) { // Detect window close button or ESC key
   // Update
   //----------------------------------------------------------------------------------
-  RL.UpdateCamera(camera, RL.CameraMode.THIRD_PERSON);
-
-  // Calculate cube screen space position (with a little offset to be in top)
-  cubeScreenPosition = RL.GetWorldToScreen(
-    new RL.Vector3(cubePosition.x, cubePosition.y + 2.5, cubePosition.z),
-    camera,
-  );
+  // TODO: Update your variables here
   //----------------------------------------------------------------------------------
 
   // Draw
@@ -56,36 +47,9 @@ while (!RL.WindowShouldClose()) { // Detect window close button or ESC key
 
   RL.EndMode3D();
 
-  const enemyText = "Enemy: 100/100";
+  RL.DrawText("Welcome to the third dimension!", 10, 40, 20, RL.DarkGray);
 
-  const w = RL.MeasureText(enemyText, 20);
-  const x = Math.floor(cubeScreenPosition.x - w / 2);
-  const y = Math.floor(cubeScreenPosition.y);
-
-  RL.DrawText(
-    enemyText,
-    x,
-    y,
-    20,
-    RL.Black,
-  );
-
-  RL.DrawText(
-    `Cube position in screen space coordinates: [${
-      Math.floor(cubeScreenPosition.x)
-    }, ${Math.floor(cubeScreenPosition.y)}]`,
-    10,
-    10,
-    20,
-    RL.Lime,
-  );
-  RL.DrawText(
-    "Text 2d should be always on top of the cube",
-    10,
-    40,
-    20,
-    RL.Gray,
-  );
+  RL.DrawFPS(10, 10);
 
   RL.EndDrawing();
   //----------------------------------------------------------------------------------

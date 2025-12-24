@@ -604,7 +604,21 @@ export const lib = Deno.dlopen(
     },
     // Get the screen space position for a 3d world space position
     GetWorldToScreen: {
-      parameters: [{ "struct": ["f32", "f32", "f32"] }, "buffer"],
+      parameters: [{ "struct": ["f32", "f32", "f32"] }, {
+        "struct": [
+          "f32",
+          "f32",
+          "f32",
+          "f32",
+          "f32",
+          "f32",
+          "f32",
+          "f32",
+          "f32",
+          "f32",
+          "i32",
+        ],
+      }],
       result: { "struct": ["f32", "f32"] },
     },
     // Get size position for a 3d world space position
@@ -3869,7 +3883,7 @@ export const lib = Deno.dlopen(
       },
     },
     // Load materials from model file
-    LoadMaterials: { parameters: ["buffer", "buffer"], result: "pointer" },
+    LoadMaterials: { parameters: ["buffer", "pointer"], result: "pointer" },
     // Load default material (Supports: DIFFUSE, SPECULAR, NORMAL maps)
     LoadMaterialDefault: {
       parameters: [],
