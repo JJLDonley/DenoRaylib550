@@ -6,11 +6,11 @@ import * as RL from "raylib";
 const screenWidth = 800;
 const screenHeight = 450;
 
-// Enable config flags for resizable window and vertical synchro
+// IMPORTANT: WINDOW_ALWAYS_RUN prevents freezing during resize
 RL.SetConfigFlags(
   RL.ConfigFlags.WINDOW_RESIZABLE |
-  RL.ConfigFlags.WINDOW_ALWAYS_RUN |
-  RL.ConfigFlags.VSYNC_HINT,
+    RL.ConfigFlags.WINDOW_ALWAYS_RUN |
+    RL.ConfigFlags.VSYNC_HINT,
 );
 
 RL.InitWindow(
@@ -21,13 +21,15 @@ RL.InitWindow(
 
 RL.SetWindowMinSize(320, 240);
 
+// Virtual game resolution
 const gameScreenWidth = 640;
 const gameScreenHeight = 480;
 
-// Render texture initialization, used to hold the rendering result so we can easily resize it
+// Render texture (virtual screen)
 const target = RL.LoadRenderTexture(gameScreenWidth, gameScreenHeight);
-RL.SetTextureFilter(target.texture, RL.TextureFilter.BILINEAR); // Texture scale filter to use
+RL.SetTextureFilter(target.texture, RL.TextureFilter.BILINEAR);
 
+// Random bar colors
 const colors: RL.Color[] = [];
 for (let i = 0; i < 10; i++) {
   colors.push(
@@ -40,21 +42,24 @@ for (let i = 0; i < 10; i++) {
   );
 }
 
-RL.SetTargetFPS(60); // Set our game to run at 60 frames-per-second
-//--------------------------------------------------------------------------------------
+RL.SetTargetFPS(60);
 
+//------------------------------------------------------------------------------------
 // Main game loop
-while (!RL.WindowShouldClose()) { // Detect window close button or ESC key
+//------------------------------------------------------------------------------------
+while (!RL.WindowShouldClose()) {
+  //----------------------------------------------------------------------------------
   // Update
   //----------------------------------------------------------------------------------
+
   // Compute required framebuffer scaling
   const scale = Math.min(
     RL.GetScreenWidth() / gameScreenWidth,
     RL.GetScreenHeight() / gameScreenHeight,
   );
 
+  // Regenerate colors
   if (RL.IsKeyPressed(RL.KeyboardKey.SPACE)) {
-    // Recalculate random colors for the bars
     for (let i = 0; i < 10; i++) {
       colors[i] = new RL.Color(
         RL.GetRandomValue(100, 250),
@@ -65,29 +70,29 @@ while (!RL.WindowShouldClose()) { // Detect window close button or ESC key
     }
   }
 
-  // Update virtual mouse (clamped mouse value behind game screen)
+  // Mouse handling
   const mouse = RL.GetMousePosition();
   const virtualMouse = new RL.Vector2(0, 0);
+
   virtualMouse.x =
-    (mouse.x - (RL.GetScreenWidth() - (gameScreenWidth * scale)) * 0.5) / scale;
+    (mouse.x -
+      (RL.GetScreenWidth() - gameScreenWidth * scale) * 0.5) /
+    scale;
+
   virtualMouse.y =
-    (mouse.y - (RL.GetScreenHeight() - (gameScreenHeight * scale)) * 0.5) /
+    (mouse.y -
+      (RL.GetScreenHeight() - gameScreenHeight * scale) * 0.5) /
     scale;
 
   // Clamp virtual mouse
   virtualMouse.x = Math.max(0, Math.min(virtualMouse.x, gameScreenWidth));
   virtualMouse.y = Math.max(0, Math.min(virtualMouse.y, gameScreenHeight));
 
-  // Apply the same transformation as the virtual mouse to the real mouse (i.e. to work with raygui)
-  //SetMouseOffset(-(GetScreenWidth() - (gameScreenWidth*scale))*0.5f, -(GetScreenHeight() - (gameScreenHeight*scale))*0.5f);
-  //SetMouseScale(1/scale, 1/scale);
   //----------------------------------------------------------------------------------
-
-  // Draw
+  // Draw to render texture (virtual screen)
   //----------------------------------------------------------------------------------
-  // Draw everything in the render texture, note this will not be rendered on screen, yet
   RL.BeginTextureMode(target);
-  RL.ClearBackground(RL.RayWhite); // Clear render texture background color
+  RL.ClearBackground(RL.RayWhite);
 
   for (let i = 0; i < 10; i++) {
     RL.DrawRectangle(
@@ -100,42 +105,50 @@ while (!RL.WindowShouldClose()) { // Detect window close button or ESC key
   }
 
   RL.DrawText(
-    "If executed inside a window,\nyou can resize the window,\nand see the screen scaling!",
+    "Resize the window.\nRendering stays realtime.",
     10,
     25,
     20,
     RL.White,
   );
 
-  // Using JS Template Literals instead of RL.TextFormat
   RL.DrawText(
-    `Default Mouse: [${Math.floor(mouse.x)} , ${Math.floor(mouse.y)}]`,
-    350,
-    25,
+    `Mouse: [${Math.floor(mouse.x)}, ${Math.floor(mouse.y)}]`,
+    10,
+    70,
     20,
     RL.Green,
   );
+
   RL.DrawText(
-    `Virtual Mouse: [${Math.floor(virtualMouse.x)} , ${
-      Math.floor(virtualMouse.y)
-    }]`,
-    350,
-    55,
+    `Virtual: [${Math.floor(virtualMouse.x)}, ${Math.floor(
+      virtualMouse.y,
+    )}]`,
+    10,
+    100,
     20,
     RL.Yellow,
   );
+
   RL.EndTextureMode();
 
+  //----------------------------------------------------------------------------------
+  // Draw to screen
+  //----------------------------------------------------------------------------------
   RL.BeginDrawing();
-  RL.ClearBackground(RL.Black); // Clear screen background
+  RL.ClearBackground(RL.Black);
 
-  // Draw render texture to screen, properly scaled
   RL.DrawTexturePro(
     target.texture,
-    new RL.Rectangle(0, 0, target.texture.width, -target.texture.height),
     new RL.Rectangle(
-      (RL.GetScreenWidth() - (gameScreenWidth * scale)) * 0.5,
-      (RL.GetScreenHeight() - (gameScreenHeight * scale)) * 0.5,
+      0,
+      0,
+      target.texture.width,
+      -target.texture.height,
+    ),
+    new RL.Rectangle(
+      (RL.GetScreenWidth() - gameScreenWidth * scale) * 0.5,
+      (RL.GetScreenHeight() - gameScreenHeight * scale) * 0.5,
       gameScreenWidth * scale,
       gameScreenHeight * scale,
     ),
@@ -143,11 +156,12 @@ while (!RL.WindowShouldClose()) { // Detect window close button or ESC key
     0,
     RL.White,
   );
+
   RL.EndDrawing();
-  //--------------------------------------------------------------------------------------
 }
 
+//------------------------------------------------------------------------------------
 // De-Initialization
-//--------------------------------------------------------------------------------------
-RL.UnloadRenderTexture(target); // Unload render texture
-RL.CloseWindow(); // Close window and OpenGL context
+//------------------------------------------------------------------------------------
+RL.UnloadRenderTexture(target);
+RL.CloseWindow();

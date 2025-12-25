@@ -1245,7 +1245,7 @@ export class Shader {
     return new DataView(this.#buffer.buffer, this.#buffer.byteOffset);
   }
 
-  // Shader program id
+  // u32 id at offset 0
   get id(): number {
     return this.view.getUint32(0, true);
   }
@@ -1253,7 +1253,9 @@ export class Shader {
     this.view.setUint32(0, v, true);
   }
 
-  // int* locs (RL_MAX_SHADER_LOCATIONS)
+  // u32 padding at offset 4 (optional accessors, not required)
+
+  // pointer locs at offset 8
   get locsPtr(): bigint {
     return this.view.getBigUint64(8, true);
   }
@@ -1929,162 +1931,18 @@ export class Wave {
   }
 }
 
-export class AudioStream {
-  #buffer: Uint8Array<ArrayBuffer>;
-
-  constructor(buffer: Uint8Array<ArrayBuffer>) {
-    this.#buffer = buffer;
-  }
-
-  get buffer(): Uint8Array<ArrayBuffer> {
-    return this.#buffer;
-  }
-
-  private get view(): DataView {
-    return new DataView(this.#buffer.buffer, this.#buffer.byteOffset);
-  }
-
-  // ---- internal pointers ----
-  get bufferPtr(): bigint {
-    return this.view.getBigUint64(0, true);
-  }
-
-  set bufferPtr(p: bigint) {
-    this.view.setBigUint64(0, p, true);
-  }
-
-  get processorPtr(): bigint {
-    return this.view.getBigUint64(8, true);
-  }
-
-  set processorPtr(p: bigint) {
-    this.view.setBigUint64(8, p, true);
-  }
-
-  // ---- audio format ----
-  get sampleRate(): number {
-    return this.view.getUint32(16, true);
-  }
-
-  set sampleRate(v: number) {
-    this.view.setUint32(16, v, true);
-  }
-
-  get sampleSize(): number {
-    return this.view.getUint32(20, true);
-  }
-
-  set sampleSize(v: number) {
-    this.view.setUint32(20, v, true);
-  }
-
-  get channels(): number {
-    return this.view.getUint32(24, true);
-  }
-
-  set channels(v: number) {
-    this.view.setUint32(24, v, true);
-  }
-}
-
 export class Sound {
-  #buffer: Uint8Array<ArrayBuffer>;
-
-  constructor(buffer: Uint8Array<ArrayBuffer>) {
-    this.#buffer = buffer;
-  }
-
-  get buffer(): Uint8Array<ArrayBuffer> {
-    return this.#buffer;
-  }
-
-  private get view(): DataView {
-    return new DataView(this.#buffer.buffer, this.#buffer.byteOffset);
-  }
-
-  // ---- AudioStream (32 bytes) ----
-  get stream(): AudioStream {
-    return new AudioStream(
-      new Uint8Array(
-        this.#buffer.buffer,
-        this.#buffer.byteOffset,
-        32,
-      ) as Uint8Array<ArrayBuffer>,
-    );
-  }
-
-  // ---- frameCount ----
-  get frameCount(): number {
-    return this.view.getUint32(32, true);
-  }
-
-  set frameCount(v: number) {
-    this.view.setUint32(32, v, true);
-  }
+  constructor(public readonly buffer: Uint8Array<ArrayBuffer>) {}
 }
 
 export class Music {
-  #buffer: Uint8Array<ArrayBuffer>;
-
-  constructor(buffer: Uint8Array<ArrayBuffer>) {
-    this.#buffer = buffer;
-  }
-
-  get buffer(): Uint8Array<ArrayBuffer> {
-    return this.#buffer;
-  }
-
-  private get view(): DataView {
-    return new DataView(this.#buffer.buffer, this.#buffer.byteOffset);
-  }
-
-  // ---- AudioStream (32 bytes) ----
-  get stream(): AudioStream {
-    return new AudioStream(
-      new Uint8Array(
-        this.#buffer.buffer,
-        this.#buffer.byteOffset,
-        32,
-      ) as Uint8Array<ArrayBuffer>,
-    );
-  }
-
-  // ---- frameCount ----
-  get frameCount(): number {
-    return this.view.getUint32(32, true);
-  }
-
-  set frameCount(v: number) {
-    this.view.setUint32(32, v, true);
-  }
-
-  // ---- looping (bool) ----
-  get looping(): boolean {
-    return this.view.getUint8(36) !== 0;
-  }
-
-  set looping(v: boolean) {
-    this.view.setUint8(36, v ? 1 : 0);
-  }
-
-  // ---- ctxType ----
-  get ctxType(): number {
-    return this.view.getInt32(40, true);
-  }
-
-  set ctxType(v: number) {
-    this.view.setInt32(40, v, true);
-  }
-
-  // ---- ctxData pointer ----
-  get ctxDataPtr(): bigint {
-    return this.view.getBigUint64(48, true);
-  }
-
-  set ctxDataPtr(p: bigint) {
-    this.view.setBigUint64(48, p, true);
-  }
+  constructor(public readonly buffer: Uint8Array<ArrayBuffer>) {}
 }
+
+export class AudioStream {
+  constructor(public readonly buffer: Uint8Array<ArrayBuffer>) {}
+}
+
 
 export class VrDeviceInfo {
   #buffer: Uint8Array<ArrayBuffer>;
@@ -3100,7 +2958,7 @@ export function OpenURL(url: string): void {
   lib.OpenURL(urlBuf);
 }
 
-export function isFileDropped(): boolean {
+export function IsFileDropped(): boolean {
   return !!lib.IsFileDropped();
 }
 
