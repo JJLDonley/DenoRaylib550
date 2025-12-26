@@ -4771,16 +4771,16 @@ export const lib = Deno.dlopen("./blobs/" + DLL_TYPE, {
   // Load wave data from file
   LoadWave: {
     parameters: ["buffer"],
-    result: {  struct: ["u32", "u32", "u32", "u32", "pointer"] },
+    result: { struct: ["u32", "u32", "u32", "u32", "pointer"] },
   },
   // Load wave from memory buffer, fileType refers to extension: i.e. '.wav'
   LoadWaveFromMemory: {
     parameters: ["buffer", "buffer", "i32"],
-    result: {  struct: ["u32", "u32", "u32", "u32", "pointer"] },
+    result: { struct: ["u32", "u32", "u32", "u32", "pointer"] },
   },
   // Checks if wave data is valid (data loaded and parameters)
   IsWaveValid: {
-    parameters: [{  struct: ["u32", "u32", "u32", "u32", "pointer"] }],
+    parameters: [{ struct: ["u32", "u32", "u32", "u32", "pointer"] }],
     result: "u8",
   },
   // Load sound from file
@@ -4790,7 +4790,7 @@ export const lib = Deno.dlopen("./blobs/" + DLL_TYPE, {
   },
   // Load sound from wave data
   LoadSoundFromWave: {
-    parameters: [{  struct: ["u32", "u32", "u32", "u32", "pointer"] }],
+    parameters: [{ struct: ["u32", "u32", "u32", "u32", "pointer"] }],
     result: { struct: ["pointer", "pointer", "u32", "u32", "u32", "u32"] },
   },
   // Create a new sound that shares the same sample data as the source sound, does not own the sound data
@@ -4844,7 +4844,7 @@ export const lib = Deno.dlopen("./blobs/" + DLL_TYPE, {
   },
   // Unload wave data
   UnloadWave: {
-    parameters: [{  struct: ["u32", "u32", "u32", "u32", "pointer"] }],
+    parameters: [{ struct: ["u32", "u32", "u32", "u32", "pointer"] }],
     result: "void",
   },
   // Unload sound
@@ -4889,12 +4889,12 @@ export const lib = Deno.dlopen("./blobs/" + DLL_TYPE, {
   },
   // Export wave data to file, returns true on success
   ExportWave: {
-    parameters: [{  struct: ["u32", "u32", "u32", "u32", "pointer"] }, "buffer"],
+    parameters: [{ struct: ["u32", "u32", "u32", "u32", "pointer"] }, "buffer"],
     result: "u8",
   },
   // Export wave sample data to code (.h), returns true on success
   ExportWaveAsCode: {
-    parameters: [{  struct: ["u32", "u32", "u32", "u32", "pointer"] }, "buffer"],
+    parameters: [{ struct: ["u32", "u32", "u32", "u32", "pointer"] }, "buffer"],
     result: "u8",
   },
   // Play a sound
@@ -5062,13 +5062,13 @@ export const lib = Deno.dlopen("./blobs/" + DLL_TYPE, {
   },
   // Copy a wave to a new wave
   WaveCopy: {
-    parameters: [{  struct: ["u32", "u32", "u32", "u32", "pointer"] }],
-    result: {  struct: ["u32", "u32", "u32", "u32", "pointer"] },
+    parameters: [{ struct: ["u32", "u32", "u32", "u32", "pointer"] }],
+    result: { struct: ["u32", "u32", "u32", "u32", "pointer"] },
   },
   // Crop a wave to defined frames range
   WaveCrop: {
     parameters: [
-      {  struct: ["u32", "u32", "u32", "u32", "pointer"] },
+      { struct: ["u32", "u32", "u32", "u32", "pointer"] },
       "i32",
       "i32",
     ],
@@ -5077,7 +5077,7 @@ export const lib = Deno.dlopen("./blobs/" + DLL_TYPE, {
   // Convert wave data to desired format
   WaveFormat: {
     parameters: [
-      {  struct: ["u32", "u32", "u32", "u32", "pointer"] },
+      { struct: ["u32", "u32", "u32", "u32", "pointer"] },
       "i32",
       "i32",
       "i32",
@@ -5086,7 +5086,7 @@ export const lib = Deno.dlopen("./blobs/" + DLL_TYPE, {
   },
   // Load samples data from wave as a 32bit float data array
   LoadWaveSamples: {
-    parameters: [{  struct: ["u32", "u32", "u32", "u32", "pointer"] }],
+    parameters: [{ struct: ["u32", "u32", "u32", "u32", "pointer"] }],
     result: "pointer",
   },
   // Unload samples data loaded with LoadWaveSamples()
@@ -5524,22 +5524,26 @@ export const lib = Deno.dlopen("./blobs/" + DLL_TYPE, {
   // Load audio stream (to stream raw audio pcm data)
   LoadAudioStream: {
     parameters: ["u32", "u32", "u32"],
-    result: { struct: ["pointer", "pointer", "u32", "u32", "u32", "u32"], },
+    result: { struct: ["pointer", "pointer", "u32", "u32", "u32", "u32"] },
   },
   // Checks if an audio stream is valid (buffers initialized)
   IsAudioStreamValid: {
-    parameters: [{ struct: ["pointer", "pointer", "u32", "u32", "u32", "u32"], }],
+    parameters: [{
+      struct: ["pointer", "pointer", "u32", "u32", "u32", "u32"],
+    }],
     result: "u8",
   },
   // Unload audio stream and free memory
   UnloadAudioStream: {
-    parameters: [{ struct: ["pointer", "pointer", "u32", "u32", "u32", "u32"], }],
+    parameters: [{
+      struct: ["pointer", "pointer", "u32", "u32", "u32", "u32"],
+    }],
     result: "void",
   },
   // Update audio stream buffers with data
   UpdateAudioStream: {
     parameters: [
-      { struct: ["pointer", "pointer", "u32", "u32", "u32", "u32"], },
+      { struct: ["pointer", "pointer", "u32", "u32", "u32", "u32"] },
       "pointer",
       "i32",
     ],
@@ -5547,38 +5551,50 @@ export const lib = Deno.dlopen("./blobs/" + DLL_TYPE, {
   },
   // Check if any audio stream buffers requires refill
   IsAudioStreamProcessed: {
-    parameters: [{ struct: ["pointer", "pointer", "u32", "u32", "u32", "u32"], }],
+    parameters: [{
+      struct: ["pointer", "pointer", "u32", "u32", "u32", "u32"],
+    }],
     result: "u8",
   },
   // Play audio stream
   PlayAudioStream: {
-    parameters: [{ struct: ["pointer", "pointer", "u32", "u32", "u32", "u32"], }],
+    parameters: [{
+      struct: ["pointer", "pointer", "u32", "u32", "u32", "u32"],
+    }],
     result: "void",
   },
   // Pause audio stream
   PauseAudioStream: {
-    parameters: [{ struct: ["pointer", "pointer", "u32", "u32", "u32", "u32"], }],
+    parameters: [{
+      struct: ["pointer", "pointer", "u32", "u32", "u32", "u32"],
+    }],
     result: "void",
   },
   // Resume audio stream
   ResumeAudioStream: {
-    parameters: [{ struct: ["pointer", "pointer", "u32", "u32", "u32", "u32"], }],
+    parameters: [{
+      struct: ["pointer", "pointer", "u32", "u32", "u32", "u32"],
+    }],
     result: "void",
   },
   // Check if audio stream is playing
   IsAudioStreamPlaying: {
-    parameters: [{ struct: ["pointer", "pointer", "u32", "u32", "u32", "u32"], }],
+    parameters: [{
+      struct: ["pointer", "pointer", "u32", "u32", "u32", "u32"],
+    }],
     result: "u8",
   },
   // Stop audio stream
   StopAudioStream: {
-    parameters: [{ struct: ["pointer", "pointer", "u32", "u32", "u32", "u32"], }],
+    parameters: [{
+      struct: ["pointer", "pointer", "u32", "u32", "u32", "u32"],
+    }],
     result: "void",
   },
   // Set volume for audio stream (1.0 is max level)
   SetAudioStreamVolume: {
     parameters: [
-      { struct: ["pointer", "pointer", "u32", "u32", "u32", "u32"], },
+      { struct: ["pointer", "pointer", "u32", "u32", "u32", "u32"] },
       "f32",
     ],
     result: "void",
@@ -5586,7 +5602,7 @@ export const lib = Deno.dlopen("./blobs/" + DLL_TYPE, {
   // Set pitch for audio stream (1.0 is base level)
   SetAudioStreamPitch: {
     parameters: [
-      { struct: ["pointer", "pointer", "u32", "u32", "u32", "u32"], },
+      { struct: ["pointer", "pointer", "u32", "u32", "u32", "u32"] },
       "f32",
     ],
     result: "void",
@@ -5594,7 +5610,7 @@ export const lib = Deno.dlopen("./blobs/" + DLL_TYPE, {
   // Set pan for audio stream (0.5 is centered)
   SetAudioStreamPan: {
     parameters: [
-      { struct: ["pointer", "pointer", "u32", "u32", "u32", "u32"], },
+      { struct: ["pointer", "pointer", "u32", "u32", "u32", "u32"] },
       "f32",
     ],
     result: "void",
@@ -5604,7 +5620,7 @@ export const lib = Deno.dlopen("./blobs/" + DLL_TYPE, {
   // Audio thread callback to request new data
   SetAudioStreamCallback: {
     parameters: [
-      { struct: ["pointer", "pointer", "u32", "u32", "u32", "u32"], },
+      { struct: ["pointer", "pointer", "u32", "u32", "u32", "u32"] },
       "pointer",
     ],
     result: "void",
@@ -5612,7 +5628,7 @@ export const lib = Deno.dlopen("./blobs/" + DLL_TYPE, {
   // Attach audio stream processor to stream, receives the samples as 'float'
   AttachAudioStreamProcessor: {
     parameters: [
-      { struct: ["pointer", "pointer", "u32", "u32", "u32", "u32"], },
+      { struct: ["pointer", "pointer", "u32", "u32", "u32", "u32"] },
       "function",
     ],
     result: "void",
@@ -5620,7 +5636,7 @@ export const lib = Deno.dlopen("./blobs/" + DLL_TYPE, {
   // Detach audio stream processor from stream
   DetachAudioStreamProcessor: {
     parameters: [
-      { struct: ["pointer", "pointer", "u32", "u32", "u32", "u32"], },
+      { struct: ["pointer", "pointer", "u32", "u32", "u32", "u32"] },
       "function",
     ],
     result: "void",

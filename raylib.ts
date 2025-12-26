@@ -1,5 +1,4 @@
 import { lib as DLL } from "./bindings/bindings.ts";
-
 const lib = DLL.symbols;
 
 export const RAYLIB_VERSION_MAJOR = 5;
@@ -14,6 +13,139 @@ export const littleEndian = (() => {
   new DataView(buffer).setInt16(0, 256, true);
   return new Int16Array(buffer)[0] === 256;
 })();
+
+const POINTER_SIZE = 8;
+const BONE_INFO_SIZE = 36;
+const TRANSFORM_SIZE = 40;
+
+function readBufferFromPtr(ptr: bigint, byteLength: number): Uint8Array {
+  if (ptr === 0n || byteLength <= 0) return new Uint8Array();
+  const view = new Deno.UnsafePointerView(Deno.UnsafePointer.create(ptr)!);
+  return new Uint8Array(view.getArrayBuffer(byteLength));
+}
+
+function readBoneNames(ptr: bigint, count: number): string[] {
+  const bones = readBufferFromPtr(ptr, count * BONE_INFO_SIZE);
+  const names: string[] = [];
+  for (let i = 0; i < count; i++) {
+    const offset = i * BONE_INFO_SIZE;
+    const bytes = bones.subarray(offset, offset + 32);
+    let end = bytes.indexOf(0);
+    if (end === -1) end = 32;
+    names.push(new TextDecoder().decode(bytes.subarray(0, end)));
+  }
+  return names;
+}
+
+function buildBoneRemap(
+  modelBones: string[],
+  animBones: string[],
+): number[] | null {
+  const remap = modelBones.map((name) => animBones.indexOf(name));
+  if (remap.some((idx) => idx < 0)) return null;
+  return remap;
+}
+
+function retargetModelAnimations(
+  model: Model,
+  animations: ModelAnimations,
+): ModelAnimations {
+  if (animations.length === 0) return animations;
+  if (model.boneCount === 0 || model.bonesPtr === 0n) return animations;
+
+  const modelBoneNames = readBoneNames(model.bonesPtr, model.boneCount);
+  const animBoneNames = readBoneNames(
+    animations[0].bonesPtr,
+    animations[0].boneCount,
+  );
+  const remap = buildBoneRemap(modelBoneNames, animBoneNames);
+  if (!remap) return animations;
+
+  const isIdentity = remap.every((idx, i) => idx === i);
+  if (isIdentity) return animations;
+
+  const keepAlive: Uint8Array[] = [];
+  const retargeted: ModelAnimation[] = [];
+  for (const anim of animations) {
+    if (anim.boneCount !== model.boneCount) {
+      retargeted.push(anim);
+      continue;
+    }
+
+    const framePtrsBuffer = readBufferFromPtr(
+      anim.framePosesPtr,
+      anim.frameCount * POINTER_SIZE,
+    );
+    const framePtrsView = new DataView(
+      framePtrsBuffer.buffer,
+      framePtrsBuffer.byteOffset,
+      framePtrsBuffer.byteLength,
+    );
+    const remappedFrames: Uint8Array[] = [];
+
+    for (let frame = 0; frame < anim.frameCount; frame++) {
+      const framePtr = framePtrsView.getBigUint64(
+        frame * POINTER_SIZE,
+        littleEndian,
+      );
+      const srcFrame = readBufferFromPtr(
+        framePtr,
+        anim.boneCount * TRANSFORM_SIZE,
+      );
+      const dstFrame = new Uint8Array(anim.boneCount * TRANSFORM_SIZE);
+      for (let modelIndex = 0; modelIndex < remap.length; modelIndex++) {
+        const animIndex = remap[modelIndex];
+        const srcOffset = animIndex * TRANSFORM_SIZE;
+        const dstOffset = modelIndex * TRANSFORM_SIZE;
+        dstFrame.set(
+          srcFrame.subarray(srcOffset, srcOffset + TRANSFORM_SIZE),
+          dstOffset,
+        );
+      }
+      remappedFrames.push(dstFrame);
+      keepAlive.push(dstFrame);
+    }
+
+    const remappedFramePtrs = new Uint8Array(
+      anim.frameCount * POINTER_SIZE,
+    );
+    const remappedFramePtrsView = new DataView(remappedFramePtrs.buffer);
+    for (let frame = 0; frame < remappedFrames.length; frame++) {
+      const ptr = Deno.UnsafePointer.of(
+        remappedFrames[frame].buffer as BufferSource,
+      );
+      remappedFramePtrsView.setBigUint64(
+        frame * POINTER_SIZE,
+        Deno.UnsafePointer.value(ptr),
+        littleEndian,
+      );
+    }
+    keepAlive.push(remappedFramePtrs);
+
+    const animBuffer = new Uint8Array(56);
+    const animView = new DataView(animBuffer.buffer);
+    animView.setInt32(0, anim.boneCount, littleEndian);
+    animView.setInt32(4, anim.frameCount, littleEndian);
+    animView.setBigUint64(8, model.bonesPtr, littleEndian);
+    animView.setBigUint64(
+      16,
+      Deno.UnsafePointer.value(
+        Deno.UnsafePointer.of(remappedFramePtrs.buffer),
+      ),
+      littleEndian,
+    );
+    animBuffer.fill(0, 24, 56);
+    const encodedName = new TextEncoder().encode(anim.name);
+    animBuffer.set(encodedName.subarray(0, 32), 24);
+    keepAlive.push(animBuffer);
+
+    retargeted.push(new ModelAnimation(animBuffer));
+  }
+
+  const retargetedSet = new ModelAnimations(retargeted, animations.ptr);
+  retargetedSet.keepAlive(keepAlive);
+  return retargetedSet;
+}
 
 export function concatVector2(vectors: Vector2[]): Uint8Array<ArrayBuffer> {
   const buf = new ArrayBuffer(vectors.length * 8); // 2 floats per Vector2
@@ -75,17 +207,17 @@ export function concatColor(colors: Color[]): Uint8Array {
 export enum ConfigFlags {
   VSYNC_HINT = 0x00000040, // Set to try enabling V-Sync on GPU
   FULLSCREEN_MODE = 0x00000002, // Set to run program in fullscreen
-  WINDOW_RESIZABLE = 0x00000004, // Set to allow resizable window
-  WINDOW_UNDECORATED = 0x00000008, // Set to disable window decoration (frame and buttons)
-  WINDOW_HIDDEN = 0x00000080, // Set to hide window
-  WINDOW_MINIMIZED = 0x00000200, // Set to minimize window (iconify)
-  WINDOW_MAXIMIZED = 0x00000400, // Set to maximize window (expanded to monitor)
-  WINDOW_UNFOCUSED = 0x00000800, // Set to window non focused
-  WINDOW_TOPMOST = 0x00001000, // Set to window always on top
-  WINDOW_ALWAYS_RUN = 0x00000100, // Set to allow windows running while minimized
-  WINDOW_TRANSPARENT = 0x00000010, // Set to allow transparent framebuffer
-  WINDOW_HIGHDPI = 0x00002000, // Set to support HighDPI
-  WINDOW_MOUSE_PASSTHROUGH = 0x00004000, // Set to support mouse passthrough, only supported when WINDOW_UNDECORATED
+  RESIZABLE = 0x00000004, // Set to allow resizable window
+  UNDECORATED = 0x00000008, // Set to disable window decoration (frame and buttons)
+  HIDDEN = 0x00000080, // Set to hide window
+  MINIMIZED = 0x00000200, // Set to minimize window (iconify)
+  MAXIMIZED = 0x00000400, // Set to maximize window (expanded to monitor)
+  UNFOCUSED = 0x00000800, // Set to window non focused
+  TOPMOST = 0x00001000, // Set to window always on top
+  ALWAYS_RUN = 0x00000100, // Set to allow windows running while minimized
+  TRANSPARENT = 0x00000010, // Set to allow transparent framebuffer
+  HIGHDPI = 0x00002000, // Set to support HighDPI
+  MOUSE_PASSTHROUGH = 0x00004000, // Set to support mouse passthrough, only supported when WINDOW_UNDECORATED
   BORDERLESS_WINDOWED_MODE = 0x00008000, // Set to run program in borderless windowed mode
   MSAA_4X_HINT = 0x00000020, // Set to try enabling MSAA 4X
   INTERLACED_HINT = 0x00010000, // Set to try enabling interlaced video format (for V3D)
@@ -1061,18 +1193,16 @@ export class Camera2D {
   /** Camera zoom (scaling), 1.0f by default */
   zoom: number;
 
-  constructor(
-    options?: {
-      /** Camera offset (displacement from target) */
-      offset?: Vector2;
-      /** Camera target (rotation and zoom origin) */
-      target?: Vector2;
-      /** Camera rotation in degrees */
-      rotation?: number;
-      /** Camera zoom (scaling), 1.0f by default */
-      zoom?: number;
-    },
-  ) {
+  constructor(options?: {
+    /** Camera offset (displacement from target) */
+    offset?: Vector2;
+    /** Camera target (rotation and zoom origin) */
+    target?: Vector2;
+    /** Camera rotation in degrees */
+    rotation?: number;
+    /** Camera zoom (scaling), 1.0f by default */
+    zoom?: number;
+  }) {
     this.offset = options?.offset ?? new Vector2(0, 0);
     this.target = options?.target ?? new Vector2(0, 0);
     this.rotation = options?.rotation ?? 0;
@@ -1481,20 +1611,12 @@ export class Model {
   // ---- transform (Matrix, 64 bytes) ----
   get transform(): Matrix {
     return new Matrix(
-      ...new Float32Array(
-        this.#buffer.buffer,
-        this.#buffer.byteOffset,
-        16,
-      ),
+      ...new Float32Array(this.#buffer.buffer, this.#buffer.byteOffset, 16),
     );
   }
 
   set transform(m: Matrix) {
-    new Float32Array(
-      this.#buffer.buffer,
-      this.#buffer.byteOffset,
-      16,
-    ).set(m);
+    new Float32Array(this.#buffer.buffer, this.#buffer.byteOffset, 16).set(m);
   }
 
   // ---- counts ----
@@ -1628,6 +1750,30 @@ export class ModelAnimation {
 
     const encoded = new TextEncoder().encode(value);
     bytes.set(encoded.subarray(0, 32));
+  }
+}
+
+export class ModelAnimations extends Array<ModelAnimation> {
+  #ptr: Deno.UnsafePointer;
+  #keepAlive: Uint8Array[];
+
+  constructor(
+    items: ModelAnimation[],
+    ptr: Deno.UnsafePointer,
+    keepAlive: Uint8Array[] = [],
+  ) {
+    super(...items);
+    this.#ptr = ptr;
+    this.#keepAlive = keepAlive;
+    Object.setPrototypeOf(this, ModelAnimations.prototype);
+  }
+
+  get ptr(): Deno.UnsafePointer {
+    return this.#ptr;
+  }
+
+  keepAlive(buffers: Uint8Array[]): void {
+    this.#keepAlive.push(...buffers);
   }
 }
 
@@ -1796,10 +1942,7 @@ export class RayCollision {
 }
 
 export class BoundingBox extends Float32Array {
-  constructor(
-    min = new Vector3(0, 0, 0),
-    max = new Vector3(0, 0, 0),
-  ) {
+  constructor(min = new Vector3(0, 0, 0), max = new Vector3(0, 0, 0)) {
     super(6);
     this.min = min;
     this.max = max;
@@ -1942,7 +2085,6 @@ export class Music {
 export class AudioStream {
   constructor(public readonly buffer: Uint8Array<ArrayBuffer>) {}
 }
-
 
 export class VrDeviceInfo {
   #buffer: Uint8Array<ArrayBuffer>;
@@ -2239,11 +2381,7 @@ export class AutomationEvent {
 
   // ---- params[4] ----
   get params(): Int32Array {
-    return new Int32Array(
-      this.#buffer.buffer,
-      this.#buffer.byteOffset + 8,
-      4,
-    );
+    return new Int32Array(this.#buffer.buffer, this.#buffer.byteOffset + 8, 4);
   }
 }
 
@@ -2409,10 +2547,7 @@ export function SetWindowIcons(images: Image[]): void {
     buf.set(images[i].buffer, i * IMAGE_SIZE);
   }
 
-  lib.SetWindowIcons(
-    Deno.UnsafePointer.of(buf),
-    count,
-  );
+  lib.SetWindowIcons(Deno.UnsafePointer.of(buf), count);
 }
 
 export function SetWindowTitle(title: string): void {
@@ -2717,11 +2852,7 @@ export function SetShaderValueMatrix(
   locIndex: int,
   mat: Matrix,
 ): void {
-  lib.SetShaderValueMatrix(
-    shader.buffer,
-    locIndex,
-    mat.buffer,
-  );
+  lib.SetShaderValueMatrix(shader.buffer, locIndex, mat.buffer);
 }
 
 export function SetShaderValueTexture(
@@ -2729,11 +2860,7 @@ export function SetShaderValueTexture(
   locIndex: int,
   texture: Texture2D,
 ): void {
-  lib.SetShaderValueTexture(
-    shader.buffer,
-    locIndex,
-    texture.buffer,
-  );
+  lib.SetShaderValueTexture(shader.buffer, locIndex, texture.buffer);
 }
 
 export function UnloadShader(shader: Shader): void {
@@ -2924,11 +3051,7 @@ export function GetRandomValue(min: int, max: int): int {
   return lib.GetRandomValue(min, max);
 }
 
-export function LoadRandomSequence(
-  count: int,
-  min: int,
-  max: int,
-): int[] {
+export function LoadRandomSequence(count: int, min: int, max: int): int[] {
   const ptr = lib.LoadRandomSequence(count, min, max);
   if (ptr === null) return [];
 
@@ -2967,9 +3090,7 @@ export function LoadDroppedFiles(): string[] {
 
   const view = new DataView(result.buffer);
   const length = view.getUint32(4, littleEndian);
-  const pointer = Deno.UnsafePointer.create(
-    view.getBigInt64(8, littleEndian),
-  );
+  const pointer = Deno.UnsafePointer.create(view.getBigInt64(8, littleEndian));
 
   const pointerView = new Deno.UnsafePointerView(pointer!);
 
@@ -3266,12 +3387,7 @@ export function UpdateCameraPro(
   zoom: float,
 ): void {
   camera.syncToBuffer();
-  lib.UpdateCameraPro(
-    camera.buffer,
-    movement.buffer,
-    rotation.buffer,
-    zoom,
-  );
+  lib.UpdateCameraPro(camera.buffer, movement.buffer, rotation.buffer, zoom);
   camera.syncFromBuffer();
 }
 
@@ -3508,10 +3624,7 @@ export function DrawRectangleV(
   lib.DrawRectangleV(position.buffer, size.buffer, color.buffer);
 }
 
-export function DrawRectangleRec(
-  rec: Rectangle,
-  color: Color,
-): void {
+export function DrawRectangleRec(rec: Rectangle, color: Color): void {
   lib.DrawRectangleRec(rec.buffer, color.buffer);
 }
 
@@ -3634,8 +3747,7 @@ export function DrawTriangle(
   v3: Vector2,
   color: Color,
 ): void {
-  const cross = (v2.x - v1.x) * (v3.y - v1.y) -
-    (v2.y - v1.y) * (v3.x - v1.x);
+  const cross = (v2.x - v1.x) * (v3.y - v1.y) - (v2.y - v1.y) * (v3.x - v1.x);
 
   // If clockwise, swap v2 and v3
   if (cross < 0) {
@@ -3651,8 +3763,7 @@ export function DrawTriangleLines(
   v3: Vector2,
   color: Color,
 ): void {
-  const cross = (v2.x - v1.x) * (v3.y - v1.y) -
-    (v2.y - v1.y) * (v3.x - v1.x);
+  const cross = (v2.x - v1.x) * (v3.y - v1.y) - (v2.y - v1.y) * (v3.x - v1.x);
 
   if (cross < 0) {
     lib.DrawTriangleLines(v1.buffer, v3.buffer, v2.buffer, color.buffer);
@@ -3661,10 +3772,7 @@ export function DrawTriangleLines(
   }
 }
 
-export function DrawTriangleFan(
-  points: Vector2[],
-  color: Color,
-): void {
+export function DrawTriangleFan(points: Vector2[], color: Color): void {
   const points_buffer = new Float32Array(points.length * 2);
   for (let i = 0; i < points.length; i++) {
     points_buffer[i * 2] = points[i].x;
@@ -3674,10 +3782,7 @@ export function DrawTriangleFan(
   lib.DrawTriangleFan(points_ptr, points.length, color.buffer);
 }
 
-export function DrawTriangleStrip(
-  points: Vector2[],
-  color: Color,
-): void {
+export function DrawTriangleStrip(points: Vector2[], color: Color): void {
   const points_buffer = new Float32Array(points.length * 2);
   for (let i = 0; i < points.length; i++) {
     points_buffer[i * 2] = points[i].x;
@@ -3889,11 +3994,7 @@ export function GetSplinePointLinear(
   endPos: Vector2,
   t: float,
 ): Vector2 {
-  const buf = lib.GetSplinePointLinear(
-    startPos.buffer,
-    endPos.buffer,
-    t,
-  );
+  const buf = lib.GetSplinePointLinear(startPos.buffer, endPos.buffer, t);
   const view = new DataView(buf.buffer);
   const x = view.getFloat32(0, littleEndian);
   const y = view.getFloat32(4, littleEndian);
@@ -3946,12 +4047,7 @@ export function GetSplinePointBezierQuad(
   p3: Vector2,
   t: float,
 ): Vector2 {
-  const buf = lib.GetSplinePointBezierQuad(
-    p1.buffer,
-    c2.buffer,
-    p3.buffer,
-    t,
-  );
+  const buf = lib.GetSplinePointBezierQuad(p1.buffer, c2.buffer, p3.buffer, t);
   const view = new DataView(buf.buffer);
   const x = view.getFloat32(0, littleEndian);
   const y = view.getFloat32(4, littleEndian);
@@ -4001,11 +4097,7 @@ export function CheckCollisionCircleRec(
   radius: float,
   rec: Rectangle,
 ): boolean {
-  return !!lib.CheckCollisionCircleRec(
-    center.buffer,
-    radius,
-    rec.buffer,
-  );
+  return !!lib.CheckCollisionCircleRec(center.buffer, radius, rec.buffer);
 }
 
 export function CheckCollisionCircleLine(
@@ -4034,11 +4126,7 @@ export function CheckCollisionPointCircle(
   center: Vector2,
   radius: float,
 ): boolean {
-  return !!lib.CheckCollisionPointCircle(
-    point.buffer,
-    center.buffer,
-    radius,
-  );
+  return !!lib.CheckCollisionPointCircle(point.buffer, center.buffer, radius);
 }
 
 export function CheckCollisionPointTriangle(
@@ -4235,18 +4323,8 @@ export function ExportImageAsCode(image: Image, file: string): boolean {
   );
 }
 
-export function GenImageColor(
-  width: int,
-  height: int,
-  color: Color,
-): Image {
-  return new Image(
-    lib.GenImageColor(
-      width,
-      height,
-      color.buffer,
-    ),
-  );
+export function GenImageColor(width: int, height: int, color: Color): Image {
+  return new Image(lib.GenImageColor(width, height, color.buffer));
 }
 
 export function GenImageGradientLinear(
@@ -4328,13 +4406,7 @@ export function GenImageWhiteNoise(
   height: int,
   factor: float,
 ): Image {
-  return new Image(
-    lib.GenImageWhiteNoise(
-      width,
-      height,
-      factor,
-    ),
-  );
+  return new Image(lib.GenImageWhiteNoise(width, height, factor));
 }
 
 export function GenImagePerlinNoise(
@@ -4345,13 +4417,7 @@ export function GenImagePerlinNoise(
   scale: float,
 ): Image {
   return new Image(
-    lib.GenImagePerlinNoise(
-      width,
-      height,
-      offsetX,
-      offsetY,
-      scale,
-    ),
+    lib.GenImagePerlinNoise(width, height, offsetX, offsetY, scale),
   );
 }
 
@@ -4360,20 +4426,10 @@ export function GenImageCellular(
   height: int,
   tileSize: int,
 ): Image {
-  return new Image(
-    lib.GenImageCellular(
-      width,
-      height,
-      tileSize,
-    ),
-  );
+  return new Image(lib.GenImageCellular(width, height, tileSize));
 }
 
-export function GenImageText(
-  width: int,
-  height: int,
-  text: string,
-): Image {
+export function GenImageText(width: int, height: int, text: string): Image {
   return new Image(
     lib.GenImageText(
       width,
@@ -4383,45 +4439,19 @@ export function GenImageText(
   );
 }
 
-export function ImageCopy(
-  image: Image,
-): Image {
-  return new Image(
-    lib.ImageCopy(
-      image.buffer,
-    ),
-  );
+export function ImageCopy(image: Image): Image {
+  return new Image(lib.ImageCopy(image.buffer));
 }
 
-export function ImageFromImage(
-  image: Image,
-  rec: Rectangle,
-): Image {
-  return new Image(
-    lib.ImageFromImage(
-      image.buffer,
-      rec.buffer,
-    ),
-  );
+export function ImageFromImage(image: Image, rec: Rectangle): Image {
+  return new Image(lib.ImageFromImage(image.buffer, rec.buffer));
 }
 
-export function ImageFromChannel(
-  image: Image,
-  selectedChannel: int,
-): Image {
-  return new Image(
-    lib.ImageFromChannel(
-      image.buffer,
-      selectedChannel,
-    ),
-  );
+export function ImageFromChannel(image: Image, selectedChannel: int): Image {
+  return new Image(lib.ImageFromChannel(image.buffer, selectedChannel));
 }
 
-export function ImageText(
-  text: string,
-  fontSize: int,
-  color: Color,
-): Image {
+export function ImageText(text: string, fontSize: int, color: Color): Image {
   return new Image(
     lib.ImageText(
       new TextEncoder().encode(text + "\0").buffer,
@@ -4449,44 +4479,20 @@ export function ImageTextEx(
   );
 }
 
-export function ImageFormat(
-  image: Image,
-  newFormat: int,
-): void {
-  lib.ImageFormat(
-    Deno.UnsafePointer.of(image.buffer),
-    newFormat,
-  );
+export function ImageFormat(image: Image, newFormat: int): void {
+  lib.ImageFormat(Deno.UnsafePointer.of(image.buffer), newFormat);
 }
 
-export function ImageToPOT(
-  image: Image,
-  fill: Color,
-): void {
-  lib.ImageToPOT(
-    Deno.UnsafePointer.of(image.buffer),
-    fill.buffer,
-  );
+export function ImageToPOT(image: Image, fill: Color): void {
+  lib.ImageToPOT(Deno.UnsafePointer.of(image.buffer), fill.buffer);
 }
 
-export function ImageCrop(
-  image: Image,
-  crop: Rectangle,
-): void {
-  lib.ImageCrop(
-    Deno.UnsafePointer.of(image.buffer),
-    crop.buffer,
-  );
+export function ImageCrop(image: Image, crop: Rectangle): void {
+  lib.ImageCrop(Deno.UnsafePointer.of(image.buffer), crop.buffer);
 }
 
-export function ImageAlphaCrop(
-  image: Image,
-  threshold: float,
-): void {
-  lib.ImageAlphaCrop(
-    Deno.UnsafePointer.of(image.buffer),
-    threshold,
-  );
+export function ImageAlphaCrop(image: Image, threshold: float): void {
+  lib.ImageAlphaCrop(Deno.UnsafePointer.of(image.buffer), threshold);
 }
 
 export function ImageAlphaClear(
@@ -4501,32 +4507,16 @@ export function ImageAlphaClear(
   );
 }
 
-export function ImageAlphaMask(
-  image: Image,
-  alphaMask: Image,
-): void {
-  lib.ImageAlphaMask(
-    Deno.UnsafePointer.of(image.buffer),
-    alphaMask.buffer,
-  );
+export function ImageAlphaMask(image: Image, alphaMask: Image): void {
+  lib.ImageAlphaMask(Deno.UnsafePointer.of(image.buffer), alphaMask.buffer);
 }
 
-export function ImageAlphaPremultiply(
-  image: Image,
-): void {
-  lib.ImageAlphaPremultiply(
-    Deno.UnsafePointer.of(image.buffer),
-  );
+export function ImageAlphaPremultiply(image: Image): void {
+  lib.ImageAlphaPremultiply(Deno.UnsafePointer.of(image.buffer));
 }
 
-export function ImageBlurGaussian(
-  image: Image,
-  blurSize: int,
-): void {
-  lib.ImageBlurGaussian(
-    Deno.UnsafePointer.of(image.buffer),
-    blurSize,
-  );
+export function ImageBlurGaussian(image: Image, blurSize: int): void {
+  lib.ImageBlurGaussian(Deno.UnsafePointer.of(image.buffer), blurSize);
 }
 
 export function ImageKernelConvolution(
@@ -4541,16 +4531,8 @@ export function ImageKernelConvolution(
   );
 }
 
-export function ImageResize(
-  image: Image,
-  newWidth: int,
-  newHeight: int,
-): void {
-  lib.ImageResize(
-    Deno.UnsafePointer.of(image.buffer),
-    newWidth,
-    newHeight,
-  );
+export function ImageResize(image: Image, newWidth: int, newHeight: int): void {
+  lib.ImageResize(Deno.UnsafePointer.of(image.buffer), newWidth, newHeight);
 }
 
 export function ImageResizeNN(
@@ -4558,11 +4540,7 @@ export function ImageResizeNN(
   newWidth: int,
   newHeight: int,
 ): void {
-  lib.ImageResizeNN(
-    Deno.UnsafePointer.of(image.buffer),
-    newWidth,
-    newHeight,
-  );
+  lib.ImageResizeNN(Deno.UnsafePointer.of(image.buffer), newWidth, newHeight);
 }
 
 export function ImageResizeCanvas(
@@ -4583,12 +4561,8 @@ export function ImageResizeCanvas(
   );
 }
 
-export function ImageMipmaps(
-  image: Image,
-): void {
-  lib.ImageMipmaps(
-    Deno.UnsafePointer.of(image.buffer),
-  );
+export function ImageMipmaps(image: Image): void {
+  lib.ImageMipmaps(Deno.UnsafePointer.of(image.buffer));
 }
 
 export function ImageDither(
@@ -4598,103 +4572,49 @@ export function ImageDither(
   bBpp: int,
   aBpp: int,
 ): void {
-  lib.ImageDither(
-    Deno.UnsafePointer.of(image.buffer),
-    rBpp,
-    gBpp,
-    bBpp,
-    aBpp,
-  );
+  lib.ImageDither(Deno.UnsafePointer.of(image.buffer), rBpp, gBpp, bBpp, aBpp);
 }
 
-export function ImageFlipVertical(
-  image: Image,
-): void {
-  lib.ImageFlipVertical(
-    Deno.UnsafePointer.of(image.buffer),
-  );
+export function ImageFlipVertical(image: Image): void {
+  lib.ImageFlipVertical(Deno.UnsafePointer.of(image.buffer));
 }
 
-export function ImageFlipHorizontal(
-  image: Image,
-): void {
-  lib.ImageFlipHorizontal(
-    Deno.UnsafePointer.of(image.buffer),
-  );
+export function ImageFlipHorizontal(image: Image): void {
+  lib.ImageFlipHorizontal(Deno.UnsafePointer.of(image.buffer));
 }
 
-export function ImageRotate(
-  image: Image,
-  degrees: int,
-): void {
-  lib.ImageRotate(
-    Deno.UnsafePointer.of(image.buffer),
-    degrees,
-  );
+export function ImageRotate(image: Image, degrees: int): void {
+  lib.ImageRotate(Deno.UnsafePointer.of(image.buffer), degrees);
 }
 
-export function ImageRotateCW(
-  image: Image,
-): void {
-  lib.ImageRotateCW(
-    Deno.UnsafePointer.of(image.buffer),
-  );
+export function ImageRotateCW(image: Image): void {
+  lib.ImageRotateCW(Deno.UnsafePointer.of(image.buffer));
 }
 
-export function ImageRotateCCW(
-  image: Image,
-): void {
-  lib.ImageRotateCCW(
-    Deno.UnsafePointer.of(image.buffer),
-  );
+export function ImageRotateCCW(image: Image): void {
+  lib.ImageRotateCCW(Deno.UnsafePointer.of(image.buffer));
 }
 
-export function ImageColorTint(
-  image: Image,
-  color: Color,
-): void {
-  lib.ImageColorTint(
-    Deno.UnsafePointer.of(image.buffer),
-    color.buffer,
-  );
+export function ImageColorTint(image: Image, color: Color): void {
+  lib.ImageColorTint(Deno.UnsafePointer.of(image.buffer), color.buffer);
 }
 
-export function ImageColorInvert(
-  image: Image,
-): void {
-  lib.ImageColorInvert(
-    Deno.UnsafePointer.of(image.buffer),
-  );
+export function ImageColorInvert(image: Image): void {
+  lib.ImageColorInvert(Deno.UnsafePointer.of(image.buffer));
 }
 
 // Image color modification functions (in-place)
 
-export function ImageColorGrayscale(
-  image: Image,
-): void {
-  lib.ImageColorGrayscale(
-    Deno.UnsafePointer.of(image.buffer),
-  );
+export function ImageColorGrayscale(image: Image): void {
+  lib.ImageColorGrayscale(Deno.UnsafePointer.of(image.buffer));
 }
 
-export function ImageColorContrast(
-  image: Image,
-  contrast: float,
-): void {
-  lib.ImageColorContrast(
-    Deno.UnsafePointer.of(image.buffer),
-    contrast,
-  );
+export function ImageColorContrast(image: Image, contrast: float): void {
+  lib.ImageColorContrast(Deno.UnsafePointer.of(image.buffer), contrast);
 }
 
-export function ImageColorBrightness(
-  image: Image,
-  brightness: int,
-): void {
-  lib.ImageColorBrightness(
-    Deno.UnsafePointer.of(image.buffer),
-    brightness,
-  );
+export function ImageColorBrightness(image: Image, brightness: int): void {
+  lib.ImageColorBrightness(Deno.UnsafePointer.of(image.buffer), brightness);
 }
 
 export function ImageColorReplace(
@@ -4709,9 +4629,7 @@ export function ImageColorReplace(
   );
 }
 
-export function LoadImageColors(
-  image: Image,
-): Uint8Array {
+export function LoadImageColors(image: Image): Uint8Array {
   const ptr = lib.LoadImageColors(image.buffer);
   if (ptr === null) throw new Error("LoadImageColors failed");
 
@@ -4744,26 +4662,16 @@ export function LoadImagePalette(
   };
 }
 
-export function UnloadImageColors(
-  colorsPtr: Deno.PointerValue,
-): void {
+export function UnloadImageColors(colorsPtr: Deno.PointerValue): void {
   lib.UnloadImageColors(colorsPtr);
 }
 
-export function UnloadImagePalette(
-  colorsPtr: Deno.PointerValue,
-): void {
+export function UnloadImagePalette(colorsPtr: Deno.PointerValue): void {
   lib.UnloadImagePalette(colorsPtr);
 }
 
-export function GetImageAlphaBorder(
-  image: Image,
-  threshold: float,
-): Rectangle {
-  const buf = lib.GetImageAlphaBorder(
-    image.buffer,
-    threshold,
-  );
+export function GetImageAlphaBorder(image: Image, threshold: float): Rectangle {
+  const buf = lib.GetImageAlphaBorder(image.buffer, threshold);
 
   const view = new DataView(buf.buffer);
   const x = view.getFloat32(0, true);
@@ -4774,16 +4682,8 @@ export function GetImageAlphaBorder(
   return new Rectangle(x, y, width, height);
 }
 
-export function GetImageColor(
-  image: Image,
-  x: int,
-  y: int,
-): Color {
-  const buf = lib.GetImageColor(
-    image.buffer,
-    x,
-    y,
-  );
+export function GetImageColor(image: Image, x: int, y: int): Color {
+  const buf = lib.GetImageColor(image.buffer, x, y);
 
   const view = new DataView(buf.buffer);
   const r = view.getUint8(0);
@@ -4794,14 +4694,8 @@ export function GetImageColor(
   return new Color(r, g, b, a);
 }
 
-export function ImageClearBackground(
-  dst: Image,
-  color: Color,
-): void {
-  lib.ImageClearBackground(
-    Deno.UnsafePointer.of(dst.buffer),
-    color.buffer,
-  );
+export function ImageClearBackground(dst: Image, color: Color): void {
+  lib.ImageClearBackground(Deno.UnsafePointer.of(dst.buffer), color.buffer);
 }
 
 export function ImageDrawPixel(
@@ -5210,12 +5104,7 @@ export function DrawTexture(
   posY: int,
   tint: Color,
 ): void {
-  lib.DrawTexture(
-    texture.buffer,
-    posX,
-    posY,
-    tint.buffer,
-  );
+  lib.DrawTexture(texture.buffer, posX, posY, tint.buffer);
 }
 
 export function DrawTextureV(
@@ -5223,11 +5112,7 @@ export function DrawTextureV(
   position: Vector2,
   tint: Color,
 ): void {
-  lib.DrawTextureV(
-    texture.buffer,
-    position.buffer,
-    tint.buffer,
-  );
+  lib.DrawTextureV(texture.buffer, position.buffer, tint.buffer);
 }
 
 export function DrawTextureEx(
@@ -5300,10 +5185,7 @@ export function ColorIsEqual(col1: Color, col2: Color): boolean {
   return !!lib.ColorIsEqual(col1.buffer, col2.buffer);
 }
 
-export function Fade(
-  color: Color,
-  alpha: float,
-): Color {
+export function Fade(color: Color, alpha: float): Color {
   const data = lib.Fade(color.buffer, alpha);
   return new Color(data[0], data[1], data[2], data[3]);
 }
@@ -5356,11 +5238,7 @@ export function ColorAlpha(color: Color, alpha: float): Color {
   return new Color(data[0], data[1], data[2], data[3]);
 }
 
-export function ColorAlphaBlend(
-  dst: Color,
-  src: Color,
-  tint: Color,
-): Color {
+export function ColorAlphaBlend(dst: Color, src: Color, tint: Color): Color {
   const data = lib.ColorAlphaBlend(dst.buffer, src.buffer, tint.buffer);
   return new Color(data[0], data[1], data[2], data[3]);
 }
@@ -5408,9 +5286,7 @@ export function GetFontDefault(): Font {
 }
 
 export function LoadFont(file: string): Font {
-  return new Font(
-    lib.LoadFont(new TextEncoder().encode(file + "\0")),
-  );
+  return new Font(lib.LoadFont(new TextEncoder().encode(file + "\0")));
 }
 
 export function LoadFontEx(
@@ -5438,9 +5314,7 @@ export function LoadFontFromImage(
   key: Color,
   firstChar: int,
 ): Font {
-  return new Font(
-    lib.LoadFontFromImage(image.buffer, key.buffer, firstChar),
-  );
+  return new Font(lib.LoadFontFromImage(image.buffer, key.buffer, firstChar));
 }
 
 export function LoadFontFromMemory(
@@ -5494,9 +5368,11 @@ export function LoadFontData(
   const glyphs = new Array<GlyphInfo>(codepointCount);
   for (let i = 0; i < codepointCount; i++) {
     glyphs[i] = new GlyphInfo(
-      new Uint8Array(backing, i * GLYPH_SIZE, GLYPH_SIZE) as Uint8Array<
-        ArrayBuffer
-      >,
+      new Uint8Array(
+        backing,
+        i * GLYPH_SIZE,
+        GLYPH_SIZE,
+      ) as Uint8Array<ArrayBuffer>,
     );
   }
 
@@ -5534,10 +5410,7 @@ export function GenImageFontAtlas(
   );
 }
 
-export function UnloadFontData(
-  glyphs: GlyphInfo[],
-  glyphCount: int,
-): void {
+export function UnloadFontData(glyphs: GlyphInfo[], glyphCount: int): void {
   const buff = new Uint8Array(glyphs.length * 40);
 
   for (let i = 0; i < glyphs.length; i++) {
@@ -5553,10 +5426,7 @@ export function UnloadFont(font: Font): void {
   lib.UnloadFont(font.buffer);
 }
 
-export function ExportFontAsCode(
-  font: Font,
-  fileName: string,
-): boolean {
+export function ExportFontAsCode(font: Font, fileName: string): boolean {
   return !!lib.ExportFontAsCode(
     font.buffer,
     new TextEncoder().encode(fileName + "\0"),
@@ -5781,8 +5651,7 @@ export function DrawTriangle3D(
   v3: Vector3,
   color: Color,
 ): void {
-  const cross = (v2.x - v1.x) * (v3.y - v1.y) -
-    (v2.y - v1.y) * (v3.x - v1.x);
+  const cross = (v2.x - v1.x) * (v3.y - v1.y) - (v2.y - v1.y) * (v3.x - v1.x);
 
   if (cross < 0) {
     lib.DrawTriangle3D(v1.buffer, v3.buffer, v2.buffer, color.buffer);
@@ -5791,10 +5660,7 @@ export function DrawTriangle3D(
   }
 }
 
-export function DrawTriangleStrip3D(
-  points: Vector3[],
-  color: Color,
-): void {
+export function DrawTriangleStrip3D(points: Vector3[], color: Color): void {
   const points_buffer = concatVector3(points);
   const points_ptr = Deno.UnsafePointer.of(
     points_buffer.buffer as BufferSource,
@@ -5838,11 +5704,7 @@ export function DrawCubeWiresV(
   lib.DrawCubeWiresV(position.buffer, size.buffer, color.buffer);
 }
 
-export function DrawSphere(
-  center: Vector3,
-  radius: float,
-  color: Color,
-): void {
+export function DrawSphere(center: Vector3, radius: float, color: Color): void {
   lib.DrawSphere(center.buffer, radius, color.buffer);
 }
 
@@ -5990,7 +5852,8 @@ export function DrawGrid(slices: int, spacing: float): void {
 }
 
 export function LoadModel(fileName: string): Model {
-  return new Model(lib.LoadModel(new TextEncoder().encode(fileName + "\0")));
+  const buf = lib.LoadModel(new TextEncoder().encode(fileName + "\0"));
+  return new Model(buf);
 }
 
 export function LoadModelFromMesh(mesh: Mesh): Model {
@@ -6054,12 +5917,7 @@ export function DrawModelWires(
   scale: float,
   tint: Color,
 ): void {
-  lib.DrawModelWires(
-    model.buffer,
-    position,
-    scale,
-    tint,
-  );
+  lib.DrawModelWires(model.buffer, position, scale, tint);
 }
 
 export function DrawModelWiresEx(
@@ -6086,12 +5944,7 @@ export function DrawModelPoints(
   scale: float,
   tint: Color,
 ): void {
-  lib.DrawModelPoints(
-    model.buffer,
-    position,
-    scale,
-    tint,
-  );
+  lib.DrawModelPoints(model.buffer, position, scale, tint);
 }
 
 export function DrawModelPointsEx(
@@ -6112,14 +5965,8 @@ export function DrawModelPointsEx(
   );
 }
 
-export function DrawBoundingBox(
-  box: BoundingBox,
-  color: Color,
-): void {
-  lib.DrawBoundingBox(
-    box,
-    color,
-  );
+export function DrawBoundingBox(box: BoundingBox, color: Color): void {
+  lib.DrawBoundingBox(box, color);
 }
 
 export function DrawBillboard(
@@ -6129,13 +5976,7 @@ export function DrawBillboard(
   scale: float,
   tint: Color,
 ): void {
-  lib.DrawBillboard(
-    camera.buffer,
-    texture.buffer,
-    position,
-    scale,
-    tint,
-  );
+  lib.DrawBillboard(camera.buffer, texture.buffer, position, scale, tint);
 }
 
 export function DrawBillboardRec(
@@ -6180,14 +6021,8 @@ export function DrawBillboardPro(
   );
 }
 
-export function UploadMesh(
-  mesh: Mesh,
-  dynamic: boolean,
-): void {
-  lib.UploadMesh(
-    mesh.buffer,
-    dynamic ? 1 : 0,
-  );
+export function UploadMesh(mesh: Mesh, dynamic: boolean): void {
+  lib.UploadMesh(mesh.buffer, dynamic ? 1 : 0);
 }
 
 export function UpdateMeshBuffer(
@@ -6197,13 +6032,7 @@ export function UpdateMeshBuffer(
   dataSize: int,
   offset: int,
 ): void {
-  lib.UpdateMeshBuffer(
-    mesh.buffer,
-    index,
-    data,
-    dataSize,
-    offset,
-  );
+  lib.UpdateMeshBuffer(mesh.buffer, index, data, dataSize, offset);
 }
 
 export function UnloadMesh(mesh: Mesh): void {
@@ -6215,11 +6044,7 @@ export function DrawMesh(
   material: Material,
   transform: Matrix,
 ): void {
-  lib.DrawMesh(
-    mesh.buffer,
-    material.buffer,
-    transform,
-  );
+  lib.DrawMesh(mesh.buffer, material.buffer, transform);
 }
 
 export function DrawMeshInstanced(
@@ -6256,36 +6081,22 @@ export function GenMeshTangents(mesh: Mesh): void {
   lib.GenMeshTangents(mesh.buffer);
 }
 
-export function ExportMesh(
-  mesh: Mesh,
-  fileName: string,
-): boolean {
+export function ExportMesh(mesh: Mesh, fileName: string): boolean {
   return !!lib.ExportMesh(
     mesh.buffer,
     new TextEncoder().encode(fileName + "\0").buffer,
   );
 }
 
-export function ExportMeshAsCode(
-  mesh: Mesh,
-  fileName: string,
-): boolean {
+export function ExportMeshAsCode(mesh: Mesh, fileName: string): boolean {
   return !!lib.ExportMeshAsCode(
     mesh.buffer,
     new TextEncoder().encode(fileName + "\0").buffer,
   );
 }
 
-export function GenMeshPoly(
-  sides: int,
-  radius: float,
-): Mesh {
-  return new Mesh(
-    lib.GenMeshPoly(
-      sides,
-      radius,
-    ),
-  );
+export function GenMeshPoly(sides: int, radius: float): Mesh {
+  return new Mesh(lib.GenMeshPoly(sides, radius));
 }
 
 export function GenMeshPlane(
@@ -6294,42 +6105,15 @@ export function GenMeshPlane(
   resX: int,
   resZ: int,
 ): Mesh {
-  return new Mesh(
-    lib.GenMeshPlane(
-      width,
-      length,
-      resX,
-      resZ,
-    ),
-  );
+  return new Mesh(lib.GenMeshPlane(width, length, resX, resZ));
 }
 
-export function GenMeshCube(
-  width: float,
-  height: float,
-  length: float,
-): Mesh {
-  return new Mesh(
-    lib.GenMeshCube(
-      width,
-      height,
-      length,
-    ),
-  );
+export function GenMeshCube(width: float, height: float, length: float): Mesh {
+  return new Mesh(lib.GenMeshCube(width, height, length));
 }
 
-export function GenMeshSphere(
-  radius: float,
-  rings: int,
-  slices: int,
-): Mesh {
-  return new Mesh(
-    lib.GenMeshSphere(
-      radius,
-      rings,
-      slices,
-    ),
-  );
+export function GenMeshSphere(radius: float, rings: int, slices: int): Mesh {
+  return new Mesh(lib.GenMeshSphere(radius, rings, slices));
 }
 
 export function GenMeshHemiSphere(
@@ -6337,13 +6121,7 @@ export function GenMeshHemiSphere(
   rings: int,
   slices: int,
 ): Mesh {
-  return new Mesh(
-    lib.GenMeshHemiSphere(
-      radius,
-      rings,
-      slices,
-    ),
-  );
+  return new Mesh(lib.GenMeshHemiSphere(radius, rings, slices));
 }
 
 export function GenMeshCylinder(
@@ -6351,27 +6129,11 @@ export function GenMeshCylinder(
   height: float,
   slices: int,
 ): Mesh {
-  return new Mesh(
-    lib.GenMeshCylinder(
-      radius,
-      height,
-      slices,
-    ),
-  );
+  return new Mesh(lib.GenMeshCylinder(radius, height, slices));
 }
 
-export function GenMeshCone(
-  radius: float,
-  height: float,
-  slices: int,
-): Mesh {
-  return new Mesh(
-    lib.GenMeshCone(
-      radius,
-      height,
-      slices,
-    ),
-  );
+export function GenMeshCone(radius: float, height: float, slices: int): Mesh {
+  return new Mesh(lib.GenMeshCone(radius, height, slices));
 }
 
 export function GenMeshTorus(
@@ -6380,14 +6142,7 @@ export function GenMeshTorus(
   radSeg: int,
   sides: int,
 ): Mesh {
-  return new Mesh(
-    lib.GenMeshTorus(
-      radius,
-      size,
-      radSeg,
-      sides,
-    ),
-  );
+  return new Mesh(lib.GenMeshTorus(radius, size, radSeg, sides));
 }
 
 export function GenMeshKnot(
@@ -6396,43 +6151,21 @@ export function GenMeshKnot(
   radSeg: int,
   sides: int,
 ): Mesh {
-  return new Mesh(
-    lib.GenMeshKnot(
-      radius,
-      size,
-      radSeg,
-      sides,
-    ),
-  );
+  return new Mesh(lib.GenMeshKnot(radius, size, radSeg, sides));
 }
 
-export function GenMeshHeightmap(
-  heightmap: Image,
-  size: Vector3,
-): Mesh {
-  return new Mesh(
-    lib.GenMeshHeightmap(
-      heightmap.buffer,
-      size,
-    ),
-  );
+export function GenMeshHeightmap(heightmap: Image, size: Vector3): Mesh {
+  return new Mesh(lib.GenMeshHeightmap(heightmap.buffer, size));
 }
 
-export function GenMeshCubicmap(
-  cubicmap: Image,
-  cubeSize: Vector3,
-): Mesh {
-  return new Mesh(
-    lib.GenMeshCubicmap(
-      cubicmap.buffer,
-      cubeSize,
-    ),
-  );
+export function GenMeshCubicmap(cubicmap: Image, cubeSize: Vector3): Mesh {
+  return new Mesh(lib.GenMeshCubicmap(cubicmap.buffer, cubeSize));
 }
 
-export function LoadMaterials(
-  fileName: string,
-): { materials: Material[]; count: int } {
+export function LoadMaterials(fileName: string): {
+  materials: Material[];
+  count: int;
+} {
   const countData = new Int32Array(1);
 
   const ptr = lib.LoadMaterials(
@@ -6451,9 +6184,7 @@ export function LoadMaterials(
   const materials: Material[] = [];
   for (let i = 0; i < count; i++) {
     materials.push(
-      new Material(
-        new Uint8Array(buf, i * 40, 40) as Uint8Array<ArrayBuffer>,
-      ),
+      new Material(new Uint8Array(buf, i * 40, 40) as Uint8Array<ArrayBuffer>),
     );
   }
 
@@ -6461,9 +6192,7 @@ export function LoadMaterials(
 }
 
 export function LoadMaterialDefault(): Material {
-  return new Material(
-    lib.LoadMaterialDefault(),
-  );
+  return new Material(lib.LoadMaterialDefault());
 }
 
 export function IsMaterialValid(material: Material): boolean {
@@ -6498,34 +6227,48 @@ export function SetModelMeshMaterial(
   );
 }
 
-export function LoadModelAnimations(
-  fileName: string,
-): { animations: ModelAnimation[]; count: int } {
+export function LoadModelAnimations(fileName: string): {
+  animations: ModelAnimations;
+  count: int;
+  ptr: Deno.UnsafePointer;
+} {
   const cntdata = new Int32Array(1);
 
   const ptr = lib.LoadModelAnimations(
     new TextEncoder().encode(fileName + "\0").buffer,
     Deno.UnsafePointer.of(cntdata.buffer),
   );
-
   if (!ptr) {
     throw new Error("Failed to load model animations");
   }
 
   const count = new DataView(cntdata.buffer).getUint32(0, true);
   const view = new Deno.UnsafePointerView(ptr);
-  const buf = view.getArrayBuffer(count * 72);
+  const buf = view.getArrayBuffer(count * 56);
 
   const animations: ModelAnimation[] = [];
   for (let i = 0; i < count; i++) {
     animations.push(
       new ModelAnimation(
-        new Uint8Array(buf, i * 72, 72) as Uint8Array<ArrayBuffer>,
+        new Uint8Array(buf, i * 56, 56) as Uint8Array<ArrayBuffer>,
       ),
     );
   }
 
-  return { animations, count };
+  return { animations: new ModelAnimations(animations, ptr), count, ptr };
+}
+
+export function LoadModelAndAnimations(
+  modelFile: string,
+  animationFiles: string[],
+): { model: Model; animations: ModelAnimations[] } {
+  const model = LoadModel(modelFile);
+  const animations: ModelAnimations[] = [];
+  for (const file of animationFiles) {
+    const { animations: anims } = LoadModelAnimations(file);
+    animations.push(retargetModelAnimations(model, anims));
+  }
+  return { model, animations };
 }
 
 export function UpdateModelAnimation(
@@ -6533,11 +6276,7 @@ export function UpdateModelAnimation(
   anim: ModelAnimation,
   frame: int,
 ): void {
-  lib.UpdateModelAnimation(
-    model.buffer,
-    anim.buffer,
-    frame,
-  );
+  lib.UpdateModelAnimation(model.buffer, anim.buffer, frame);
 }
 
 export function UpdateModelAnimationBones(
@@ -6545,24 +6284,33 @@ export function UpdateModelAnimationBones(
   anim: ModelAnimation,
   frame: int,
 ): void {
-  lib.UpdateModelAnimationBones(
-    model.buffer,
-    anim.buffer,
-    frame,
-  );
+  lib.UpdateModelAnimationBones(model.buffer, anim.buffer, frame);
 }
 
-export function UnloadModelAnimation(anim: ModelAnimation): void {
+export function UnloadModelAnimation(
+  anim: ModelAnimation | ModelAnimations,
+): void {
+  if (anim instanceof ModelAnimations) {
+    UnloadModelAnimations(anim);
+    return;
+  }
   lib.UnloadModelAnimation(anim.buffer);
 }
 
 export function UnloadModelAnimations(
-  animations: ModelAnimation[],
+  animations: ModelAnimation[] | ModelAnimations,
+  ptr?: Deno.UnsafePointer,
 ): void {
   if (animations.length === 0) return;
-
+  const basePtr = ptr ??
+    (animations instanceof ModelAnimations ? animations.ptr : null);
+  if (!basePtr) {
+    throw new Error(
+      "UnloadModelAnimations requires a base pointer. Use LoadModelAnimations or pass ptr.",
+    );
+  }
   lib.UnloadModelAnimations(
-    Deno.UnsafePointer.of(animations[0].buffer),
+    basePtr as unknown as Deno.PointerValue<unknown>,
     animations.length,
   );
 }
@@ -6571,10 +6319,7 @@ export function IsModelAnimationValid(
   model: Model,
   anim: ModelAnimation,
 ): boolean {
-  return !!lib.IsModelAnimationValid(
-    model.buffer,
-    anim.buffer,
-  );
+  return !!lib.IsModelAnimationValid(model.buffer, anim.buffer);
 }
 
 export function CheckCollisionSpheres(
@@ -6595,10 +6340,7 @@ export function CheckCollisionBoxes(
   box1: BoundingBox,
   box2: BoundingBox,
 ): boolean {
-  return !!lib.CheckCollisionBoxes(
-    box1.buffer,
-    box2.buffer,
-  );
+  return !!lib.CheckCollisionBoxes(box1.buffer, box2.buffer);
 }
 
 export function CheckCollisionBoxSphere(
@@ -6606,11 +6348,7 @@ export function CheckCollisionBoxSphere(
   center: Vector3,
   radius: float,
 ): boolean {
-  return !!lib.CheckCollisionBoxSphere(
-    box.buffer,
-    center.buffer,
-    radius,
-  );
+  return !!lib.CheckCollisionBoxSphere(box.buffer, center.buffer, radius);
 }
 
 export function GetRayCollisionSphere(
@@ -6619,24 +6357,12 @@ export function GetRayCollisionSphere(
   radius: float,
 ): RayCollision {
   return new RayCollision(
-    lib.GetRayCollisionSphere(
-      ray.buffer,
-      center.buffer,
-      radius,
-    ),
+    lib.GetRayCollisionSphere(ray.buffer, center.buffer, radius),
   );
 }
 
-export function GetRayCollisionBox(
-  ray: Ray,
-  box: BoundingBox,
-): RayCollision {
-  return new RayCollision(
-    lib.GetRayCollisionBox(
-      ray.buffer,
-      box.buffer,
-    ),
-  );
+export function GetRayCollisionBox(ray: Ray, box: BoundingBox): RayCollision {
+  return new RayCollision(lib.GetRayCollisionBox(ray.buffer, box.buffer));
 }
 
 export function GetRayCollisionMesh(
@@ -6645,11 +6371,7 @@ export function GetRayCollisionMesh(
   transform: Matrix,
 ): RayCollision {
   return new RayCollision(
-    lib.GetRayCollisionMesh(
-      ray.buffer,
-      mesh.buffer,
-      transform,
-    ),
+    lib.GetRayCollisionMesh(ray.buffer, mesh.buffer, transform),
   );
 }
 
@@ -6660,12 +6382,7 @@ export function GetRayCollisionTriangle(
   p3: Vector3,
 ): RayCollision {
   return new RayCollision(
-    lib.GetRayCollisionTriangle(
-      ray,
-      p1.buffer,
-      p2.buffer,
-      p3.buffer,
-    ),
+    lib.GetRayCollisionTriangle(ray, p1.buffer, p2.buffer, p3.buffer),
   );
 }
 
@@ -6677,13 +6394,7 @@ export function GetRayCollisionQuad(
   p4: Vector3,
 ): RayCollision {
   return new RayCollision(
-    lib.GetRayCollisionQuad(
-      ray,
-      p1.buffer,
-      p2.buffer,
-      p3.buffer,
-      p4.buffer,
-    ),
+    lib.GetRayCollisionQuad(ray, p1.buffer, p2.buffer, p3.buffer, p4.buffer),
   );
 }
 
@@ -6757,11 +6468,7 @@ export function UpdateSound(
   data: BufferSource,
   sampleCount: int,
 ): void {
-  lib.UpdateSound(
-    sound.buffer,
-    data,
-    sampleCount,
-  );
+  lib.UpdateSound(sound.buffer, data, sampleCount);
 }
 
 export function UnloadWave(wave: Wave): void {
@@ -6776,20 +6483,14 @@ export function UnloadSoundAlias(alias: Sound): void {
   lib.UnloadSoundAlias(alias.buffer);
 }
 
-export function ExportWave(
-  wave: Wave,
-  fileName: string,
-): boolean {
+export function ExportWave(wave: Wave, fileName: string): boolean {
   return !!lib.ExportWave(
     wave.buffer,
     new TextEncoder().encode(fileName + "\0").buffer,
   );
 }
 
-export function ExportWaveAsCode(
-  wave: Wave,
-  fileName: string,
-): boolean {
+export function ExportWaveAsCode(wave: Wave, fileName: string): boolean {
   return !!lib.ExportWaveAsCode(
     wave.buffer,
     new TextEncoder().encode(fileName + "\0").buffer,
@@ -6829,21 +6530,11 @@ export function SetSoundPan(sound: Sound, pan: float): void {
 }
 
 export function WaveCopy(wave: Wave): Wave {
-  return new Wave(
-    lib.WaveCopy(wave.buffer),
-  );
+  return new Wave(lib.WaveCopy(wave.buffer));
 }
 
-export function WaveCrop(
-  wave: Wave,
-  initFrame: int,
-  finalFrame: int,
-): void {
-  lib.WaveCrop(
-    wave.buffer,
-    initFrame,
-    finalFrame,
-  );
+export function WaveCrop(wave: Wave, initFrame: int, finalFrame: int): void {
+  lib.WaveCrop(wave.buffer, initFrame, finalFrame);
 }
 
 export function WaveFormat(
@@ -6852,12 +6543,7 @@ export function WaveFormat(
   sampleSize: int,
   channels: int,
 ): void {
-  lib.WaveFormat(
-    wave.buffer,
-    sampleRate,
-    sampleSize,
-    channels,
-  );
+  lib.WaveFormat(wave.buffer, sampleRate, sampleSize, channels);
 }
 
 export function LoadWaveSamples(wave: Wave): Float32Array {
@@ -6877,9 +6563,7 @@ export function UnloadWaveSamples(samples: Float32Array): void {
 
 export function LoadMusicStream(fileName: string): Music {
   return new Music(
-    lib.LoadMusicStream(
-      new TextEncoder().encode(fileName + "\0").buffer,
-    ),
+    lib.LoadMusicStream(new TextEncoder().encode(fileName + "\0").buffer),
   );
 }
 
@@ -6957,13 +6641,7 @@ export function LoadAudioStream(
   sampleSize: int,
   channels: int,
 ): AudioStream {
-  return new AudioStream(
-    lib.LoadAudioStream(
-      sampleRate,
-      sampleSize,
-      channels,
-    ),
-  );
+  return new AudioStream(lib.LoadAudioStream(sampleRate, sampleSize, channels));
 }
 
 export function IsAudioStreamValid(stream: AudioStream): boolean {
@@ -6979,11 +6657,7 @@ export function UpdateAudioStream(
   data: BufferSource,
   frameCount: int,
 ): void {
-  lib.UpdateAudioStream(
-    stream.buffer,
-    Deno.UnsafePointer.of(data),
-    frameCount,
-  );
+  lib.UpdateAudioStream(stream.buffer, Deno.UnsafePointer.of(data), frameCount);
 }
 
 export function IsAudioStreamProcessed(stream: AudioStream): boolean {
@@ -7010,24 +6684,15 @@ export function StopAudioStream(stream: AudioStream): void {
   lib.StopAudioStream(stream.buffer);
 }
 
-export function SetAudioStreamVolume(
-  stream: AudioStream,
-  volume: float,
-): void {
+export function SetAudioStreamVolume(stream: AudioStream, volume: float): void {
   lib.SetAudioStreamVolume(stream.buffer, volume);
 }
 
-export function SetAudioStreamPitch(
-  stream: AudioStream,
-  pitch: float,
-): void {
+export function SetAudioStreamPitch(stream: AudioStream, pitch: float): void {
   lib.SetAudioStreamPitch(stream.buffer, pitch);
 }
 
-export function SetAudioStreamPan(
-  stream: AudioStream,
-  pan: float,
-): void {
+export function SetAudioStreamPan(stream: AudioStream, pan: float): void {
   lib.SetAudioStreamPan(stream.buffer, pan);
 }
 
