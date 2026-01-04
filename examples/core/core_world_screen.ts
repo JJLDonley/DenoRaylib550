@@ -12,7 +12,7 @@ RL.InitWindow(
 );
 
 // Define the camera to look into our 3d world
-const camera = new RL.Camera3D({
+let camera = new RL.Camera3D({
   position: new RL.Vector3(10.0, 10.0, 10.0), // Camera position
   target: new RL.Vector3(0.0, 0.0, 0.0), // Camera looking at point
   up: new RL.Vector3(0.0, 1.0, 0.0), // Camera up vector (rotation towards target)
@@ -20,7 +20,7 @@ const camera = new RL.Camera3D({
   projection: RL.CameraProjection.PERSPECTIVE, // Camera projection type
 });
 
-const cubePosition = new RL.Vector3(0.0, 0.0, 0.0);
+let cubePosition = new RL.Vector3(0.0, 0.0, 0.0);
 let cubeScreenPosition = new RL.Vector2(0.0, 0.0);
 
 RL.DisableCursor(); // Limit cursor to relative movement inside the window
@@ -61,6 +61,8 @@ while (!RL.WindowShouldClose()) { // Detect window close button or ESC key
   const w = RL.MeasureText(enemyText, 20);
   const x = Math.floor(cubeScreenPosition.x - w / 2);
   const y = Math.floor(cubeScreenPosition.y);
+
+  console.log({ screen: cubeScreenPosition, w, x, y });
 
   RL.DrawText(
     enemyText,

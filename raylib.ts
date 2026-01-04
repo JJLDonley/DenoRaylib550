@@ -825,33 +825,6 @@ export class RenderTexture {
   get buffer(): Uint8Array<ArrayBuffer> {
     return this.#buffer;
   }
-
-  get id(): number {
-    return new DataView(this.#buffer.buffer, this.#buffer.byteOffset).getUint32(
-      0,
-      true,
-    );
-  }
-
-  get texture(): Texture2D {
-    return new Texture2D(
-      new Uint8Array(
-        this.#buffer.buffer,
-        this.#buffer.byteOffset + 4,
-        20,
-      ) as Uint8Array<ArrayBuffer>,
-    );
-  }
-
-  get depth(): Texture2D {
-    return new Texture2D(
-      new Uint8Array(
-        this.#buffer.buffer,
-        this.#buffer.byteOffset + 24,
-        20,
-      ) as Uint8Array<ArrayBuffer>,
-    );
-  }
 }
 
 export class NPatchInfo {
@@ -1707,33 +1680,8 @@ export class Ray extends Float32Array {
 export class RayCollision {
   #buffer: Uint8Array<ArrayBuffer>;
 
-  constructor(
-    bufferOrOptions?:
-      | Uint8Array<ArrayBuffer>
-      | {
-        hit?: boolean;
-        distance?: number;
-        point?: Vector3;
-        normal?: Vector3;
-      },
-  ) {
-    if (bufferOrOptions instanceof Uint8Array) {
-      this.#buffer = bufferOrOptions as Uint8Array<ArrayBuffer>;
-    } else {
-      this.#buffer = new Uint8Array(32) as Uint8Array<ArrayBuffer>;
-      if (bufferOrOptions) {
-        if (bufferOrOptions.hit !== undefined) this.hit = bufferOrOptions.hit;
-        if (bufferOrOptions.distance !== undefined) {
-          this.distance = bufferOrOptions.distance;
-        }
-        if (bufferOrOptions.point !== undefined) {
-          this.point = bufferOrOptions.point;
-        }
-        if (bufferOrOptions.normal !== undefined) {
-          this.normal = bufferOrOptions.normal;
-        }
-      }
-    }
+  constructor(buffer: Uint8Array<ArrayBuffer>) {
+    this.#buffer = buffer;
   }
 
   get buffer(): Uint8Array<ArrayBuffer> {
@@ -2089,55 +2037,8 @@ export class Music {
 export class VrDeviceInfo {
   #buffer: Uint8Array<ArrayBuffer>;
 
-  constructor(
-    bufferOrOptions?:
-      | Uint8Array<ArrayBuffer>
-      | {
-        hResolution?: number;
-        vResolution?: number;
-        hScreenSize?: number;
-        vScreenSize?: number;
-        eyeToScreenDistance?: number;
-        lensSeparationDistance?: number;
-        interpupillaryDistance?: number;
-        lensDistortionValues?: number[] | Float32Array;
-        chromaAbCorrection?: number[] | Float32Array;
-      },
-  ) {
-    if (bufferOrOptions instanceof Uint8Array) {
-      this.#buffer = bufferOrOptions as Uint8Array<ArrayBuffer>;
-    } else {
-      this.#buffer = new Uint8Array(60) as Uint8Array<ArrayBuffer>;
-      if (bufferOrOptions) {
-        if (bufferOrOptions.hResolution !== undefined) {
-          this.hResolution = bufferOrOptions.hResolution;
-        }
-        if (bufferOrOptions.vResolution !== undefined) {
-          this.vResolution = bufferOrOptions.vResolution;
-        }
-        if (bufferOrOptions.hScreenSize !== undefined) {
-          this.hScreenSize = bufferOrOptions.hScreenSize;
-        }
-        if (bufferOrOptions.vScreenSize !== undefined) {
-          this.vScreenSize = bufferOrOptions.vScreenSize;
-        }
-        if (bufferOrOptions.eyeToScreenDistance !== undefined) {
-          this.eyeToScreenDistance = bufferOrOptions.eyeToScreenDistance;
-        }
-        if (bufferOrOptions.lensSeparationDistance !== undefined) {
-          this.lensSeparationDistance = bufferOrOptions.lensSeparationDistance;
-        }
-        if (bufferOrOptions.interpupillaryDistance !== undefined) {
-          this.interpupillaryDistance = bufferOrOptions.interpupillaryDistance;
-        }
-        if (bufferOrOptions.lensDistortionValues !== undefined) {
-          this.lensDistortionValues.set(bufferOrOptions.lensDistortionValues);
-        }
-        if (bufferOrOptions.chromaAbCorrection !== undefined) {
-          this.chromaAbCorrection.set(bufferOrOptions.chromaAbCorrection);
-        }
-      }
-    }
+  constructor(buffer: Uint8Array<ArrayBuffer>) {
+    this.#buffer = buffer;
   }
 
   get buffer(): Uint8Array<ArrayBuffer> {
@@ -2202,7 +2103,7 @@ export class VrDeviceInfo {
   // ---- arrays ----
   get lensDistortionValues(): Float32Array {
     return new Float32Array(
-      this.#buffer.buffer as ArrayBuffer,
+      this.#buffer.buffer,
       this.#buffer.byteOffset + 28,
       4,
     );
@@ -2210,7 +2111,7 @@ export class VrDeviceInfo {
 
   get chromaAbCorrection(): Float32Array {
     return new Float32Array(
-      this.#buffer.buffer as ArrayBuffer,
+      this.#buffer.buffer,
       this.#buffer.byteOffset + 44,
       4,
     );
@@ -2272,7 +2173,7 @@ export class VrStereoConfig {
   // ---- float[2] helpers ----
   private getVec2(offset: number): Float32Array {
     return new Float32Array(
-      this.#buffer.buffer as ArrayBuffer,
+      this.#buffer.buffer,
       this.#buffer.byteOffset + offset,
       2,
     );
@@ -2736,8 +2637,8 @@ export function EndMode3D(): void {
   lib.EndMode3D();
 }
 
-export function BeginTextureMode(target: RenderTexture): void {
-  lib.BeginTextureMode(target.buffer);
+export function BeginTextureMode(texture: Texture2D): void {
+  lib.BeginTextureMode(texture.buffer);
 }
 
 export function EndTextureMode(): void {
@@ -2790,22 +2691,16 @@ export function UnloadVrStereoConfig(config: VrStereoConfig): void {
   lib.UnloadVrStereoConfig(config.buffer);
 }
 
-export function LoadShader(
-  vShader: string | null,
-  fShader: string | null,
-): Shader {
-  const vShaderBuf = vShader ? new TextEncoder().encode(vShader + "\0") : null;
-  const fShaderBuf = fShader ? new TextEncoder().encode(fShader + "\0") : null;
+export function LoadShader(vShader: string, fShader: string): Shader {
+  const vShaderBuf = new TextEncoder().encode(vShader + "\0");
+  const fShaderBuf = new TextEncoder().encode(fShader + "\0");
   const buf = lib.LoadShader(vShaderBuf, fShaderBuf);
   return new Shader(buf);
 }
 
-export function LoadShaderFromMemory(
-  vShader: string | null,
-  fShader: string | null,
-): Shader {
-  const vShaderBuf = vShader ? new TextEncoder().encode(vShader + "\0") : null;
-  const fShaderBuf = fShader ? new TextEncoder().encode(fShader + "\0") : null;
+export function LoadShaderFromMemory(vShader: string, fShader: string): Shader {
+  const vShaderBuf = new TextEncoder().encode(vShader + "\0");
+  const fShaderBuf = new TextEncoder().encode(fShader + "\0");
   const buf = lib.LoadShaderFromMemory(vShaderBuf, fShaderBuf);
   return new Shader(buf);
 }
@@ -2827,13 +2722,13 @@ export function GetShaderLocationAttrib(shader: Shader, name: string): int {
 export function SetShaderValue(
   shader: Shader,
   locIndex: int,
-  value: BufferSource,
+  value: Uint8Array<ArrayBufferLike>,
   uniformType: ShaderUniformDataType,
 ): void {
   lib.SetShaderValue(
     shader.buffer,
     locIndex,
-    Deno.UnsafePointer.of(value),
+    Deno.UnsafePointer.of(value as unknown as Uint8Array<ArrayBuffer>),
     uniformType,
   );
 }
@@ -2841,14 +2736,14 @@ export function SetShaderValue(
 export function SetShaderValueV(
   shader: Shader,
   locIndex: int,
-  value: BufferSource,
+  value: Uint8Array<ArrayBufferLike>,
   uniformType: ShaderUniformDataType,
   count: int,
 ): void {
   lib.SetShaderValueV(
     shader.buffer,
     locIndex,
-    Deno.UnsafePointer.of(value),
+    Deno.UnsafePointer.of(value as unknown as Uint8Array<ArrayBuffer>),
     uniformType,
     count,
   );
@@ -2883,19 +2778,9 @@ export function UnloadShader(shader: Shader): void {
 }
 
 export function GetScreenToWorldRay(position: Vector2, camera: Camera): Ray {
-  const data = lib.GetScreenToWorldRay(position.buffer, camera.buffer);
-
-  const view = new DataView(data.buffer);
-  const pos3 = new Vector3(
-    view.getFloat32(0, true),
-    view.getFloat32(4, true),
-    view.getFloat32(8, true),
-  );
-  const dir3 = new Vector3(
-    view.getFloat32(12, true),
-    view.getFloat32(16, true),
-    view.getFloat32(20, true),
-  );
+  const buf = lib.GetScreenToWorldRay(position.buffer, camera.buffer);
+  const pos3 = new Vector3(buf[0], buf[4], buf[8]);
+  const dir3 = new Vector3(buf[12], buf[16], buf[20]);
   return new Ray(pos3, dir3);
 }
 
@@ -2905,35 +2790,20 @@ export function GetScreenToWorldRayEx(
   width: int,
   height: int,
 ): Ray {
-  const data = lib.GetScreenToWorldRayEx(
+  const buf = lib.GetScreenToWorldRayEx(
     position.buffer,
     camera.buffer,
     width,
     height,
   );
-
-  const view = new DataView(data.buffer);
-  const pos3 = new Vector3(
-    view.getFloat32(0, true),
-    view.getFloat32(4, true),
-    view.getFloat32(8, true),
-  );
-  const dir3 = new Vector3(
-    view.getFloat32(12, true),
-    view.getFloat32(16, true),
-    view.getFloat32(20, true),
-  );
+  const pos3 = new Vector3(buf[0], buf[4], buf[8]);
+  const dir3 = new Vector3(buf[12], buf[16], buf[20]);
   return new Ray(pos3, dir3);
 }
 
 export function GetWorldToScreen(position: Vector3, camera: Camera): Vector2 {
-  const data = lib.GetWorldToScreen(position.buffer, camera.buffer);
-
-  const view = new DataView(data.buffer);
-  const x = view.getFloat32(0, true);
-  const y = view.getFloat32(4, true);
-
-  return new Vector2(x, y);
+  const buf = lib.GetWorldToScreen(position.buffer, camera.buffer);
+  return new Vector2(buf[0], buf[1]);
 }
 
 export function GetWorldToScreenEx(
@@ -2942,91 +2812,72 @@ export function GetWorldToScreenEx(
   width: int,
   height: int,
 ): Vector2 {
-  const data = lib.GetWorldToScreenEx(
+  const buf = lib.GetWorldToScreenEx(
     position.buffer,
     camera.buffer,
     width,
     height,
   );
-
-  const view = new DataView(data.buffer);
-  const x = view.getFloat32(0, true);
-  const y = view.getFloat32(4, true);
-
-  return new Vector2(x, y);
+  return new Vector2(buf[0], buf[1]);
 }
 
 export function GetWorldToScreen2D(
   position: Vector2,
   camera: Camera2D,
 ): Vector2 {
-  const data = lib.GetWorldToScreen2D(position.buffer, camera.buffer);
-
-  const view = new DataView(data.buffer);
-  const x = view.getFloat32(0, true);
-  const y = view.getFloat32(4, true);
-
-  return new Vector2(x, y);
+  const buf = lib.GetWorldToScreen2D(position.buffer, camera.buffer);
+  return new Vector2(buf[0], buf[1]);
 }
 
-export function GetScreenToWorld2D(
+export function GetSCreenToWorld2D(
   position: Vector2,
   camera: Camera2D,
 ): Vector2 {
-  const data = lib.GetScreenToWorld2D(position.buffer, camera.buffer);
-
-  const view = new DataView(data.buffer);
-  const x = view.getFloat32(0, true);
-  const y = view.getFloat32(4, true);
-
-  return new Vector2(x, y);
+  const buf = lib.GetScreenToWorld2D(position.buffer, camera.buffer);
+  return new Vector2(buf[0], buf[1]);
 }
 
 export function GetCameraMatrix(camera: Camera): Matrix {
-  const data = lib.GetCameraMatrix(camera.buffer);
-  const view = new DataView(data.buffer);
-
+  const buf = lib.GetCameraMatrix(camera.buffer);
   return new Matrix(
-    view.getFloat32(0, true),
-    view.getFloat32(4, true),
-    view.getFloat32(8, true),
-    view.getFloat32(12, true),
-    view.getFloat32(16, true),
-    view.getFloat32(20, true),
-    view.getFloat32(24, true),
-    view.getFloat32(28, true),
-    view.getFloat32(32, true),
-    view.getFloat32(36, true),
-    view.getFloat32(40, true),
-    view.getFloat32(44, true),
-    view.getFloat32(48, true),
-    view.getFloat32(52, true),
-    view.getFloat32(56, true),
-    view.getFloat32(60, true),
+    buf[0],
+    buf[4],
+    buf[8],
+    buf[12],
+    buf[16],
+    buf[20],
+    buf[24],
+    buf[28],
+    buf[32],
+    buf[36],
+    buf[40],
+    buf[44],
+    buf[48],
+    buf[52],
+    buf[56],
+    buf[60],
   );
 }
 
 export function GetCameraMatrix2D(camera: Camera2D): Matrix {
-  const data = lib.GetCameraMatrix2D(camera.buffer);
-  const view = new DataView(data.buffer);
-
+  const buf = lib.GetCameraMatrix2D(camera.buffer);
   return new Matrix(
-    view.getFloat32(0, true),
-    view.getFloat32(4, true),
-    view.getFloat32(8, true),
-    view.getFloat32(12, true),
-    view.getFloat32(16, true),
-    view.getFloat32(20, true),
-    view.getFloat32(24, true),
-    view.getFloat32(28, true),
-    view.getFloat32(32, true),
-    view.getFloat32(36, true),
-    view.getFloat32(40, true),
-    view.getFloat32(44, true),
-    view.getFloat32(48, true),
-    view.getFloat32(52, true),
-    view.getFloat32(56, true),
-    view.getFloat32(60, true),
+    buf[0],
+    buf[4],
+    buf[8],
+    buf[12],
+    buf[16],
+    buf[20],
+    buf[24],
+    buf[28],
+    buf[32],
+    buf[36],
+    buf[40],
+    buf[44],
+    buf[48],
+    buf[52],
+    buf[56],
+    buf[60],
   );
 }
 
@@ -3173,10 +3024,6 @@ export function IsKeyPressed(key: KeyboardKey): boolean {
   return !!lib.IsKeyPressed(key);
 }
 
-export function IsKeyPressedRepeat(key: KeyboardKey): boolean {
-  return !!lib.IsKeyPressedRepeat(key);
-}
-
 export function IsKeyDown(key: KeyboardKey): boolean {
   return !!lib.IsKeyDown(key);
 }
@@ -3289,18 +3136,18 @@ export function GetMouseY(): int {
 }
 
 export function GetMousePosition(): Vector2 {
-  const data = lib.GetMousePosition();
-  const view = new DataView(data.buffer);
-  const x = view.getFloat32(0, littleEndian);
-  const y = view.getFloat32(4, littleEndian);
+  const buffer = lib.GetMousePosition();
+  const view = new DataView(buffer.buffer);
+  const x = view.getFloat32(0);
+  const y = view.getFloat32(4);
   return new Vector2(x, y);
 }
 
 export function GetMouseDelta(): Vector2 {
-  const data = lib.GetMouseDelta();
-  const view = new DataView(data.buffer);
-  const x = view.getFloat32(0, littleEndian);
-  const y = view.getFloat32(4, littleEndian);
+  const buffer = lib.GetMouseDelta();
+  const view = new DataView(buffer.buffer);
+  const x = view.getFloat32(0);
+  const y = view.getFloat32(4);
   return new Vector2(x, y);
 }
 
@@ -3321,10 +3168,10 @@ export function GetMouseWheelMove(): float {
 }
 
 export function GetMouseWheelMoveV(): Vector2 {
-  const data = lib.GetMouseWheelMoveV();
-  const view = new DataView(data.buffer);
-  const x = view.getFloat32(0, littleEndian);
-  const y = view.getFloat32(4, littleEndian);
+  const buffer = lib.GetMouseWheelMoveV();
+  const view = new DataView(buffer.buffer);
+  const x = view.getFloat32(0);
+  const y = view.getFloat32(4);
   return new Vector2(x, y);
 }
 
@@ -3341,10 +3188,10 @@ export function GetTouchY(): int {
 }
 
 export function GetTouchPosition(index: int): Vector2 {
-  const data = lib.GetTouchPosition(index);
-  const view = new DataView(data.buffer);
-  const x = view.getFloat32(0, littleEndian);
-  const y = view.getFloat32(4, littleEndian);
+  const buffer = lib.GetTouchPosition(index);
+  const view = new DataView(buffer.buffer);
+  const x = view.getFloat32(0);
+  const y = view.getFloat32(4);
   return new Vector2(x, y);
 }
 
@@ -3364,19 +3211,15 @@ export function IsGestureDetected(gesture: Gesture): boolean {
   return !!lib.IsGestureDetected(gesture);
 }
 
-export function GetGestureDetected(): Gesture {
-  return lib.GetGestureDetected();
-}
-
 export function GetGestureHoldDuration(): float {
   return lib.GetGestureHoldDuration();
 }
 
 export function GetGestureDragVector(): Vector2 {
-  const data = lib.GetGestureDragVector();
-  const view = new DataView(data.buffer);
-  const x = view.getFloat32(0, littleEndian);
-  const y = view.getFloat32(4, littleEndian);
+  const buffer = lib.GetGestureDragVector();
+  const view = new DataView(buffer.buffer);
+  const x = view.getFloat32(0);
+  const y = view.getFloat32(4);
   return new Vector2(x, y);
 }
 
@@ -3385,10 +3228,10 @@ export function GetGestureDragAngle(): float {
 }
 
 export function GetGesturePinchVector(): Vector2 {
-  const data = lib.GetGesturePinchVector();
-  const view = new DataView(data.buffer);
-  const x = view.getFloat32(0, littleEndian);
-  const y = view.getFloat32(4, littleEndian);
+  const buffer = lib.GetGesturePinchVector();
+  const view = new DataView(buffer.buffer);
+  const x = view.getFloat32(0);
+  const y = view.getFloat32(4);
   return new Vector2(x, y);
 }
 
@@ -3427,12 +3270,12 @@ export function GetShapesTexture(): Texture2D {
 }
 
 export function GetShapesTextureRectangle(): Rectangle {
-  const data = lib.GetShapesTextureRectangle();
-  const view = new DataView(data.buffer);
-  const x = view.getFloat32(0, littleEndian);
-  const y = view.getFloat32(4, littleEndian);
-  const width = view.getFloat32(8, littleEndian);
-  const height = view.getFloat32(12, littleEndian);
+  const buffer = lib.GetShapesTextureRectangle();
+  const view = new DataView(buffer.buffer);
+  const x = view.getFloat32(0);
+  const y = view.getFloat32(4);
+  const width = view.getFloat32(8);
+  const height = view.getFloat32(12);
   return new Rectangle(x, y, width, height);
 }
 
@@ -3472,12 +3315,12 @@ export function DrawLineEx(
 }
 
 export function DrawLineStrip(points: Vector2[], color: Color): void {
-  const lineStripData = new Float32Array(points.length * 2);
+  const line_strip_buffer = new Float32Array(points.length * 2);
   for (let i = 0; i < points.length; i++) {
-    lineStripData[i * 2] = points[i].x;
-    lineStripData[i * 2 + 1] = points[i].y;
+    line_strip_buffer[i * 2] = points[i].x;
+    line_strip_buffer[i * 2 + 1] = points[i].y;
   }
-  const line_ptr = Deno.UnsafePointer.of(lineStripData.buffer);
+  const line_ptr = Deno.UnsafePointer.of(line_strip_buffer.buffer);
   lib.DrawLineStrip(line_ptr, points.length, color.buffer);
 }
 
@@ -4276,18 +4119,18 @@ export function LoadImageRaw(
 }
 
 export function LoadImageAnim(file: string): { image: Image; frames: number } {
-  const framesdata = new Int32Array(1);
+  const framesBuf = new Int32Array(1);
 
   const image = new Image(
     lib.LoadImageAnim(
       new TextEncoder().encode(file + "\0"),
-      Deno.UnsafePointer.of(framesdata.buffer),
+      Deno.UnsafePointer.of(framesBuf.buffer),
     ),
   );
 
   return {
     image,
-    frames: new DataView(framesdata.buffer).getUint32(0, true),
+    frames: framesBuf[0],
   };
 }
 
@@ -4296,20 +4139,20 @@ export function LoadImageAnimFromMemory(
   fileData: string,
   dataSize: int,
 ): { image: Image; frames: number } {
-  const framesdata = new Int32Array(1);
+  const framesBuf = new Int32Array(1);
 
   const image = new Image(
     lib.LoadImageAnimFromMemory(
       new TextEncoder().encode(fileType + "\0"),
       new TextEncoder().encode(fileData + "\0"),
       dataSize,
-      Deno.UnsafePointer.of(framesdata.buffer),
+      Deno.UnsafePointer.of(framesBuf.buffer),
     ),
   );
 
   return {
     image,
-    frames: new DataView(framesdata.buffer).getUint32(0, true),
+    frames: framesBuf[0],
   };
 }
 
@@ -4347,19 +4190,19 @@ export function ExportImageToMemory(
   image: Image,
   fileType: string,
 ): { data: Uint8Array; dataSize: number } {
-  const sizeData = new Int32Array(1);
+  const sizeBuf = new Int32Array(1);
 
   const ptr = lib.ExportImageToMemory(
     image.buffer,
     new TextEncoder().encode(fileType + "\0"),
-    Deno.UnsafePointer.of(sizeData.buffer),
+    Deno.UnsafePointer.of(sizeBuf.buffer),
   );
 
   if (ptr === null) {
     throw new Error("ExportImageToMemory failed");
   }
 
-  const size = new DataView(sizeData.buffer).getUint32(0, true);
+  const size = sizeBuf[0];
   const view = new Deno.UnsafePointerView(ptr);
   const buffer = view.getArrayBuffer(size);
   const data = new Uint8Array(buffer);
@@ -4866,17 +4709,17 @@ export function LoadImagePalette(
   image: Image,
   maxPaletteSize: int,
 ): { colors: Uint8Array; colorCount: int } {
-  const cntdata = new Int32Array(1);
+  const countBuf = new Int32Array(1);
 
   const ptr = lib.LoadImagePalette(
     image.buffer,
     maxPaletteSize,
-    Deno.UnsafePointer.of(cntdata.buffer),
+    Deno.UnsafePointer.of(countBuf.buffer),
   );
 
   if (ptr === null) throw new Error("LoadImagePalette failed");
 
-  const colorCount = new DataView(cntdata.buffer).getUint32(0, true);
+  const colorCount = countBuf[0];
   const size = colorCount * 4;
   const view = new Deno.UnsafePointerView(ptr);
 
@@ -5346,6 +5189,8 @@ export function SetTextureWrap(texture: Texture2D, wrap: TextureWrap): void {
   lib.SetTextureWrap(texture.buffer, wrap);
 }
 
+// Texture drawing functions
+
 export function DrawTexture(
   texture: Texture2D,
   posX: int,
@@ -5446,8 +5291,8 @@ export function Fade(
   color: Color,
   alpha: float,
 ): Color {
-  const data = lib.Fade(color.buffer, alpha);
-  return new Color(data[0], data[1], data[2], data[3]);
+  const buf = lib.Fade(color.buffer, alpha);
+  return new Color(buf[0], buf[1], buf[2], buf[3]);
 }
 
 export function ColorToInt(color: Color): int {
@@ -5455,18 +5300,18 @@ export function ColorToInt(color: Color): int {
 }
 
 export function ColorNormalize(color: Color): Vector4 {
-  const data = lib.ColorNormalize(color.buffer);
-  return new Vector4(data[0], data[1], data[2], data[3]);
+  const buf = lib.ColorNormalize(color.buffer);
+  return new Vector4(buf[0], buf[1], buf[2], buf[3]);
 }
 
 export function ColorFromNormalized(normalized: Vector4): Color {
-  const data = lib.ColorFromNormalized(normalized.buffer);
-  return new Color(data[0], data[1], data[2], data[3]);
+  const buf = lib.ColorFromNormalized(normalized.buffer);
+  return new Color(buf[0], buf[1], buf[2], buf[3]);
 }
 
 export function ColorToHSV(color: Color): Vector3 {
-  const data = lib.ColorToHSV(color.buffer);
-  return new Vector3(data[0], data[1], data[2]);
+  const buf = lib.ColorToHSV(color.buffer);
+  return new Vector3(buf[0], buf[1], buf[2]);
 }
 
 export function ColorFromHSV(
@@ -5474,28 +5319,28 @@ export function ColorFromHSV(
   saturation: float,
   value: float,
 ): Color {
-  const data = lib.ColorFromHSV(hue, saturation, value);
-  return new Color(data[0], data[1], data[2], data[3]);
+  const buf = lib.ColorFromHSV(hue, saturation, value);
+  return new Color(buf[0], buf[1], buf[2], buf[3]);
 }
 
 export function ColorTint(color: Color, tint: Color): Color {
-  const data = lib.ColorTint(color.buffer, tint.buffer);
-  return new Color(data[0], data[1], data[2], data[3]);
+  const buf = lib.ColorTint(color.buffer, tint.buffer);
+  return new Color(buf[0], buf[1], buf[2], buf[3]);
 }
 
 export function ColorBrightness(color: Color, factor: float): Color {
-  const data = lib.ColorBrightness(color.buffer, factor);
-  return new Color(data[0], data[1], data[2], data[3]);
+  const buf = lib.ColorBrightness(color.buffer, factor);
+  return new Color(buf[0], buf[1], buf[2], buf[3]);
 }
 
 export function ColorContrast(color: Color, contrast: float): Color {
-  const data = lib.ColorContrast(color.buffer, contrast);
-  return new Color(data[0], data[1], data[2], data[3]);
+  const buf = lib.ColorContrast(color.buffer, contrast);
+  return new Color(buf[0], buf[1], buf[2], buf[3]);
 }
 
 export function ColorAlpha(color: Color, alpha: float): Color {
-  const data = lib.ColorAlpha(color.buffer, alpha);
-  return new Color(data[0], data[1], data[2], data[3]);
+  const buf = lib.ColorAlpha(color.buffer, alpha);
+  return new Color(buf[0], buf[1], buf[2], buf[3]);
 }
 
 export function ColorAlphaBlend(
@@ -5503,26 +5348,26 @@ export function ColorAlphaBlend(
   src: Color,
   tint: Color,
 ): Color {
-  const data = lib.ColorAlphaBlend(dst.buffer, src.buffer, tint.buffer);
-  return new Color(data[0], data[1], data[2], data[3]);
+  const buf = lib.ColorAlphaBlend(dst.buffer, src.buffer, tint.buffer);
+  return new Color(buf[0], buf[1], buf[2], buf[3]);
 }
 
 export function ColorLerp(color1: Color, color2: Color, amount: float): Color {
-  const data = lib.ColorLerp(color1.buffer, color2.buffer, amount);
-  return new Color(data[0], data[1], data[2], data[3]);
+  const buf = lib.ColorLerp(color1.buffer, color2.buffer, amount);
+  return new Color(buf[0], buf[1], buf[2], buf[3]);
 }
 
 export function GetColor(hex: int): Color {
-  const data = lib.GetColor(hex);
-  return new Color(data[0], data[1], data[2], data[3]);
+  const buf = lib.GetColor(hex);
+  return new Color(buf[0], buf[1], buf[2], buf[3]);
 }
 
 export function GetPixelColor(srcPtr: Uint8Array, format: PixelFormat): Color {
-  const data = lib.GetPixelColor(
+  const buf = lib.GetPixelColor(
     Deno.UnsafePointer.of(srcPtr.buffer as BufferSource),
     format,
   );
-  return new Color(data[0], data[1], data[2], data[3]);
+  return new Color(buf[0], buf[1], buf[2], buf[3]);
 }
 
 export function SetPixelColor(
@@ -5818,17 +5663,13 @@ export function MeasureTextEx(
   fontSize: float,
   spacing: float,
 ): Vector2 {
-  const data = lib.MeasureTextEx(
+  const buf = lib.MeasureTextEx(
     font.buffer,
     new TextEncoder().encode(text + "\0").buffer,
     fontSize,
     spacing,
   );
-  const view = new DataView(data.buffer);
-  return new Vector2(
-    view.getFloat32(0, littleEndian),
-    view.getFloat32(4, littleEndian),
-  );
+  return new Vector2(buf[0], buf[1]);
 }
 
 export function GetGlyphIndex(font: Font, codepoint: int): int {
@@ -5841,13 +5682,12 @@ export function GetGlyphInfo(font: Font, codepoint: int): GlyphInfo {
 }
 
 export function GetGlyphAtlasRec(font: Font, codepoint: int): Rectangle {
-  const data = lib.GetGlyphAtlasRec(font.buffer, codepoint);
-  const view = new DataView(data.buffer);
+  const buf = lib.GetGlyphAtlasRec(font.buffer, codepoint);
   return new Rectangle(
-    view.getFloat32(0, littleEndian),
-    view.getFloat32(4, littleEndian),
-    view.getFloat32(8, littleEndian),
-    view.getFloat32(12, littleEndian),
+    buf[0],
+    buf[1],
+    buf[2],
+    buf[3],
   );
 }
 
@@ -6148,18 +5988,9 @@ export function UnloadModel(model: Model): void {
 }
 
 export function GetModelBoundingBox(model: Model): BoundingBox {
-  const data = lib.GetModelBoundingBox(model.buffer);
-  const view = new DataView(data.buffer);
-  const min = new Vector3(
-    view.getFloat32(0, littleEndian),
-    view.getFloat32(4, littleEndian),
-    view.getFloat32(8, littleEndian),
-  );
-  const max = new Vector3(
-    view.getFloat32(12, littleEndian),
-    view.getFloat32(16, littleEndian),
-    view.getFloat32(20, littleEndian),
-  );
+  const buf = lib.GetModelBoundingBox(model.buffer);
+  const min = new Vector3(buf[0], buf[1], buf[2]);
+  const max = new Vector3(buf[3], buf[4], buf[5]);
   return new BoundingBox(min, max);
 }
 
@@ -6379,18 +6210,9 @@ export function DrawMeshInstanced(
 }
 
 export function GetMeshBoundingBox(mesh: Mesh): BoundingBox {
-  const data = lib.GetMeshBoundingBox(mesh.buffer);
-  const view = new DataView(data.buffer);
-  const min = new Vector3(
-    view.getFloat32(0, true),
-    view.getFloat32(4, true),
-    view.getFloat32(8, true),
-  );
-  const max = new Vector3(
-    view.getFloat32(12, true),
-    view.getFloat32(16, true),
-    view.getFloat32(20, true),
-  );
+  const buf = lib.GetMeshBoundingBox(mesh.buffer);
+  const min = new Vector3(buf[0], buf[1], buf[2]);
+  const max = new Vector3(buf[3], buf[4], buf[5]);
   return new BoundingBox(min, max);
 }
 
@@ -6575,18 +6397,18 @@ export function GenMeshCubicmap(
 export function LoadMaterials(
   fileName: string,
 ): { materials: Material[]; count: int } {
-  const countData = new Int32Array(1);
+  const countBuf = new Int32Array(1);
 
   const ptr = lib.LoadMaterials(
     new TextEncoder().encode(fileName + "\0").buffer,
-    Deno.UnsafePointer.of(countData.buffer),
+    countBuf,
   );
 
   if (!ptr) {
     throw new Error("Failed to load materials");
   }
 
-  const count = new DataView(countData.buffer).getUint32(0, true);
+  const count = countBuf[0];
   const view = new Deno.UnsafePointerView(ptr);
   const buf = view.getArrayBuffer(count * 40);
 
@@ -6643,18 +6465,18 @@ export function SetModelMeshMaterial(
 export function LoadModelAnimations(
   fileName: string,
 ): { animations: ModelAnimation[]; count: int } {
-  const cntdata = new Int32Array(1);
+  const countBuf = new Int32Array(1);
 
   const ptr = lib.LoadModelAnimations(
     new TextEncoder().encode(fileName + "\0").buffer,
-    Deno.UnsafePointer.of(cntdata.buffer),
+    Deno.UnsafePointer.of(countBuf.buffer),
   );
 
   if (!ptr) {
     throw new Error("Failed to load model animations");
   }
 
-  const count = new DataView(cntdata.buffer).getUint32(0, true);
+  const count = countBuf[0];
   const view = new Deno.UnsafePointerView(ptr);
   const buf = view.getArrayBuffer(count * 72);
 
