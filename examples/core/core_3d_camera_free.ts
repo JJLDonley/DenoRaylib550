@@ -12,7 +12,7 @@ RL.InitWindow(
 );
 
 // Define the camera to look into our 3d world
-let camera = new RL.Camera3D({
+const camera = new RL.Camera3D({
   position: new RL.Vector3(10.0, 10.0, 10.0), // Camera position
   target: new RL.Vector3(0.0, 0.0, 0.0), // Camera looking at point
   up: new RL.Vector3(0.0, 1.0, 0.0), // Camera up vector (rotation towards target)
@@ -20,7 +20,7 @@ let camera = new RL.Camera3D({
   projection: RL.CameraProjection.PERSPECTIVE, // Camera projection type
 });
 
-let cubePosition = new RL.Vector3(0.0, 0.0, 0.0);
+const cubePosition = new RL.Vector3(0.0, 0.0, 0.0);
 
 RL.DisableCursor(); // Limit cursor to relative movement inside the window
 
@@ -32,12 +32,9 @@ while (!RL.WindowShouldClose()) { // Detect window close button or ESC key
   // Update
   //----------------------------------------------------------------------------------
   RL.UpdateCamera(camera, RL.CameraMode.FREE);
-  // camera.syncFromBuffer();
 
   if (RL.IsKeyPressed(RL.KeyboardKey.Z)) {
-    console.log(camera.target);
     camera.target = new RL.Vector3(0.0, 0.0, 0.0);
-    console.log(camera.target);
   }
 
   if (RL.IsMouseButtonPressed(RL.MouseButton.RIGHT)) {

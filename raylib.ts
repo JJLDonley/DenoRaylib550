@@ -2,6 +2,38 @@ import { lib as DLL } from "./bindings/bindings.ts";
 
 const lib = DLL.symbols;
 
+type ViewFloatVec3 = {
+  x: float;
+  y: float;
+  z: float;
+};
+
+type ViewFloatVec2 = {
+  x: float;
+  y: float;
+};
+
+type ViewIntVec4 = {
+  x: int;
+  y: int;
+  z: int;
+  w: int;
+};
+
+type ViewFloatRect = {
+  x: float;
+  y: float;
+  width: float;
+  height: float;
+};
+
+type ViewFloatQuat = {
+  x: float;
+  y: float;
+  z: float;
+  w: float;
+};
+
 export const RAYLIB_VERSION_MAJOR = 5;
 export const RAYLIB_VERSION_MINOR = 5;
 export const RAYLIB_VERSION_PATCH = 0;
@@ -572,6 +604,12 @@ export class Matrix extends Float32Array {
     ]);
   }
 
+  static fromBuffer(buffer: ArrayBufferLike, byteOffset = 0): Matrix {
+    const view = new Float32Array(buffer, byteOffset, 16) as Matrix;
+    Object.setPrototypeOf(view, Matrix.prototype);
+    return view;
+  }
+
   // first row
   get m0() {
     return this[0];
@@ -953,12 +991,9 @@ export class Font {
 export class Camera3D {
   #buffer: ArrayBuffer;
   #view: DataView;
-
-  position: Vector3;
-  target: Vector3;
-  up: Vector3;
-  fovy: number;
-  projection: CameraProjection;
+  #position: ViewFloatVec3;
+  #target: ViewFloatVec3;
+  #up: ViewFloatVec3;
 
   constructor(options?: {
     position?: Vector3;
@@ -970,69 +1005,95 @@ export class Camera3D {
     this.#buffer = new ArrayBuffer(44);
     this.#view = new DataView(this.#buffer);
 
+    this.#position = this.VFVector(0);
+    this.#target = this.VFVector(12);
+    this.#up = this.VFVector(24);
+
     this.position = options?.position ?? new Vector3(0, 0, 0);
     this.target = options?.target ?? new Vector3(0, 1, 0);
     this.up = options?.up ?? new Vector3(0, 0, 1);
     this.fovy = options?.fovy ?? 90;
     this.projection = options?.projection ?? CameraProjection.PERSPECTIVE;
-
-    this.syncToBuffer();
   }
 
   get buffer(): ArrayBuffer {
-    this.syncToBuffer();
+    // this.#buffer = this.#view.buffer as ArrayBuffer;
     return this.#buffer;
   }
 
-  syncToBuffer(): void {
-    const v = this.#view;
-
-    v.setFloat32(0, this.position.x, littleEndian);
-    v.setFloat32(4, this.position.y, littleEndian);
-    v.setFloat32(8, this.position.z, littleEndian);
-
-    v.setFloat32(12, this.target.x, littleEndian);
-    v.setFloat32(16, this.target.y, littleEndian);
-    v.setFloat32(20, this.target.z, littleEndian);
-
-    v.setFloat32(24, this.up.x, littleEndian);
-    v.setFloat32(28, this.up.y, littleEndian);
-    v.setFloat32(32, this.up.z, littleEndian);
-
-    v.setFloat32(36, this.fovy, littleEndian);
-    v.setInt32(40, this.projection, littleEndian);
+  private VFVector(offset: int): ViewFloatVec3 {
+    const view = this.#view;
+    return {
+      get x() {
+        return view.getFloat32(offset + 0, littleEndian);
+      },
+      set x(v: float) {
+        view.setFloat32(offset + 0, v, littleEndian);
+      },
+      get y() {
+        return view.getFloat32(offset + 4, littleEndian);
+      },
+      set y(v: float) {
+        view.setFloat32(offset + 4, v, littleEndian);
+      },
+      get z() {
+        return view.getFloat32(offset + 8, littleEndian);
+      },
+      set z(v: float) {
+        view.setFloat32(offset + 8, v, littleEndian);
+      },
+    };
   }
-  syncFromBuffer(): void {
-    const v = this.#view;
 
-    this.position.x = v.getFloat32(0, littleEndian);
-    this.position.y = v.getFloat32(4, littleEndian);
-    this.position.z = v.getFloat32(8, littleEndian);
+  get position(): ViewFloatVec3 {
+    return this.#position;
+  }
+  set position(value: { x: float; y: float; z: float }) {
+    this.#position.x = value.x;
+    this.#position.y = value.y;
+    this.#position.z = value.z;
+  }
 
-    this.target.x = v.getFloat32(12, littleEndian);
-    this.target.y = v.getFloat32(16, littleEndian);
-    this.target.z = v.getFloat32(20, littleEndian);
+  get target(): ViewFloatVec3 {
+    return this.#target;
+  }
+  set target(value: { x: float; y: float; z: float }) {
+    this.#target.x = value.x;
+    this.#target.y = value.y;
+    this.#target.z = value.z;
+  }
 
-    this.up.x = v.getFloat32(24, littleEndian);
-    this.up.y = v.getFloat32(28, littleEndian);
-    this.up.z = v.getFloat32(32, littleEndian);
+  get up(): ViewFloatVec3 {
+    return this.#up;
+  }
+  set up(value: { x: float; y: float; z: float }) {
+    this.#up.x = value.x;
+    this.#up.y = value.y;
+    this.#up.z = value.z;
+  }
 
-    this.fovy = v.getFloat32(36, littleEndian);
-    this.projection = v.getInt32(40, littleEndian);
+  get fovy(): float {
+    return this.#view.getFloat32(36, littleEndian);
+  }
+  set fovy(value: float) {
+    this.#view.setFloat32(36, value, littleEndian);
+  }
+
+  get projection(): CameraProjection {
+    return this.#view.getInt32(40, littleEndian);
+  }
+  set projection(value: CameraProjection) {
+    this.#view.setInt32(40, value, littleEndian);
   }
 }
 
 export class Camera extends Camera3D {}
 
 export class Camera2D {
-  /** Camera offset (displacement from target) */
-  offset: Vector2;
-  /** Camera target (rotation and zoom origin) */
-  target: Vector2;
-  /** Camera rotation in degrees */
-  rotation: number;
-  /** Camera zoom (scaling), 1.0f by default */
-  zoom: number;
+  #buffer: ArrayBuffer;
+  #view: DataView;
+  #offset: ViewFloatVec2;
+  #target: ViewFloatVec2;
 
   constructor(
     options?: {
@@ -1046,6 +1107,11 @@ export class Camera2D {
       zoom?: number;
     },
   ) {
+    this.#buffer = new ArrayBuffer(24);
+    this.#view = new DataView(this.#buffer);
+    this.#offset = this.VFVector2(0);
+    this.#target = this.VFVector2(8);
+
     this.offset = options?.offset ?? new Vector2(0, 0);
     this.target = options?.target ?? new Vector2(0, 0);
     this.rotation = options?.rotation ?? 0;
@@ -1053,14 +1119,59 @@ export class Camera2D {
   }
 
   get buffer(): ArrayBuffer {
-    return new Float32Array([
-      this.offset.x,
-      this.offset.y,
-      this.target.x,
-      this.target.y,
-      this.rotation,
-      this.zoom,
-    ]).buffer;
+    return this.#buffer;
+  }
+
+  private VFVector2(offset: int): ViewFloatVec2 {
+    const view = this.#view;
+    return {
+      get x() {
+        return view.getFloat32(offset + 0, littleEndian);
+      },
+      set x(v: float) {
+        view.setFloat32(offset + 0, v, littleEndian);
+      },
+      get y() {
+        return view.getFloat32(offset + 4, littleEndian);
+      },
+      set y(v: float) {
+        view.setFloat32(offset + 4, v, littleEndian);
+      },
+    };
+  }
+
+  /** Camera offset (displacement from target) */
+  get offset(): ViewFloatVec2 {
+    return this.#offset;
+  }
+  set offset(value: { x: float; y: float }) {
+    this.#offset.x = value.x;
+    this.#offset.y = value.y;
+  }
+
+  /** Camera target (rotation and zoom origin) */
+  get target(): ViewFloatVec2 {
+    return this.#target;
+  }
+  set target(value: { x: float; y: float }) {
+    this.#target.x = value.x;
+    this.#target.y = value.y;
+  }
+
+  /** Camera rotation in degrees */
+  get rotation(): float {
+    return this.#view.getFloat32(16, littleEndian);
+  }
+  set rotation(value: float) {
+    this.#view.setFloat32(16, value, littleEndian);
+  }
+
+  /** Camera zoom (scaling), 1.0f by default */
+  get zoom(): float {
+    return this.#view.getFloat32(20, littleEndian);
+  }
+  set zoom(value: float) {
+    this.#view.setFloat32(20, value, littleEndian);
   }
 }
 
@@ -1334,6 +1445,10 @@ export class Material {
 }
 
 export class Transform extends Float32Array {
+  #translation: ViewFloatVec3;
+  #rotation: ViewFloatQuat;
+  #scale: ViewFloatVec3;
+
   constructor(
     translation = new Vector3(0, 0, 0),
     rotation = new Quaternion(0, 0, 0, 1),
@@ -1341,43 +1456,101 @@ export class Transform extends Float32Array {
   ) {
     super(10);
 
+    this.#translation = this.VFVector(0);
+    this.#rotation = this.VFQuat(3);
+    this.#scale = this.VFVector(7);
+
     this.translation = translation;
     this.rotation = rotation;
     this.scale = scale;
   }
 
-  // ---- translation ----
-  get translation(): Vector3 {
-    return new Vector3(this[0], this[1], this[2]);
+  private VFVector(offset: int): ViewFloatVec3 {
+    const view = this;
+    return {
+      get x() {
+        return view[offset + 0];
+      },
+      set x(v: float) {
+        view[offset + 0] = v;
+      },
+      get y() {
+        return view[offset + 1];
+      },
+      set y(v: float) {
+        view[offset + 1] = v;
+      },
+      get z() {
+        return view[offset + 2];
+      },
+      set z(v: float) {
+        view[offset + 2] = v;
+      },
+    };
   }
 
-  set translation(v: Vector3) {
-    this[0] = v.x;
-    this[1] = v.y;
-    this[2] = v.z;
+  private VFQuat(offset: int): ViewFloatQuat {
+    const view = this;
+    return {
+      get x() {
+        return view[offset + 0];
+      },
+      set x(v: float) {
+        view[offset + 0] = v;
+      },
+      get y() {
+        return view[offset + 1];
+      },
+      set y(v: float) {
+        view[offset + 1] = v;
+      },
+      get z() {
+        return view[offset + 2];
+      },
+      set z(v: float) {
+        view[offset + 2] = v;
+      },
+      get w() {
+        return view[offset + 3];
+      },
+      set w(v: float) {
+        view[offset + 3] = v;
+      },
+    };
+  }
+
+  // ---- translation ----
+  get translation(): ViewFloatVec3 {
+    return this.#translation;
+  }
+
+  set translation(v: { x: float; y: float; z: float }) {
+    this.#translation.x = v.x;
+    this.#translation.y = v.y;
+    this.#translation.z = v.z;
   }
 
   // ---- rotation ----
-  get rotation(): Quaternion {
-    return new Quaternion(this[3], this[4], this[5], this[6]);
+  get rotation(): ViewFloatQuat {
+    return this.#rotation;
   }
 
-  set rotation(q: Quaternion) {
-    this[3] = q.x;
-    this[4] = q.y;
-    this[5] = q.z;
-    this[6] = q.w;
+  set rotation(q: { x: float; y: float; z: float; w: float }) {
+    this.#rotation.x = q.x;
+    this.#rotation.y = q.y;
+    this.#rotation.z = q.z;
+    this.#rotation.w = q.w;
   }
 
   // ---- scale ----
-  get scale(): Vector3 {
-    return new Vector3(this[7], this[8], this[9]);
+  get scale(): ViewFloatVec3 {
+    return this.#scale;
   }
 
-  set scale(v: Vector3) {
-    this[7] = v.x;
-    this[8] = v.y;
-    this[9] = v.z;
+  set scale(v: { x: float; y: float; z: float }) {
+    this.#scale.x = v.x;
+    this.#scale.y = v.y;
+    this.#scale.z = v.z;
   }
 }
 
@@ -1436,9 +1609,14 @@ export class BoneInfo {
 
 export class Model {
   #buffer: Uint8Array<ArrayBuffer>;
+  #transform: Matrix;
 
   constructor(buffer: Uint8Array<ArrayBuffer>) {
     this.#buffer = buffer;
+    this.#transform = Matrix.fromBuffer(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset,
+    );
   }
 
   get buffer(): Uint8Array<ArrayBuffer> {
@@ -1451,21 +1629,11 @@ export class Model {
 
   // ---- transform (Matrix, 64 bytes) ----
   get transform(): Matrix {
-    return new Matrix(
-      ...new Float32Array(
-        this.#buffer.buffer,
-        this.#buffer.byteOffset,
-        16,
-      ),
-    );
+    return this.#transform;
   }
 
   set transform(m: Matrix) {
-    new Float32Array(
-      this.#buffer.buffer,
-      this.#buffer.byteOffset,
-      16,
-    ).set(m);
+    this.#transform.set(m);
   }
 
   // ---- counts ----
@@ -1603,24 +1771,53 @@ export class ModelAnimation {
 }
 
 export class Ray extends Float32Array {
+  #position: ViewFloatVec3;
+  #direction: ViewFloatVec3;
+
   constructor(
     position = new Vector3(0, 0, 0),
     direction = new Vector3(0, 0, 1),
   ) {
     super(6);
+    this.#position = this.VFVector(0);
+    this.#direction = this.VFVector(3);
     this.position = position;
     this.direction = direction;
   }
 
-  // ---- position ----
-  get position(): Vector3 {
-    return new Vector3(this[0], this[1], this[2]);
+  private VFVector(offset: int): ViewFloatVec3 {
+    const view = this;
+    return {
+      get x() {
+        return view[offset + 0];
+      },
+      set x(v: float) {
+        view[offset + 0] = v;
+      },
+      get y() {
+        return view[offset + 1];
+      },
+      set y(v: float) {
+        view[offset + 1] = v;
+      },
+      get z() {
+        return view[offset + 2];
+      },
+      set z(v: float) {
+        view[offset + 2] = v;
+      },
+    };
   }
 
-  set position(v: Vector3) {
-    this[0] = v.x;
-    this[1] = v.y;
-    this[2] = v.z;
+  // ---- position ----
+  get position(): ViewFloatVec3 {
+    return this.#position;
+  }
+
+  set position(v: { x: float; y: float; z: float }) {
+    this.#position.x = v.x;
+    this.#position.y = v.y;
+    this.#position.z = v.z;
   }
 
   get px(): number {
@@ -1645,14 +1842,14 @@ export class Ray extends Float32Array {
   }
 
   // ---- direction ----
-  get direction(): Vector3 {
-    return new Vector3(this[3], this[4], this[5]);
+  get direction(): ViewFloatVec3 {
+    return this.#direction;
   }
 
-  set direction(v: Vector3) {
-    this[3] = v.x;
-    this[4] = v.y;
-    this[5] = v.z;
+  set direction(v: { x: float; y: float; z: float }) {
+    this.#direction.x = v.x;
+    this.#direction.y = v.y;
+    this.#direction.z = v.z;
   }
 
   get dx(): number {
@@ -1679,9 +1876,15 @@ export class Ray extends Float32Array {
 
 export class RayCollision {
   #buffer: Uint8Array<ArrayBuffer>;
+  #view: DataView;
+  #point: ViewFloatVec3;
+  #normal: ViewFloatVec3;
 
   constructor(buffer: Uint8Array<ArrayBuffer>) {
     this.#buffer = buffer;
+    this.#view = new DataView(this.#buffer.buffer, this.#buffer.byteOffset);
+    this.#point = this.VFVector(8);
+    this.#normal = this.VFVector(20);
   }
 
   get buffer(): Uint8Array<ArrayBuffer> {
@@ -1689,7 +1892,31 @@ export class RayCollision {
   }
 
   private get view(): DataView {
-    return new DataView(this.#buffer.buffer, this.#buffer.byteOffset);
+    return this.#view;
+  }
+
+  private VFVector(offset: int): ViewFloatVec3 {
+    const view = this.#view;
+    return {
+      get x() {
+        return view.getFloat32(offset + 0, true);
+      },
+      set x(v: float) {
+        view.setFloat32(offset + 0, v, true);
+      },
+      get y() {
+        return view.getFloat32(offset + 4, true);
+      },
+      set y(v: float) {
+        view.setFloat32(offset + 4, v, true);
+      },
+      get z() {
+        return view.getFloat32(offset + 8, true);
+      },
+      set z(v: float) {
+        view.setFloat32(offset + 8, v, true);
+      },
+    };
   }
 
   // ---- hit ----
@@ -1711,55 +1938,76 @@ export class RayCollision {
   }
 
   // ---- point ----
-  get point(): Vector3 {
-    return new Vector3(
-      this.view.getFloat32(8, true),
-      this.view.getFloat32(12, true),
-      this.view.getFloat32(16, true),
-    );
+  get point(): ViewFloatVec3 {
+    return this.#point;
   }
 
-  set point(v: Vector3) {
-    this.view.setFloat32(8, v.x, true);
-    this.view.setFloat32(12, v.y, true);
-    this.view.setFloat32(16, v.z, true);
+  set point(v: { x: float; y: float; z: float }) {
+    this.#point.x = v.x;
+    this.#point.y = v.y;
+    this.#point.z = v.z;
   }
 
   // ---- normal ----
-  get normal(): Vector3 {
-    return new Vector3(
-      this.view.getFloat32(20, true),
-      this.view.getFloat32(24, true),
-      this.view.getFloat32(28, true),
-    );
+  get normal(): ViewFloatVec3 {
+    return this.#normal;
   }
 
-  set normal(v: Vector3) {
-    this.view.setFloat32(20, v.x, true);
-    this.view.setFloat32(24, v.y, true);
-    this.view.setFloat32(28, v.z, true);
+  set normal(v: { x: float; y: float; z: float }) {
+    this.#normal.x = v.x;
+    this.#normal.y = v.y;
+    this.#normal.z = v.z;
   }
 }
 
 export class BoundingBox extends Float32Array {
+  #min: ViewFloatVec3;
+  #max: ViewFloatVec3;
+
   constructor(
     min = new Vector3(0, 0, 0),
     max = new Vector3(0, 0, 0),
   ) {
     super(6);
+    this.#min = this.VFVector(0);
+    this.#max = this.VFVector(3);
     this.min = min;
     this.max = max;
   }
 
-  // ---- min ----
-  get min(): Vector3 {
-    return new Vector3(this[0], this[1], this[2]);
+  private VFVector(offset: int): ViewFloatVec3 {
+    const view = this;
+    return {
+      get x() {
+        return view[offset + 0];
+      },
+      set x(v: float) {
+        view[offset + 0] = v;
+      },
+      get y() {
+        return view[offset + 1];
+      },
+      set y(v: float) {
+        view[offset + 1] = v;
+      },
+      get z() {
+        return view[offset + 2];
+      },
+      set z(v: float) {
+        view[offset + 2] = v;
+      },
+    };
   }
 
-  set min(v: Vector3) {
-    this[0] = v.x;
-    this[1] = v.y;
-    this[2] = v.z;
+  // ---- min ----
+  get min(): ViewFloatVec3 {
+    return this.#min;
+  }
+
+  set min(v: { x: float; y: float; z: float }) {
+    this.#min.x = v.x;
+    this.#min.y = v.y;
+    this.#min.z = v.z;
   }
 
   get minX(): number {
@@ -1784,14 +2032,14 @@ export class BoundingBox extends Float32Array {
   }
 
   // ---- max ----
-  get max(): Vector3 {
-    return new Vector3(this[3], this[4], this[5]);
+  get max(): ViewFloatVec3 {
+    return this.#max;
   }
 
-  set max(v: Vector3) {
-    this[3] = v.x;
-    this[4] = v.y;
-    this[5] = v.z;
+  set max(v: { x: float; y: float; z: float }) {
+    this.#max.x = v.x;
+    this.#max.y = v.y;
+    this.#max.z = v.z;
   }
 
   get maxX(): number {
@@ -2120,9 +2368,19 @@ export class VrDeviceInfo {
 
 export class VrStereoConfig {
   #buffer: Uint8Array<ArrayBuffer>;
+  #projection: [Matrix, Matrix];
+  #viewOffset: [Matrix, Matrix];
 
   constructor(buffer: Uint8Array<ArrayBuffer>) {
     this.#buffer = buffer;
+    this.#projection = [
+      Matrix.fromBuffer(this.#buffer.buffer, this.#buffer.byteOffset + 0),
+      Matrix.fromBuffer(this.#buffer.buffer, this.#buffer.byteOffset + 64),
+    ];
+    this.#viewOffset = [
+      Matrix.fromBuffer(this.#buffer.buffer, this.#buffer.byteOffset + 128),
+      Matrix.fromBuffer(this.#buffer.buffer, this.#buffer.byteOffset + 192),
+    ];
   }
 
   get buffer(): Uint8Array<ArrayBuffer> {
@@ -2135,39 +2393,19 @@ export class VrStereoConfig {
 
   // ---- matrices ----
   getProjection(eye: 0 | 1): Matrix {
-    return new Matrix(
-      ...new Float32Array(
-        this.#buffer.buffer,
-        this.#buffer.byteOffset + eye * 64,
-        16,
-      ),
-    );
+    return this.#projection[eye];
   }
 
   setProjection(eye: 0 | 1, m: Matrix): void {
-    new Float32Array(
-      this.#buffer.buffer,
-      this.#buffer.byteOffset + eye * 64,
-      16,
-    ).set(m);
+    this.#projection[eye].set(m);
   }
 
   getViewOffset(eye: 0 | 1): Matrix {
-    return new Matrix(
-      ...new Float32Array(
-        this.#buffer.buffer,
-        this.#buffer.byteOffset + 128 + eye * 64,
-        16,
-      ),
-    );
+    return this.#viewOffset[eye];
   }
 
   setViewOffset(eye: 0 | 1, m: Matrix): void {
-    new Float32Array(
-      this.#buffer.buffer,
-      this.#buffer.byteOffset + 128 + eye * 64,
-      16,
-    ).set(m);
+    this.#viewOffset[eye].set(m);
   }
 
   // ---- float[2] helpers ----
@@ -3241,7 +3479,6 @@ export function GetGesturePinchAngle(): float {
 
 export function UpdateCamera(camera: Camera, mode: CameraMode): void {
   lib.UpdateCamera(camera.buffer, mode);
-  camera.syncFromBuffer();
 }
 
 export function UpdateCameraPro(
@@ -3250,14 +3487,12 @@ export function UpdateCameraPro(
   rotation: Vector3,
   zoom: float,
 ): void {
-  camera.syncToBuffer();
   lib.UpdateCameraPro(
     camera.buffer,
     movement.buffer,
     rotation.buffer,
     zoom,
   );
-  camera.syncFromBuffer();
 }
 
 export function SetShapesTexture(texture: Texture2D, source: Rectangle): void {
