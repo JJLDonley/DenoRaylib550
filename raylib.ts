@@ -1466,55 +1466,55 @@ export class Transform extends Float32Array {
   }
 
   private VFVector(offset: int): ViewFloatVec3 {
-    const view = this;
+    const view = () => this;
     return {
       get x() {
-        return view[offset + 0];
+        return view()[offset + 0];
       },
       set x(v: float) {
-        view[offset + 0] = v;
+        view()[offset + 0] = v;
       },
       get y() {
-        return view[offset + 1];
+        return view()[offset + 1];
       },
       set y(v: float) {
-        view[offset + 1] = v;
+        view()[offset + 1] = v;
       },
       get z() {
-        return view[offset + 2];
+        return view()[offset + 2];
       },
       set z(v: float) {
-        view[offset + 2] = v;
+        view()[offset + 2] = v;
       },
     };
   }
 
   private VFQuat(offset: int): ViewFloatQuat {
-    const view = this;
+    const view = () => this;
     return {
       get x() {
-        return view[offset + 0];
+        return view()[offset + 0];
       },
       set x(v: float) {
-        view[offset + 0] = v;
+        view()[offset + 0] = v;
       },
       get y() {
-        return view[offset + 1];
+        return view()[offset + 1];
       },
       set y(v: float) {
-        view[offset + 1] = v;
+        view()[offset + 1] = v;
       },
       get z() {
-        return view[offset + 2];
+        return view()[offset + 2];
       },
       set z(v: float) {
-        view[offset + 2] = v;
+        view()[offset + 2] = v;
       },
       get w() {
-        return view[offset + 3];
+        return view()[offset + 3];
       },
       set w(v: float) {
-        view[offset + 3] = v;
+        view()[offset + 3] = v;
       },
     };
   }
@@ -1786,25 +1786,25 @@ export class Ray extends Float32Array {
   }
 
   private VFVector(offset: int): ViewFloatVec3 {
-    const view = this;
+    const view = () => this;
     return {
       get x() {
-        return view[offset + 0];
+        return view()[offset + 0];
       },
       set x(v: float) {
-        view[offset + 0] = v;
+        view()[offset + 0] = v;
       },
       get y() {
-        return view[offset + 1];
+        return view()[offset + 1];
       },
       set y(v: float) {
-        view[offset + 1] = v;
+        view()[offset + 1] = v;
       },
       get z() {
-        return view[offset + 2];
+        return view()[offset + 2];
       },
       set z(v: float) {
-        view[offset + 2] = v;
+        view()[offset + 2] = v;
       },
     };
   }
@@ -1976,25 +1976,25 @@ export class BoundingBox extends Float32Array {
   }
 
   private VFVector(offset: int): ViewFloatVec3 {
-    const view = this;
+    const view = () => this;
     return {
       get x() {
-        return view[offset + 0];
+        return view()[offset + 0];
       },
       set x(v: float) {
-        view[offset + 0] = v;
+        view()[offset + 0] = v;
       },
       get y() {
-        return view[offset + 1];
+        return view()[offset + 1];
       },
       set y(v: float) {
-        view[offset + 1] = v;
+        view()[offset + 1] = v;
       },
       get z() {
-        return view[offset + 2];
+        return view()[offset + 2];
       },
       set z(v: float) {
-        view[offset + 2] = v;
+        view()[offset + 2] = v;
       },
     };
   }
