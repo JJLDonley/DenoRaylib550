@@ -15,12 +15,13 @@ git clone https://github.com/JJLDonley/DenoRaylib550
 mv DenoRaylib550 raylib
 ```
 
-IMPORTANT COPY BLOBS TO MAIN DIRECTORY!
-Blobs are the DLLs that are located in the `raylib` directory.
-You cannot run raylib without them.
+IMPORTANT: Copy `blobs` to your project root.
+The blobs are the platform DLLs shipped in the `raylib/blobs` folder.
+Raylib will not run without them.
 
-Alternatively run ./blobs.ps1 in your main directory ( requires 7zip)
-Feel free to download the blobs from the release page for raylib 5.5
+Options:
+- Run `./blobs.ps1` in your project root (requires 7zip).
+- Download blobs from the raylib 5.5 release page.
 
 Create `deno.json` with:
 
@@ -75,7 +76,7 @@ main();
 You can run examples with:
 
 ```bash
-deno run ./raylib/example/core/<file_name>.ts
+deno run ./raylib/examples/core/<file_name>.ts
 ```
 
 ## License
