@@ -1,2 +1,5 @@
 .DS_Store
-examples/c/*
+**/c/
+*.c
+*.h
+**/external/

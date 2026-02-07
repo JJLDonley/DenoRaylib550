@@ -1,38 +1,86 @@
 import { lib as DLL } from "./bindings/bindings.ts";
+import {
+  AudioStream,
+  AutomationEvent,
+  AutomationEventList,
+  BoneInfo,
+  BoundingBox,
+  Camera2D,
+  Camera3D,
+  Color,
+  FilePathList,
+  Font,
+  GlyphInfo,
+  Image,
+  Material,
+  MaterialMap,
+  Matrix,
+  Mesh,
+  Model,
+  ModelAnimation,
+  Music,
+  NPatchInfo,
+  Vector4 as Quaternion,
+  Ray,
+  RayCollision,
+  Rectangle,
+  RenderTexture,
+  Shader,
+  Sound,
+  Texture,
+  Texture as Texture2D,
+  Texture as TextureCubemap,
+  Transform,
+  Vector2,
+  Vector3,
+  Vector4,
+  VrDeviceInfo,
+  VrStereoConfig,
+  Wave,
+} from "./bindings/structs.ts";
+
+export {
+  AudioStream,
+  AutomationEvent,
+  AutomationEventList,
+  BoneInfo,
+  BoundingBox,
+  Camera2D,
+  Camera3D,
+  Color,
+  FilePathList,
+  Font,
+  GlyphInfo,
+  Image,
+  Material,
+  MaterialMap,
+  Matrix,
+  Mesh,
+  Model,
+  ModelAnimation,
+  Music,
+  NPatchInfo,
+  Quaternion,
+  Ray,
+  RayCollision,
+  Rectangle,
+  RenderTexture,
+  Shader,
+  Sound,
+  Texture,
+  Texture2D,
+  TextureCubemap,
+  Transform,
+  Vector2,
+  Vector3,
+  Vector4,
+  VrDeviceInfo,
+  VrStereoConfig,
+  Wave,
+};
 
 const lib = DLL.symbols;
-
-type ViewFloatVec3 = {
-  x: float;
-  y: float;
-  z: float;
-};
-
-type ViewFloatVec2 = {
-  x: float;
-  y: float;
-};
-
-type ViewIntVec4 = {
-  x: int;
-  y: int;
-  z: int;
-  w: int;
-};
-
-type ViewFloatRect = {
-  x: float;
-  y: float;
-  width: float;
-  height: float;
-};
-
-type ViewFloatQuat = {
-  x: float;
-  y: float;
-  z: float;
-  w: float;
-};
+export type Camera = Camera3D;
 
 export const RAYLIB_VERSION_MAJOR = 5;
 export const RAYLIB_VERSION_MINOR = 5;
@@ -47,16 +95,14 @@ export const littleEndian = (() => {
   return new Int16Array(buffer)[0] === 256;
 })();
 
-export function concatVector2(vectors: Vector2[]): Uint8Array<ArrayBuffer> {
-  const buf = new ArrayBuffer(vectors.length * 8); // 2 floats per Vector2
-  const view = new DataView(buf);
 
+export function concatVector2(vectors: Vector2[]): Float32Array {
+  const vecs = new Float32Array(vectors.length * 2);
   for (let i = 0; i < vectors.length; i++) {
-    view.setFloat32(i * 8 + 0, vectors[i].x, true);
-    view.setFloat32(i * 8 + 4, vectors[i].y, true);
+    vecs[i * 2] = vectors[i].x;
+    vecs[i * 2 + 1] = vectors[i].y;
   }
-
-  return new Uint8Array(buf);
+  return vecs;
 }
 
 export function concatVector3(vectors: Vector3[]): Float32Array {
@@ -107,18 +153,18 @@ export function concatColor(colors: Color[]): Uint8Array {
 export enum ConfigFlags {
   VSYNC_HINT = 0x00000040, // Set to try enabling V-Sync on GPU
   FULLSCREEN_MODE = 0x00000002, // Set to run program in fullscreen
-  WINDOW_RESIZABLE = 0x00000004, // Set to allow resizable window
-  WINDOW_UNDECORATED = 0x00000008, // Set to disable window decoration (frame and buttons)
-  WINDOW_HIDDEN = 0x00000080, // Set to hide window
-  WINDOW_MINIMIZED = 0x00000200, // Set to minimize window (iconify)
-  WINDOW_MAXIMIZED = 0x00000400, // Set to maximize window (expanded to monitor)
-  WINDOW_UNFOCUSED = 0x00000800, // Set to window non focused
-  WINDOW_TOPMOST = 0x00001000, // Set to window always on top
-  WINDOW_ALWAYS_RUN = 0x00000100, // Set to allow windows running while minimized
-  WINDOW_TRANSPARENT = 0x00000010, // Set to allow transparent framebuffer
-  WINDOW_HIGHDPI = 0x00002000, // Set to support HighDPI
-  WINDOW_MOUSE_PASSTHROUGH = 0x00004000, // Set to support mouse passthrough, only supported when WINDOW_UNDECORATED
-  BORDERLESS_WINDOWED_MODE = 0x00008000, // Set to run program in borderless windowed mode
+  RESIZABLE = 0x00000004, // Set to allow resizable window
+  UNDECORATED = 0x00000008, // Set to disable window decoration (frame and buttons)
+  HIDDEN = 0x00000080, // Set to hide window
+  MINIMIZED = 0x00000200, // Set to minimize window (iconify)
+  MAXIMIZED = 0x00000400, // Set to maximize window (expanded to monitor)
+  UNFOCUSED = 0x00000800, // Set to window non focused
+  TOPMOST = 0x00001000, // Set to window always on top
+  ALWAYS_RUN = 0x00000100, // Set to allow windows running while minimized
+  TRANSPARENT = 0x00000010, // Set to allow transparent framebuffer
+  HIGHDPI = 0x00002000, // Set to support HighDPI
+  MOUSE_PASSTHROUGH = 0x00004000, // Set to support mouse passthrough, only supported when WINDOW_UNDECORATED
+  BORDERLESS = 0x00008000, // Set to run program in borderless windowed mode
   MSAA_4X_HINT = 0x00000020, // Set to try enabling MSAA 4X
   INTERLACED_HINT = 0x00010000, // Set to try enabling interlaced video format (for V3D)
 }
@@ -471,2106 +517,7 @@ export enum NPatchLayout {
   THREE_PATCH_HORIZONTAL, // Npatch layout: 3x1 tiles
 }
 
-// struct types
-
-export class Vector2 extends Float32Array {
-  constructor(x: number, y: number) {
-    super([x, y]);
-  }
-
-  get x() {
-    return this[0];
-  }
-
-  set x(value: number) {
-    this[0] = value;
-  }
-
-  get y() {
-    return this[1];
-  }
-
-  set y(value: number) {
-    this[1] = value;
-  }
-}
-
-export class Vector3 extends Float32Array {
-  constructor(x: number, y: number, z: number) {
-    super([x, y, z]);
-  }
-
-  get x() {
-    return this[0];
-  }
-
-  set x(value: number) {
-    this[0] = value;
-  }
-
-  get y() {
-    return this[1];
-  }
-
-  set y(value: number) {
-    this[1] = value;
-  }
-
-  get z() {
-    return this[2];
-  }
-
-  set z(value: number) {
-    this[2] = value;
-  }
-}
-
-export class Vector4 extends Float32Array {
-  constructor(x: number, y: number, z: number, w: number) {
-    super([x, y, z, w]);
-  }
-
-  get x() {
-    return this[0];
-  }
-
-  set x(value: number) {
-    this[0] = value;
-  }
-
-  get y() {
-    return this[1];
-  }
-
-  set y(value: number) {
-    this[1] = value;
-  }
-
-  get z() {
-    return this[2];
-  }
-
-  set z(value: number) {
-    this[2] = value;
-  }
-
-  get w() {
-    return this[3];
-  }
-
-  set w(value: number) {
-    this[3] = value;
-  }
-}
-
-export class Quaternion extends Vector4 {}
-
-export class Matrix extends Float32Array {
-  constructor(
-    m0 = 1,
-    m4 = 0,
-    m8 = 0,
-    m12 = 0,
-    m1 = 0,
-    m5 = 1,
-    m9 = 0,
-    m13 = 0,
-    m2 = 0,
-    m6 = 0,
-    m10 = 1,
-    m14 = 0,
-    m3 = 0,
-    m7 = 0,
-    m11 = 0,
-    m15 = 1,
-  ) {
-    super([
-      m0,
-      m1,
-      m2,
-      m3,
-      m4,
-      m5,
-      m6,
-      m7,
-      m8,
-      m9,
-      m10,
-      m11,
-      m12,
-      m13,
-      m14,
-      m15,
-    ]);
-  }
-
-  static fromBuffer(buffer: ArrayBufferLike, byteOffset = 0): Matrix {
-    const view = new Float32Array(buffer, byteOffset, 16) as Matrix;
-    Object.setPrototypeOf(view, Matrix.prototype);
-    return view;
-  }
-
-  // first row
-  get m0() {
-    return this[0];
-  }
-  set m0(v: number) {
-    this[0] = v;
-  }
-  get m4() {
-    return this[4];
-  }
-  set m4(v: number) {
-    this[4] = v;
-  }
-  get m8() {
-    return this[8];
-  }
-  set m8(v: number) {
-    this[8] = v;
-  }
-  get m12() {
-    return this[12];
-  }
-  set m12(v: number) {
-    this[12] = v;
-  }
-
-  // second row
-  get m1() {
-    return this[1];
-  }
-  set m1(v: number) {
-    this[1] = v;
-  }
-  get m5() {
-    return this[5];
-  }
-  set m5(v: number) {
-    this[5] = v;
-  }
-  get m9() {
-    return this[9];
-  }
-  set m9(v: number) {
-    this[9] = v;
-  }
-  get m13() {
-    return this[13];
-  }
-  set m13(v: number) {
-    this[13] = v;
-  }
-
-  // third row
-  get m2() {
-    return this[2];
-  }
-  set m2(v: number) {
-    this[2] = v;
-  }
-  get m6() {
-    return this[6];
-  }
-  set m6(v: number) {
-    this[6] = v;
-  }
-  get m10() {
-    return this[10];
-  }
-  set m10(v: number) {
-    this[10] = v;
-  }
-  get m14() {
-    return this[14];
-  }
-  set m14(v: number) {
-    this[14] = v;
-  }
-
-  // fourth row
-  get m3() {
-    return this[3];
-  }
-  set m3(v: number) {
-    this[3] = v;
-  }
-  get m7() {
-    return this[7];
-  }
-  set m7(v: number) {
-    this[7] = v;
-  }
-  get m11() {
-    return this[11];
-  }
-  set m11(v: number) {
-    this[11] = v;
-  }
-  get m15() {
-    return this[15];
-  }
-  set m15(v: number) {
-    this[15] = v;
-  }
-}
-
-export class Color extends Uint8Array {
-  constructor(r: number, g: number, b: number, a: number) {
-    super([r, g, b, a]);
-  }
-
-  get r() {
-    return this[0];
-  }
-
-  set r(value: number) {
-    this[0] = value;
-  }
-
-  get g() {
-    return this[1];
-  }
-
-  set g(value: number) {
-    this[1] = value;
-  }
-
-  get b() {
-    return this[2];
-  }
-
-  set b(value: number) {
-    this[2] = value;
-  }
-
-  get a() {
-    return this[3];
-  }
-
-  set a(value: number) {
-    this[3] = value;
-  }
-}
-
-export class Rectangle extends Float32Array {
-  constructor(x: number, y: number, width: number, height: number) {
-    super([x, y, width, height]);
-  }
-
-  get x() {
-    return this[0];
-  }
-
-  set x(value: number) {
-    this[0] = value;
-  }
-
-  get y() {
-    return this[1];
-  }
-
-  set y(value: number) {
-    this[1] = value;
-  }
-
-  get width() {
-    return this[2];
-  }
-
-  set width(value: number) {
-    this[2] = value;
-  }
-
-  get height() {
-    return this[3];
-  }
-
-  set height(value: number) {
-    this[3] = value;
-  }
-}
-
-export class Image {
-  #buffer: Uint8Array<ArrayBuffer>;
-
-  /** Avoid using if possible */
-  constructor(buffer: Uint8Array<ArrayBuffer>) {
-    this.#buffer = buffer;
-  }
-
-  get buffer(): Uint8Array<ArrayBuffer> {
-    return this.#buffer;
-  }
-
-  get width(): number {
-    const view = new DataView(this.#buffer.buffer);
-    return view.getInt32(8, littleEndian);
-  }
-
-  get height(): number {
-    const view = new DataView(this.#buffer.buffer);
-    return view.getInt32(12, littleEndian);
-  }
-}
-
-export class Texture {
-  #buffer: Uint8Array<ArrayBuffer>;
-
-  constructor(buffer: Uint8Array<ArrayBuffer>) {
-    this.#buffer = buffer;
-  }
-
-  get buffer(): Uint8Array<ArrayBuffer> {
-    return this.#buffer;
-  }
-
-  private get view(): DataView {
-    return new DataView(this.#buffer.buffer, this.#buffer.byteOffset);
-  }
-
-  get id(): number {
-    return this.view.getUint32(0, true);
-  }
-
-  get width(): number {
-    return this.view.getInt32(4, true);
-  }
-
-  get height(): number {
-    return this.view.getInt32(8, true);
-  }
-
-  get mipmaps(): number {
-    return this.view.getInt32(12, true);
-  }
-
-  get format(): number {
-    return this.view.getInt32(16, true);
-  }
-}
-
-export class Texture2D extends Texture {}
-export class TextureCubemap extends Texture {}
-
-export class RenderTexture {
-  #buffer: Uint8Array<ArrayBuffer>;
-
-  constructor(buffer: Uint8Array<ArrayBuffer>) {
-    this.#buffer = buffer;
-  }
-
-  get buffer(): Uint8Array<ArrayBuffer> {
-    return this.#buffer;
-  }
-}
-
-export class NPatchInfo {
-  constructor(
-    /** Texture source rectangle */
-    public source: Rectangle,
-    /** Left border offset */
-    public left: number,
-    /** Top border offset */
-    public top: number,
-    /** Right border offset */
-    public right: number,
-    /**  Bottom border offset */
-    public bottom: number,
-    /** Layout of the n-patch: 3x3, 1x3 or 3x1 */
-    public layout: NPatchLayout,
-  ) {}
-
-  get buffer(): ArrayBuffer {
-    const view = new DataView(new ArrayBuffer(36));
-    view.setFloat32(0, this.source.x, littleEndian);
-    view.setFloat32(4, this.source.y, littleEndian);
-    view.setFloat32(8, this.source.width, littleEndian);
-    view.setFloat32(12, this.source.height, littleEndian);
-    view.setInt32(16, this.left, littleEndian);
-    view.setInt32(20, this.top, littleEndian);
-    view.setInt32(24, this.right, littleEndian);
-    view.setInt32(28, this.bottom, littleEndian);
-    view.setInt32(32, this.layout, littleEndian);
-    return view.buffer;
-  }
-}
-
-export class GlyphInfo {
-  #buffer: Uint8Array<ArrayBuffer>;
-
-  constructor(buffer: Uint8Array<ArrayBuffer>) {
-    this.#buffer = buffer;
-  }
-
-  get buffer(): Uint8Array<ArrayBuffer> {
-    return this.#buffer;
-  }
-
-  private get view(): DataView {
-    return new DataView(this.#buffer.buffer, this.#buffer.byteOffset);
-  }
-
-  get value(): number {
-    return this.view.getInt32(0, littleEndian);
-  }
-
-  get offsetX(): number {
-    return this.view.getInt32(4, littleEndian);
-  }
-
-  get offsetY(): number {
-    return this.view.getInt32(8, littleEndian);
-  }
-
-  get advanceX(): number {
-    return this.view.getInt32(12, littleEndian);
-  }
-
-  // Image starts at offset 16
-  get image(): Image {
-    return new Image(
-      new Uint8Array(
-        this.#buffer.buffer,
-        this.#buffer.byteOffset + 16,
-        24,
-      ) as Uint8Array<ArrayBuffer>,
-    );
-  }
-}
-
-export class Font {
-  #buffer: Uint8Array<ArrayBuffer>;
-
-  constructor(buffer: Uint8Array<ArrayBuffer>) {
-    this.#buffer = buffer;
-  }
-
-  get buffer(): ArrayBuffer {
-    return this.#buffer.buffer;
-  }
-
-  private get view(): DataView {
-    return new DataView(this.#buffer.buffer, this.#buffer.byteOffset);
-  }
-
-  get baseSize(): number {
-    return this.view.getInt32(0, littleEndian);
-  }
-
-  get glyphCount(): number {
-    return this.view.getInt32(4, littleEndian);
-  }
-
-  get glyphPadding(): number {
-    return this.view.getInt32(8, littleEndian);
-  }
-
-  // Texture2D at offset 12 (20 bytes)
-  get texture(): Texture2D {
-    return new Texture2D(
-      new Uint8Array(
-        this.#buffer.buffer,
-        this.#buffer.byteOffset + 12,
-        20,
-      ) as Uint8Array<ArrayBuffer>,
-    );
-  }
-
-  // Rectangle* recs
-  get recsPtr(): bigint {
-    return this.view.getBigUint64(32, littleEndian);
-  }
-
-  // GlyphInfo* glyphs
-  get glyphsPtr(): bigint {
-    return this.view.getBigUint64(40, littleEndian);
-  }
-}
-
-export class Camera3D {
-  #buffer: ArrayBuffer;
-  #view: DataView;
-  #position: ViewFloatVec3;
-  #target: ViewFloatVec3;
-  #up: ViewFloatVec3;
-
-  constructor(options?: {
-    position?: Vector3;
-    target?: Vector3;
-    up?: Vector3;
-    fovy?: number;
-    projection?: CameraProjection;
-  }) {
-    this.#buffer = new ArrayBuffer(44);
-    this.#view = new DataView(this.#buffer);
-
-    this.#position = this.VFVector(0);
-    this.#target = this.VFVector(12);
-    this.#up = this.VFVector(24);
-
-    this.position = options?.position ?? new Vector3(0, 0, 0);
-    this.target = options?.target ?? new Vector3(0, 1, 0);
-    this.up = options?.up ?? new Vector3(0, 0, 1);
-    this.fovy = options?.fovy ?? 90;
-    this.projection = options?.projection ?? CameraProjection.PERSPECTIVE;
-  }
-
-  get buffer(): ArrayBuffer {
-    // this.#buffer = this.#view.buffer as ArrayBuffer;
-    return this.#buffer;
-  }
-
-  private VFVector(offset: int): ViewFloatVec3 {
-    const view = this.#view;
-    return {
-      get x() {
-        return view.getFloat32(offset + 0, littleEndian);
-      },
-      set x(v: float) {
-        view.setFloat32(offset + 0, v, littleEndian);
-      },
-      get y() {
-        return view.getFloat32(offset + 4, littleEndian);
-      },
-      set y(v: float) {
-        view.setFloat32(offset + 4, v, littleEndian);
-      },
-      get z() {
-        return view.getFloat32(offset + 8, littleEndian);
-      },
-      set z(v: float) {
-        view.setFloat32(offset + 8, v, littleEndian);
-      },
-    };
-  }
-
-  get position(): ViewFloatVec3 {
-    return this.#position;
-  }
-  set position(value: { x: float; y: float; z: float }) {
-    this.#position.x = value.x;
-    this.#position.y = value.y;
-    this.#position.z = value.z;
-  }
-
-  get target(): ViewFloatVec3 {
-    return this.#target;
-  }
-  set target(value: { x: float; y: float; z: float }) {
-    this.#target.x = value.x;
-    this.#target.y = value.y;
-    this.#target.z = value.z;
-  }
-
-  get up(): ViewFloatVec3 {
-    return this.#up;
-  }
-  set up(value: { x: float; y: float; z: float }) {
-    this.#up.x = value.x;
-    this.#up.y = value.y;
-    this.#up.z = value.z;
-  }
-
-  get fovy(): float {
-    return this.#view.getFloat32(36, littleEndian);
-  }
-  set fovy(value: float) {
-    this.#view.setFloat32(36, value, littleEndian);
-  }
-
-  get projection(): CameraProjection {
-    return this.#view.getInt32(40, littleEndian);
-  }
-  set projection(value: CameraProjection) {
-    this.#view.setInt32(40, value, littleEndian);
-  }
-}
-
-export class Camera extends Camera3D {}
-
-export class Camera2D {
-  #buffer: ArrayBuffer;
-  #view: DataView;
-  #offset: ViewFloatVec2;
-  #target: ViewFloatVec2;
-
-  constructor(
-    options?: {
-      /** Camera offset (displacement from target) */
-      offset?: Vector2;
-      /** Camera target (rotation and zoom origin) */
-      target?: Vector2;
-      /** Camera rotation in degrees */
-      rotation?: number;
-      /** Camera zoom (scaling), 1.0f by default */
-      zoom?: number;
-    },
-  ) {
-    this.#buffer = new ArrayBuffer(24);
-    this.#view = new DataView(this.#buffer);
-    this.#offset = this.VFVector2(0);
-    this.#target = this.VFVector2(8);
-
-    this.offset = options?.offset ?? new Vector2(0, 0);
-    this.target = options?.target ?? new Vector2(0, 0);
-    this.rotation = options?.rotation ?? 0;
-    this.zoom = options?.zoom ?? 1;
-  }
-
-  get buffer(): ArrayBuffer {
-    return this.#buffer;
-  }
-
-  private VFVector2(offset: int): ViewFloatVec2 {
-    const view = this.#view;
-    return {
-      get x() {
-        return view.getFloat32(offset + 0, littleEndian);
-      },
-      set x(v: float) {
-        view.setFloat32(offset + 0, v, littleEndian);
-      },
-      get y() {
-        return view.getFloat32(offset + 4, littleEndian);
-      },
-      set y(v: float) {
-        view.setFloat32(offset + 4, v, littleEndian);
-      },
-    };
-  }
-
-  /** Camera offset (displacement from target) */
-  get offset(): ViewFloatVec2 {
-    return this.#offset;
-  }
-  set offset(value: { x: float; y: float }) {
-    this.#offset.x = value.x;
-    this.#offset.y = value.y;
-  }
-
-  /** Camera target (rotation and zoom origin) */
-  get target(): ViewFloatVec2 {
-    return this.#target;
-  }
-  set target(value: { x: float; y: float }) {
-    this.#target.x = value.x;
-    this.#target.y = value.y;
-  }
-
-  /** Camera rotation in degrees */
-  get rotation(): float {
-    return this.#view.getFloat32(16, littleEndian);
-  }
-  set rotation(value: float) {
-    this.#view.setFloat32(16, value, littleEndian);
-  }
-
-  /** Camera zoom (scaling), 1.0f by default */
-  get zoom(): float {
-    return this.#view.getFloat32(20, littleEndian);
-  }
-  set zoom(value: float) {
-    this.#view.setFloat32(20, value, littleEndian);
-  }
-}
-
-export class Mesh {
-  #buffer: Uint8Array<ArrayBuffer>;
-
-  constructor(buffer: Uint8Array<ArrayBuffer>) {
-    this.#buffer = buffer;
-  }
-
-  get buffer(): Uint8Array<ArrayBuffer> {
-    return this.#buffer;
-  }
-
-  private get view(): DataView {
-    return new DataView(this.#buffer.buffer, this.#buffer.byteOffset);
-  }
-
-  // ---- counts ----
-  get vertexCount(): number {
-    return this.view.getInt32(0, true);
-  }
-  set vertexCount(v: number) {
-    this.view.setInt32(0, v, true);
-  }
-
-  get triangleCount(): number {
-    return this.view.getInt32(4, true);
-  }
-  set triangleCount(v: number) {
-    this.view.setInt32(4, v, true);
-  }
-
-  // ---- pointers ----
-  get verticesPtr(): bigint {
-    return this.view.getBigUint64(8, true);
-  }
-  set verticesPtr(p: bigint) {
-    this.view.setBigUint64(8, p, true);
-  }
-
-  get texcoordsPtr(): bigint {
-    return this.view.getBigUint64(16, true);
-  }
-  set texcoordsPtr(p: bigint) {
-    this.view.setBigUint64(16, p, true);
-  }
-
-  get texcoords2Ptr(): bigint {
-    return this.view.getBigUint64(24, true);
-  }
-  set texcoords2Ptr(p: bigint) {
-    this.view.setBigUint64(24, p, true);
-  }
-
-  get normalsPtr(): bigint {
-    return this.view.getBigUint64(32, true);
-  }
-  set normalsPtr(p: bigint) {
-    this.view.setBigUint64(32, p, true);
-  }
-
-  get tangentsPtr(): bigint {
-    return this.view.getBigUint64(40, true);
-  }
-  set tangentsPtr(p: bigint) {
-    this.view.setBigUint64(40, p, true);
-  }
-
-  get colorsPtr(): bigint {
-    return this.view.getBigUint64(48, true);
-  }
-  set colorsPtr(p: bigint) {
-    this.view.setBigUint64(48, p, true);
-  }
-
-  get indicesPtr(): bigint {
-    return this.view.getBigUint64(56, true);
-  }
-  set indicesPtr(p: bigint) {
-    this.view.setBigUint64(56, p, true);
-  }
-
-  get animVerticesPtr(): bigint {
-    return this.view.getBigUint64(64, true);
-  }
-  set animVerticesPtr(p: bigint) {
-    this.view.setBigUint64(64, p, true);
-  }
-
-  get animNormalsPtr(): bigint {
-    return this.view.getBigUint64(72, true);
-  }
-  set animNormalsPtr(p: bigint) {
-    this.view.setBigUint64(72, p, true);
-  }
-
-  get boneIdsPtr(): bigint {
-    return this.view.getBigUint64(80, true);
-  }
-  set boneIdsPtr(p: bigint) {
-    this.view.setBigUint64(80, p, true);
-  }
-
-  get boneWeightsPtr(): bigint {
-    return this.view.getBigUint64(88, true);
-  }
-  set boneWeightsPtr(p: bigint) {
-    this.view.setBigUint64(88, p, true);
-  }
-
-  get boneMatricesPtr(): bigint {
-    return this.view.getBigUint64(96, true);
-  }
-  set boneMatricesPtr(p: bigint) {
-    this.view.setBigUint64(96, p, true);
-  }
-
-  // ---- bones ----
-  get boneCount(): number {
-    return this.view.getInt32(104, true);
-  }
-  set boneCount(v: number) {
-    this.view.setInt32(104, v, true);
-  }
-
-  // ---- OpenGL ----
-  get vaoId(): number {
-    return this.view.getUint32(112, true);
-  }
-  set vaoId(v: number) {
-    this.view.setUint32(112, v, true);
-  }
-
-  get vboIdPtr(): bigint {
-    return this.view.getBigUint64(120, true);
-  }
-  set vboIdPtr(p: bigint) {
-    this.view.setBigUint64(120, p, true);
-  }
-}
-
-export class Shader {
-  #buffer: Uint8Array<ArrayBuffer>;
-
-  constructor(buffer: Uint8Array<ArrayBuffer>) {
-    this.#buffer = buffer;
-  }
-
-  get buffer(): Uint8Array<ArrayBuffer> {
-    return this.#buffer;
-  }
-
-  private get view(): DataView {
-    return new DataView(this.#buffer.buffer, this.#buffer.byteOffset);
-  }
-
-  // Shader program id
-  get id(): number {
-    return this.view.getUint32(0, true);
-  }
-  set id(v: number) {
-    this.view.setUint32(0, v, true);
-  }
-
-  // int* locs (RL_MAX_SHADER_LOCATIONS)
-  get locsPtr(): bigint {
-    return this.view.getBigUint64(8, true);
-  }
-  set locsPtr(p: bigint) {
-    this.view.setBigUint64(8, p, true);
-  }
-}
-
-export class MaterialMap {
-  #buffer: Uint8Array<ArrayBuffer>;
-
-  constructor(buffer: Uint8Array<ArrayBuffer>) {
-    this.#buffer = buffer;
-  }
-
-  get buffer(): Uint8Array<ArrayBuffer> {
-    return this.#buffer;
-  }
-
-  private get view(): DataView {
-    return new DataView(this.#buffer.buffer, this.#buffer.byteOffset);
-  }
-
-  // Texture2D (20 bytes)
-  get texture(): Texture2D {
-    return new Texture2D(
-      new Uint8Array(
-        this.#buffer.buffer,
-        this.#buffer.byteOffset,
-        20,
-      ) as Uint8Array<ArrayBuffer>,
-    );
-  }
-
-  // Color (RGBA, 4 bytes)
-  get color(): Color {
-    return new Color(
-      this.view.getUint8(20),
-      this.view.getUint8(21),
-      this.view.getUint8(22),
-      this.view.getUint8(23),
-    );
-  }
-
-  set color(c: Color) {
-    this.view.setUint8(20, c.r);
-    this.view.setUint8(21, c.g);
-    this.view.setUint8(22, c.b);
-    this.view.setUint8(23, c.a);
-  }
-
-  // float value
-  get value(): number {
-    return this.view.getFloat32(24, true);
-  }
-
-  set value(v: number) {
-    this.view.setFloat32(24, v, true);
-  }
-}
-
-export class Material {
-  #buffer: Uint8Array<ArrayBuffer>;
-
-  constructor(buffer: Uint8Array<ArrayBuffer>) {
-    this.#buffer = buffer;
-  }
-
-  get buffer(): Uint8Array<ArrayBuffer> {
-    return this.#buffer;
-  }
-
-  private get view(): DataView {
-    return new DataView(this.#buffer.buffer, this.#buffer.byteOffset);
-  }
-
-  // Shader (16 bytes)
-  get shader(): Shader {
-    return new Shader(
-      new Uint8Array(
-        this.#buffer.buffer,
-        this.#buffer.byteOffset,
-        16,
-      ) as Uint8Array<ArrayBuffer>,
-    );
-  }
-
-  // MaterialMap* maps
-  get mapsPtr(): bigint {
-    return this.view.getBigUint64(16, true);
-  }
-
-  set mapsPtr(p: bigint) {
-    this.view.setBigUint64(16, p, true);
-  }
-
-  // params[4]
-  get params(): Float32Array {
-    return new Float32Array(
-      this.#buffer.buffer,
-      this.#buffer.byteOffset + 24,
-      4,
-    );
-  }
-}
-
-export class Transform extends Float32Array {
-  #translation: ViewFloatVec3;
-  #rotation: ViewFloatQuat;
-  #scale: ViewFloatVec3;
-
-  constructor(
-    translation = new Vector3(0, 0, 0),
-    rotation = new Quaternion(0, 0, 0, 1),
-    scale = new Vector3(1, 1, 1),
-  ) {
-    super(10);
-
-    this.#translation = this.VFVector(0);
-    this.#rotation = this.VFQuat(3);
-    this.#scale = this.VFVector(7);
-
-    this.translation = translation;
-    this.rotation = rotation;
-    this.scale = scale;
-  }
-
-  private VFVector(offset: int): ViewFloatVec3 {
-    const view = () => this;
-    return {
-      get x() {
-        return view()[offset + 0];
-      },
-      set x(v: float) {
-        view()[offset + 0] = v;
-      },
-      get y() {
-        return view()[offset + 1];
-      },
-      set y(v: float) {
-        view()[offset + 1] = v;
-      },
-      get z() {
-        return view()[offset + 2];
-      },
-      set z(v: float) {
-        view()[offset + 2] = v;
-      },
-    };
-  }
-
-  private VFQuat(offset: int): ViewFloatQuat {
-    const view = () => this;
-    return {
-      get x() {
-        return view()[offset + 0];
-      },
-      set x(v: float) {
-        view()[offset + 0] = v;
-      },
-      get y() {
-        return view()[offset + 1];
-      },
-      set y(v: float) {
-        view()[offset + 1] = v;
-      },
-      get z() {
-        return view()[offset + 2];
-      },
-      set z(v: float) {
-        view()[offset + 2] = v;
-      },
-      get w() {
-        return view()[offset + 3];
-      },
-      set w(v: float) {
-        view()[offset + 3] = v;
-      },
-    };
-  }
-
-  // ---- translation ----
-  get translation(): ViewFloatVec3 {
-    return this.#translation;
-  }
-
-  set translation(v: { x: float; y: float; z: float }) {
-    this.#translation.x = v.x;
-    this.#translation.y = v.y;
-    this.#translation.z = v.z;
-  }
-
-  // ---- rotation ----
-  get rotation(): ViewFloatQuat {
-    return this.#rotation;
-  }
-
-  set rotation(q: { x: float; y: float; z: float; w: float }) {
-    this.#rotation.x = q.x;
-    this.#rotation.y = q.y;
-    this.#rotation.z = q.z;
-    this.#rotation.w = q.w;
-  }
-
-  // ---- scale ----
-  get scale(): ViewFloatVec3 {
-    return this.#scale;
-  }
-
-  set scale(v: { x: float; y: float; z: float }) {
-    this.#scale.x = v.x;
-    this.#scale.y = v.y;
-    this.#scale.z = v.z;
-  }
-}
-
-export class BoneInfo {
-  #buffer: Uint8Array<ArrayBuffer>;
-
-  constructor(buffer: Uint8Array<ArrayBuffer>) {
-    this.#buffer = buffer;
-  }
-
-  get buffer(): Uint8Array<ArrayBuffer> {
-    return this.#buffer;
-  }
-
-  private get view(): DataView {
-    return new DataView(this.#buffer.buffer, this.#buffer.byteOffset);
-  }
-
-  // ---- name[32] ----
-  get name(): string {
-    const bytes = new Uint8Array(
-      this.#buffer.buffer,
-      this.#buffer.byteOffset,
-      32,
-    );
-
-    // C-style null-terminated string
-    let end = bytes.indexOf(0);
-    if (end === -1) end = 32;
-
-    return new TextDecoder().decode(bytes.subarray(0, end));
-  }
-
-  set name(value: string) {
-    const bytes = new Uint8Array(
-      this.#buffer.buffer,
-      this.#buffer.byteOffset,
-      32,
-    );
-
-    bytes.fill(0);
-
-    const encoded = new TextEncoder().encode(value);
-    bytes.set(encoded.subarray(0, 32));
-  }
-
-  // ---- parent ----
-  get parent(): number {
-    return this.view.getInt32(32, true);
-  }
-
-  set parent(v: number) {
-    this.view.setInt32(32, v, true);
-  }
-}
-
-export class Model {
-  #buffer: Uint8Array<ArrayBuffer>;
-  #transform: Matrix;
-
-  constructor(buffer: Uint8Array<ArrayBuffer>) {
-    this.#buffer = buffer;
-    this.#transform = Matrix.fromBuffer(
-      this.#buffer.buffer,
-      this.#buffer.byteOffset,
-    );
-  }
-
-  get buffer(): Uint8Array<ArrayBuffer> {
-    return this.#buffer;
-  }
-
-  private get view(): DataView {
-    return new DataView(this.#buffer.buffer, this.#buffer.byteOffset);
-  }
-
-  // ---- transform (Matrix, 64 bytes) ----
-  get transform(): Matrix {
-    return this.#transform;
-  }
-
-  set transform(m: Matrix) {
-    this.#transform.set(m);
-  }
-
-  // ---- counts ----
-  get meshCount(): number {
-    return this.view.getInt32(64, true);
-  }
-  set meshCount(v: number) {
-    this.view.setInt32(64, v, true);
-  }
-
-  get materialCount(): number {
-    return this.view.getInt32(68, true);
-  }
-  set materialCount(v: number) {
-    this.view.setInt32(68, v, true);
-  }
-
-  // ---- pointers ----
-  get meshesPtr(): bigint {
-    return this.view.getBigUint64(72, true);
-  }
-  set meshesPtr(p: bigint) {
-    this.view.setBigUint64(72, p, true);
-  }
-
-  get materialsPtr(): bigint {
-    return this.view.getBigUint64(80, true);
-  }
-  set materialsPtr(p: bigint) {
-    this.view.setBigUint64(80, p, true);
-  }
-
-  get meshMaterialPtr(): bigint {
-    return this.view.getBigUint64(88, true);
-  }
-  set meshMaterialPtr(p: bigint) {
-    this.view.setBigUint64(88, p, true);
-  }
-
-  // ---- bones ----
-  get boneCount(): number {
-    return this.view.getInt32(96, true);
-  }
-  set boneCount(v: number) {
-    this.view.setInt32(96, v, true);
-  }
-
-  get bonesPtr(): bigint {
-    return this.view.getBigUint64(104, true);
-  }
-  set bonesPtr(p: bigint) {
-    this.view.setBigUint64(104, p, true);
-  }
-
-  get bindPosePtr(): bigint {
-    return this.view.getBigUint64(112, true);
-  }
-  set bindPosePtr(p: bigint) {
-    this.view.setBigUint64(112, p, true);
-  }
-}
-
-export class ModelAnimation {
-  #buffer: Uint8Array<ArrayBuffer>;
-
-  constructor(buffer: Uint8Array<ArrayBuffer>) {
-    this.#buffer = buffer;
-  }
-
-  get buffer(): Uint8Array<ArrayBuffer> {
-    return this.#buffer;
-  }
-
-  private get view(): DataView {
-    return new DataView(this.#buffer.buffer, this.#buffer.byteOffset);
-  }
-
-  // ---- counts ----
-  get boneCount(): number {
-    return this.view.getInt32(0, true);
-  }
-  set boneCount(v: number) {
-    this.view.setInt32(0, v, true);
-  }
-
-  get frameCount(): number {
-    return this.view.getInt32(4, true);
-  }
-  set frameCount(v: number) {
-    this.view.setInt32(4, v, true);
-  }
-
-  // ---- pointers ----
-  get bonesPtr(): bigint {
-    return this.view.getBigUint64(8, true);
-  }
-  set bonesPtr(p: bigint) {
-    this.view.setBigUint64(8, p, true);
-  }
-
-  // Transform** (array of Transform*)
-  get framePosesPtr(): bigint {
-    return this.view.getBigUint64(16, true);
-  }
-  set framePosesPtr(p: bigint) {
-    this.view.setBigUint64(16, p, true);
-  }
-
-  // ---- name[32] ----
-  get name(): string {
-    const bytes = new Uint8Array(
-      this.#buffer.buffer,
-      this.#buffer.byteOffset + 24,
-      32,
-    );
-
-    let end = bytes.indexOf(0);
-    if (end === -1) end = 32;
-
-    return new TextDecoder().decode(bytes.subarray(0, end));
-  }
-
-  set name(value: string) {
-    const bytes = new Uint8Array(
-      this.#buffer.buffer,
-      this.#buffer.byteOffset + 24,
-      32,
-    );
-
-    bytes.fill(0);
-
-    const encoded = new TextEncoder().encode(value);
-    bytes.set(encoded.subarray(0, 32));
-  }
-}
-
-export class Ray extends Float32Array {
-  #position: ViewFloatVec3;
-  #direction: ViewFloatVec3;
-
-  constructor(
-    position = new Vector3(0, 0, 0),
-    direction = new Vector3(0, 0, 1),
-  ) {
-    super(6);
-    this.#position = this.VFVector(0);
-    this.#direction = this.VFVector(3);
-    this.position = position;
-    this.direction = direction;
-  }
-
-  private VFVector(offset: int): ViewFloatVec3 {
-    const view = () => this;
-    return {
-      get x() {
-        return view()[offset + 0];
-      },
-      set x(v: float) {
-        view()[offset + 0] = v;
-      },
-      get y() {
-        return view()[offset + 1];
-      },
-      set y(v: float) {
-        view()[offset + 1] = v;
-      },
-      get z() {
-        return view()[offset + 2];
-      },
-      set z(v: float) {
-        view()[offset + 2] = v;
-      },
-    };
-  }
-
-  // ---- position ----
-  get position(): ViewFloatVec3 {
-    return this.#position;
-  }
-
-  set position(v: { x: float; y: float; z: float }) {
-    this.#position.x = v.x;
-    this.#position.y = v.y;
-    this.#position.z = v.z;
-  }
-
-  get px(): number {
-    return this[0];
-  }
-  set px(v: number) {
-    this[0] = v;
-  }
-
-  get py(): number {
-    return this[1];
-  }
-  set py(v: number) {
-    this[1] = v;
-  }
-
-  get pz(): number {
-    return this[2];
-  }
-  set pz(v: number) {
-    this[2] = v;
-  }
-
-  // ---- direction ----
-  get direction(): ViewFloatVec3 {
-    return this.#direction;
-  }
-
-  set direction(v: { x: float; y: float; z: float }) {
-    this.#direction.x = v.x;
-    this.#direction.y = v.y;
-    this.#direction.z = v.z;
-  }
-
-  get dx(): number {
-    return this[3];
-  }
-  set dx(v: number) {
-    this[3] = v;
-  }
-
-  get dy(): number {
-    return this[4];
-  }
-  set dy(v: number) {
-    this[4] = v;
-  }
-
-  get dz(): number {
-    return this[5];
-  }
-  set dz(v: number) {
-    this[5] = v;
-  }
-}
-
-export class RayCollision {
-  #buffer: Uint8Array<ArrayBuffer>;
-  #view: DataView;
-  #point: ViewFloatVec3;
-  #normal: ViewFloatVec3;
-
-  constructor(buffer: Uint8Array<ArrayBuffer>) {
-    this.#buffer = buffer;
-    this.#view = new DataView(this.#buffer.buffer, this.#buffer.byteOffset);
-    this.#point = this.VFVector(8);
-    this.#normal = this.VFVector(20);
-  }
-
-  get buffer(): Uint8Array<ArrayBuffer> {
-    return this.#buffer;
-  }
-
-  private get view(): DataView {
-    return this.#view;
-  }
-
-  private VFVector(offset: int): ViewFloatVec3 {
-    const view = this.#view;
-    return {
-      get x() {
-        return view.getFloat32(offset + 0, true);
-      },
-      set x(v: float) {
-        view.setFloat32(offset + 0, v, true);
-      },
-      get y() {
-        return view.getFloat32(offset + 4, true);
-      },
-      set y(v: float) {
-        view.setFloat32(offset + 4, v, true);
-      },
-      get z() {
-        return view.getFloat32(offset + 8, true);
-      },
-      set z(v: float) {
-        view.setFloat32(offset + 8, v, true);
-      },
-    };
-  }
-
-  // ---- hit ----
-  get hit(): boolean {
-    return this.view.getUint8(0) !== 0;
-  }
-
-  set hit(v: boolean) {
-    this.view.setUint8(0, v ? 1 : 0);
-  }
-
-  // ---- distance ----
-  get distance(): number {
-    return this.view.getFloat32(4, true);
-  }
-
-  set distance(v: number) {
-    this.view.setFloat32(4, v, true);
-  }
-
-  // ---- point ----
-  get point(): ViewFloatVec3 {
-    return this.#point;
-  }
-
-  set point(v: { x: float; y: float; z: float }) {
-    this.#point.x = v.x;
-    this.#point.y = v.y;
-    this.#point.z = v.z;
-  }
-
-  // ---- normal ----
-  get normal(): ViewFloatVec3 {
-    return this.#normal;
-  }
-
-  set normal(v: { x: float; y: float; z: float }) {
-    this.#normal.x = v.x;
-    this.#normal.y = v.y;
-    this.#normal.z = v.z;
-  }
-}
-
-export class BoundingBox extends Float32Array {
-  #min: ViewFloatVec3;
-  #max: ViewFloatVec3;
-
-  constructor(
-    min = new Vector3(0, 0, 0),
-    max = new Vector3(0, 0, 0),
-  ) {
-    super(6);
-    this.#min = this.VFVector(0);
-    this.#max = this.VFVector(3);
-    this.min = min;
-    this.max = max;
-  }
-
-  private VFVector(offset: int): ViewFloatVec3 {
-    const view = () => this;
-    return {
-      get x() {
-        return view()[offset + 0];
-      },
-      set x(v: float) {
-        view()[offset + 0] = v;
-      },
-      get y() {
-        return view()[offset + 1];
-      },
-      set y(v: float) {
-        view()[offset + 1] = v;
-      },
-      get z() {
-        return view()[offset + 2];
-      },
-      set z(v: float) {
-        view()[offset + 2] = v;
-      },
-    };
-  }
-
-  // ---- min ----
-  get min(): ViewFloatVec3 {
-    return this.#min;
-  }
-
-  set min(v: { x: float; y: float; z: float }) {
-    this.#min.x = v.x;
-    this.#min.y = v.y;
-    this.#min.z = v.z;
-  }
-
-  get minX(): number {
-    return this[0];
-  }
-  set minX(v: number) {
-    this[0] = v;
-  }
-
-  get minY(): number {
-    return this[1];
-  }
-  set minY(v: number) {
-    this[1] = v;
-  }
-
-  get minZ(): number {
-    return this[2];
-  }
-  set minZ(v: number) {
-    this[2] = v;
-  }
-
-  // ---- max ----
-  get max(): ViewFloatVec3 {
-    return this.#max;
-  }
-
-  set max(v: { x: float; y: float; z: float }) {
-    this.#max.x = v.x;
-    this.#max.y = v.y;
-    this.#max.z = v.z;
-  }
-
-  get maxX(): number {
-    return this[3];
-  }
-  set maxX(v: number) {
-    this[3] = v;
-  }
-
-  get maxY(): number {
-    return this[4];
-  }
-  set maxY(v: number) {
-    this[4] = v;
-  }
-
-  get maxZ(): number {
-    return this[5];
-  }
-  set maxZ(v: number) {
-    this[5] = v;
-  }
-}
-
-export class Wave {
-  #buffer: Uint8Array<ArrayBuffer>;
-
-  constructor(buffer: Uint8Array<ArrayBuffer>) {
-    this.#buffer = buffer;
-  }
-
-  get buffer(): Uint8Array<ArrayBuffer> {
-    return this.#buffer;
-  }
-
-  private get view(): DataView {
-    return new DataView(this.#buffer.buffer, this.#buffer.byteOffset);
-  }
-
-  // ---- frameCount ----
-  get frameCount(): number {
-    return this.view.getUint32(0, true);
-  }
-
-  set frameCount(v: number) {
-    this.view.setUint32(0, v, true);
-  }
-
-  // ---- sampleRate ----
-  get sampleRate(): number {
-    return this.view.getUint32(4, true);
-  }
-
-  set sampleRate(v: number) {
-    this.view.setUint32(4, v, true);
-  }
-
-  // ---- sampleSize ----
-  get sampleSize(): number {
-    return this.view.getUint32(8, true);
-  }
-
-  set sampleSize(v: number) {
-    this.view.setUint32(8, v, true);
-  }
-
-  // ---- channels ----
-  get channels(): number {
-    return this.view.getUint32(12, true);
-  }
-
-  set channels(v: number) {
-    this.view.setUint32(12, v, true);
-  }
-
-  // ---- data pointer ----
-  get dataPtr(): bigint {
-    return this.view.getBigUint64(16, true);
-  }
-
-  set dataPtr(p: bigint) {
-    this.view.setBigUint64(16, p, true);
-  }
-}
-
-export class AudioStream {
-  #buffer: Uint8Array<ArrayBuffer>;
-
-  constructor(buffer: Uint8Array<ArrayBuffer>) {
-    this.#buffer = buffer;
-  }
-
-  get buffer(): Uint8Array<ArrayBuffer> {
-    return this.#buffer;
-  }
-
-  private get view(): DataView {
-    return new DataView(this.#buffer.buffer, this.#buffer.byteOffset);
-  }
-
-  // ---- internal pointers ----
-  get bufferPtr(): bigint {
-    return this.view.getBigUint64(0, true);
-  }
-
-  set bufferPtr(p: bigint) {
-    this.view.setBigUint64(0, p, true);
-  }
-
-  get processorPtr(): bigint {
-    return this.view.getBigUint64(8, true);
-  }
-
-  set processorPtr(p: bigint) {
-    this.view.setBigUint64(8, p, true);
-  }
-
-  // ---- audio format ----
-  get sampleRate(): number {
-    return this.view.getUint32(16, true);
-  }
-
-  set sampleRate(v: number) {
-    this.view.setUint32(16, v, true);
-  }
-
-  get sampleSize(): number {
-    return this.view.getUint32(20, true);
-  }
-
-  set sampleSize(v: number) {
-    this.view.setUint32(20, v, true);
-  }
-
-  get channels(): number {
-    return this.view.getUint32(24, true);
-  }
-
-  set channels(v: number) {
-    this.view.setUint32(24, v, true);
-  }
-}
-
-export class Sound {
-  #buffer: Uint8Array<ArrayBuffer>;
-
-  constructor(buffer: Uint8Array<ArrayBuffer>) {
-    this.#buffer = buffer;
-  }
-
-  get buffer(): Uint8Array<ArrayBuffer> {
-    return this.#buffer;
-  }
-
-  private get view(): DataView {
-    return new DataView(this.#buffer.buffer, this.#buffer.byteOffset);
-  }
-
-  // ---- AudioStream (32 bytes) ----
-  get stream(): AudioStream {
-    return new AudioStream(
-      new Uint8Array(
-        this.#buffer.buffer,
-        this.#buffer.byteOffset,
-        32,
-      ) as Uint8Array<ArrayBuffer>,
-    );
-  }
-
-  // ---- frameCount ----
-  get frameCount(): number {
-    return this.view.getUint32(32, true);
-  }
-
-  set frameCount(v: number) {
-    this.view.setUint32(32, v, true);
-  }
-}
-
-export class Music {
-  #buffer: Uint8Array<ArrayBuffer>;
-
-  constructor(buffer: Uint8Array<ArrayBuffer>) {
-    this.#buffer = buffer;
-  }
-
-  get buffer(): Uint8Array<ArrayBuffer> {
-    return this.#buffer;
-  }
-
-  private get view(): DataView {
-    return new DataView(this.#buffer.buffer, this.#buffer.byteOffset);
-  }
-
-  // ---- AudioStream (32 bytes) ----
-  get stream(): AudioStream {
-    return new AudioStream(
-      new Uint8Array(
-        this.#buffer.buffer,
-        this.#buffer.byteOffset,
-        32,
-      ) as Uint8Array<ArrayBuffer>,
-    );
-  }
-
-  // ---- frameCount ----
-  get frameCount(): number {
-    return this.view.getUint32(32, true);
-  }
-
-  set frameCount(v: number) {
-    this.view.setUint32(32, v, true);
-  }
-
-  // ---- looping (bool) ----
-  get looping(): boolean {
-    return this.view.getUint8(36) !== 0;
-  }
-
-  set looping(v: boolean) {
-    this.view.setUint8(36, v ? 1 : 0);
-  }
-
-  // ---- ctxType ----
-  get ctxType(): number {
-    return this.view.getInt32(40, true);
-  }
-
-  set ctxType(v: number) {
-    this.view.setInt32(40, v, true);
-  }
-
-  // ---- ctxData pointer ----
-  get ctxDataPtr(): bigint {
-    return this.view.getBigUint64(48, true);
-  }
-
-  set ctxDataPtr(p: bigint) {
-    this.view.setBigUint64(48, p, true);
-  }
-}
-
-export class VrDeviceInfo {
-  #buffer: Uint8Array<ArrayBuffer>;
-
-  constructor(buffer: Uint8Array<ArrayBuffer>) {
-    this.#buffer = buffer;
-  }
-
-  get buffer(): Uint8Array<ArrayBuffer> {
-    return this.#buffer;
-  }
-
-  private get view(): DataView {
-    return new DataView(this.#buffer.buffer, this.#buffer.byteOffset);
-  }
-
-  // ---- resolution ----
-  get hResolution(): number {
-    return this.view.getInt32(0, true);
-  }
-  set hResolution(v: number) {
-    this.view.setInt32(0, v, true);
-  }
-
-  get vResolution(): number {
-    return this.view.getInt32(4, true);
-  }
-  set vResolution(v: number) {
-    this.view.setInt32(4, v, true);
-  }
-
-  // ---- sizes ----
-  get hScreenSize(): number {
-    return this.view.getFloat32(8, true);
-  }
-  set hScreenSize(v: number) {
-    this.view.setFloat32(8, v, true);
-  }
-
-  get vScreenSize(): number {
-    return this.view.getFloat32(12, true);
-  }
-  set vScreenSize(v: number) {
-    this.view.setFloat32(12, v, true);
-  }
-
-  get eyeToScreenDistance(): number {
-    return this.view.getFloat32(16, true);
-  }
-  set eyeToScreenDistance(v: number) {
-    this.view.setFloat32(16, v, true);
-  }
-
-  get lensSeparationDistance(): number {
-    return this.view.getFloat32(20, true);
-  }
-  set lensSeparationDistance(v: number) {
-    this.view.setFloat32(20, v, true);
-  }
-
-  get interpupillaryDistance(): number {
-    return this.view.getFloat32(24, true);
-  }
-  set interpupillaryDistance(v: number) {
-    this.view.setFloat32(24, v, true);
-  }
-
-  // ---- arrays ----
-  get lensDistortionValues(): Float32Array {
-    return new Float32Array(
-      this.#buffer.buffer,
-      this.#buffer.byteOffset + 28,
-      4,
-    );
-  }
-
-  get chromaAbCorrection(): Float32Array {
-    return new Float32Array(
-      this.#buffer.buffer,
-      this.#buffer.byteOffset + 44,
-      4,
-    );
-  }
-}
-
-export class VrStereoConfig {
-  #buffer: Uint8Array<ArrayBuffer>;
-  #projection: [Matrix, Matrix];
-  #viewOffset: [Matrix, Matrix];
-
-  constructor(buffer: Uint8Array<ArrayBuffer>) {
-    this.#buffer = buffer;
-    this.#projection = [
-      Matrix.fromBuffer(this.#buffer.buffer, this.#buffer.byteOffset + 0),
-      Matrix.fromBuffer(this.#buffer.buffer, this.#buffer.byteOffset + 64),
-    ];
-    this.#viewOffset = [
-      Matrix.fromBuffer(this.#buffer.buffer, this.#buffer.byteOffset + 128),
-      Matrix.fromBuffer(this.#buffer.buffer, this.#buffer.byteOffset + 192),
-    ];
-  }
-
-  get buffer(): Uint8Array<ArrayBuffer> {
-    return this.#buffer;
-  }
-
-  private get view(): DataView {
-    return new DataView(this.#buffer.buffer, this.#buffer.byteOffset);
-  }
-
-  // ---- matrices ----
-  getProjection(eye: 0 | 1): Matrix {
-    return this.#projection[eye];
-  }
-
-  setProjection(eye: 0 | 1, m: Matrix): void {
-    this.#projection[eye].set(m);
-  }
-
-  getViewOffset(eye: 0 | 1): Matrix {
-    return this.#viewOffset[eye];
-  }
-
-  setViewOffset(eye: 0 | 1, m: Matrix): void {
-    this.#viewOffset[eye].set(m);
-  }
-
-  // ---- float[2] helpers ----
-  private getVec2(offset: number): Float32Array {
-    return new Float32Array(
-      this.#buffer.buffer,
-      this.#buffer.byteOffset + offset,
-      2,
-    );
-  }
-
-  get leftLensCenter(): Float32Array {
-    return this.getVec2(256);
-  }
-
-  get rightLensCenter(): Float32Array {
-    return this.getVec2(264);
-  }
-
-  get leftScreenCenter(): Float32Array {
-    return this.getVec2(272);
-  }
-
-  get rightScreenCenter(): Float32Array {
-    return this.getVec2(280);
-  }
-
-  get scale(): Float32Array {
-    return this.getVec2(288);
-  }
-
-  get scaleIn(): Float32Array {
-    return this.getVec2(296);
-  }
-}
-
-export class FilePathList {
-  #buffer: Uint8Array<ArrayBuffer>;
-
-  constructor(buffer: Uint8Array<ArrayBuffer>) {
-    this.#buffer = buffer;
-  }
-
-  get buffer(): Uint8Array<ArrayBuffer> {
-    return this.#buffer;
-  }
-
-  private get view(): DataView {
-    return new DataView(this.#buffer.buffer, this.#buffer.byteOffset);
-  }
-
-  // ---- capacity ----
-  get capacity(): number {
-    return this.view.getUint32(0, true);
-  }
-
-  set capacity(v: number) {
-    this.view.setUint32(0, v, true);
-  }
-
-  // ---- count ----
-  get count(): number {
-    return this.view.getUint32(4, true);
-  }
-
-  set count(v: number) {
-    this.view.setUint32(4, v, true);
-  }
-
-  // ---- char** paths ----
-  get pathsPtr(): bigint {
-    return this.view.getBigUint64(8, true);
-  }
-
-  set pathsPtr(p: bigint) {
-    this.view.setBigUint64(8, p, true);
-  }
-}
-
-export class AutomationEvent {
-  #buffer: Uint8Array<ArrayBuffer>;
-
-  constructor(buffer: Uint8Array<ArrayBuffer>) {
-    this.#buffer = buffer;
-  }
-
-  get buffer(): Uint8Array<ArrayBuffer> {
-    return this.#buffer;
-  }
-
-  private get view(): DataView {
-    return new DataView(this.#buffer.buffer, this.#buffer.byteOffset);
-  }
-
-  // ---- frame ----
-  get frame(): number {
-    return this.view.getUint32(0, true);
-  }
-
-  set frame(v: number) {
-    this.view.setUint32(0, v, true);
-  }
-
-  // ---- type ----
-  get type(): number {
-    return this.view.getUint32(4, true);
-  }
-
-  set type(v: number) {
-    this.view.setUint32(4, v, true);
-  }
-
-  // ---- params[4] ----
-  get params(): Int32Array {
-    return new Int32Array(
-      this.#buffer.buffer,
-      this.#buffer.byteOffset + 8,
-      4,
-    );
-  }
-}
-
-export class AutomationEventList {
-  #buffer: Uint8Array<ArrayBuffer>;
-
-  constructor(buffer: Uint8Array<ArrayBuffer>) {
-    this.#buffer = buffer;
-  }
-
-  get buffer(): Uint8Array<ArrayBuffer> {
-    return this.#buffer;
-  }
-
-  private get view(): DataView {
-    return new DataView(this.#buffer.buffer, this.#buffer.byteOffset);
-  }
-
-  // ---- capacity ----
-  get capacity(): number {
-    return this.view.getUint32(0, true);
-  }
-
-  set capacity(v: number) {
-    this.view.setUint32(0, v, true);
-  }
-
-  // ---- count ----
-  get count(): number {
-    return this.view.getUint32(4, true);
-  }
-
-  set count(v: number) {
-    this.view.setUint32(4, v, true);
-  }
-
-  // ---- AutomationEvent* events ----
-  get eventsPtr(): bigint {
-    return this.view.getBigUint64(8, true);
-  }
-
-  set eventsPtr(p: bigint) {
-    this.view.setBigUint64(8, p, true);
-  }
-}
-
+// struct types (imported)
 // consts
 
 export const LightGray = new Color(200, 200, 200, 255);
@@ -2691,7 +638,7 @@ export function SetWindowIcons(images: Image[]): void {
   }
 
   lib.SetWindowIcons(
-    Deno.UnsafePointer.of(buf),
+    buf,
     count,
   );
 }
@@ -2875,8 +822,25 @@ export function EndMode3D(): void {
   lib.EndMode3D();
 }
 
-export function BeginTextureMode(texture: Texture2D): void {
-  lib.BeginTextureMode(texture.buffer);
+// rlgl state helpers (skybox)
+export function DisableBackfaceCulling(): void {
+  lib.rlDisableBackfaceCulling();
+}
+
+export function EnableBackfaceCulling(): void {
+  lib.rlEnableBackfaceCulling();
+}
+
+export function DisableDepthMask(): void {
+  lib.rlDisableDepthMask();
+}
+
+export function EnableDepthMask(): void {
+  lib.rlEnableDepthMask();
+}
+
+export function BeginTextureMode(target: RenderTexture): void {
+  lib.BeginTextureMode(target.buffer);
 }
 
 export function EndTextureMode(): void {
@@ -3017,9 +981,7 @@ export function UnloadShader(shader: Shader): void {
 
 export function GetScreenToWorldRay(position: Vector2, camera: Camera): Ray {
   const buf = lib.GetScreenToWorldRay(position.buffer, camera.buffer);
-  const pos3 = new Vector3(buf[0], buf[4], buf[8]);
-  const dir3 = new Vector3(buf[12], buf[16], buf[20]);
-  return new Ray(pos3, dir3);
+  return Ray.fromBuffer(buf.buffer, buf.byteOffset);
 }
 
 export function GetScreenToWorldRayEx(
@@ -3034,14 +996,12 @@ export function GetScreenToWorldRayEx(
     width,
     height,
   );
-  const pos3 = new Vector3(buf[0], buf[4], buf[8]);
-  const dir3 = new Vector3(buf[12], buf[16], buf[20]);
-  return new Ray(pos3, dir3);
+  return Ray.fromBuffer(buf.buffer, buf.byteOffset);
 }
 
 export function GetWorldToScreen(position: Vector3, camera: Camera): Vector2 {
   const buf = lib.GetWorldToScreen(position.buffer, camera.buffer);
-  return new Vector2(buf[0], buf[1]);
+  return Vector2.fromBuffer(buf.buffer, buf.byteOffset);
 }
 
 export function GetWorldToScreenEx(
@@ -3056,7 +1016,7 @@ export function GetWorldToScreenEx(
     width,
     height,
   );
-  return new Vector2(buf[0], buf[1]);
+  return Vector2.fromBuffer(buf.buffer, buf.byteOffset);
 }
 
 export function GetWorldToScreen2D(
@@ -3064,7 +1024,7 @@ export function GetWorldToScreen2D(
   camera: Camera2D,
 ): Vector2 {
   const buf = lib.GetWorldToScreen2D(position.buffer, camera.buffer);
-  return new Vector2(buf[0], buf[1]);
+  return Vector2.fromBuffer(buf.buffer, buf.byteOffset);
 }
 
 export function GetSCreenToWorld2D(
@@ -3072,51 +1032,17 @@ export function GetSCreenToWorld2D(
   camera: Camera2D,
 ): Vector2 {
   const buf = lib.GetScreenToWorld2D(position.buffer, camera.buffer);
-  return new Vector2(buf[0], buf[1]);
+  return Vector2.fromBuffer(buf.buffer, buf.byteOffset);
 }
 
 export function GetCameraMatrix(camera: Camera): Matrix {
   const buf = lib.GetCameraMatrix(camera.buffer);
-  return new Matrix(
-    buf[0],
-    buf[4],
-    buf[8],
-    buf[12],
-    buf[16],
-    buf[20],
-    buf[24],
-    buf[28],
-    buf[32],
-    buf[36],
-    buf[40],
-    buf[44],
-    buf[48],
-    buf[52],
-    buf[56],
-    buf[60],
-  );
+  return Matrix.fromBuffer(buf.buffer, buf.byteOffset);
 }
 
 export function GetCameraMatrix2D(camera: Camera2D): Matrix {
   const buf = lib.GetCameraMatrix2D(camera.buffer);
-  return new Matrix(
-    buf[0],
-    buf[4],
-    buf[8],
-    buf[12],
-    buf[16],
-    buf[20],
-    buf[24],
-    buf[28],
-    buf[32],
-    buf[36],
-    buf[40],
-    buf[44],
-    buf[48],
-    buf[52],
-    buf[56],
-    buf[60],
-  );
+  return Matrix.fromBuffer(buf.buffer, buf.byteOffset);
 }
 
 export function SetTargetFPS(fps: int): void {
@@ -3239,7 +1165,7 @@ export function ExportAutomationEventList(
 }
 
 export function SetAutomationEventList(eventList: AutomationEventList): void {
-  lib.SetAutomationEventList(Deno.UnsafePointer.of(eventList.buffer));
+  lib.SetAutomationEventList(eventList.buffer);
 }
 
 export function SetAutomationEventBaseFrame(frame: int): void {
@@ -3292,8 +1218,10 @@ export function IsGamepadAvailable(gamepad: int): boolean {
 }
 
 export function GetGamepadName(gamepad: int): string {
-  const name = lib.GetGamepadName(gamepad) as unknown as BufferSource;
-  return new TextDecoder().decode(name);
+  const ptr = lib.GetGamepadName(gamepad);
+  if (!ptr) return "";
+  const view = new Deno.UnsafePointerView(ptr);
+  return view.getCString();
 }
 
 export function IsGamepadButtonPressed(
@@ -3375,18 +1303,12 @@ export function GetMouseY(): int {
 
 export function GetMousePosition(): Vector2 {
   const buffer = lib.GetMousePosition();
-  const view = new DataView(buffer.buffer);
-  const x = view.getFloat32(0);
-  const y = view.getFloat32(4);
-  return new Vector2(x, y);
+  return Vector2.fromBuffer(buffer.buffer, buffer.byteOffset);
 }
 
 export function GetMouseDelta(): Vector2 {
   const buffer = lib.GetMouseDelta();
-  const view = new DataView(buffer.buffer);
-  const x = view.getFloat32(0);
-  const y = view.getFloat32(4);
-  return new Vector2(x, y);
+  return Vector2.fromBuffer(buffer.buffer, buffer.byteOffset);
 }
 
 export function SetMousePosition(x: int, y: int): void {
@@ -3407,10 +1329,7 @@ export function GetMouseWheelMove(): float {
 
 export function GetMouseWheelMoveV(): Vector2 {
   const buffer = lib.GetMouseWheelMoveV();
-  const view = new DataView(buffer.buffer);
-  const x = view.getFloat32(0);
-  const y = view.getFloat32(4);
-  return new Vector2(x, y);
+  return Vector2.fromBuffer(buffer.buffer, buffer.byteOffset);
 }
 
 export function SetMouseCursor(cursor: MouseCursor): void {
@@ -3427,10 +1346,7 @@ export function GetTouchY(): int {
 
 export function GetTouchPosition(index: int): Vector2 {
   const buffer = lib.GetTouchPosition(index);
-  const view = new DataView(buffer.buffer);
-  const x = view.getFloat32(0);
-  const y = view.getFloat32(4);
-  return new Vector2(x, y);
+  return Vector2.fromBuffer(buffer.buffer, buffer.byteOffset);
 }
 
 export function GetTouchPointId(index: int): int {
@@ -3455,10 +1371,7 @@ export function GetGestureHoldDuration(): float {
 
 export function GetGestureDragVector(): Vector2 {
   const buffer = lib.GetGestureDragVector();
-  const view = new DataView(buffer.buffer);
-  const x = view.getFloat32(0);
-  const y = view.getFloat32(4);
-  return new Vector2(x, y);
+  return Vector2.fromBuffer(buffer.buffer, buffer.byteOffset);
 }
 
 export function GetGestureDragAngle(): float {
@@ -3467,10 +1380,7 @@ export function GetGestureDragAngle(): float {
 
 export function GetGesturePinchVector(): Vector2 {
   const buffer = lib.GetGesturePinchVector();
-  const view = new DataView(buffer.buffer);
-  const x = view.getFloat32(0);
-  const y = view.getFloat32(4);
-  return new Vector2(x, y);
+  return Vector2.fromBuffer(buffer.buffer, buffer.byteOffset);
 }
 
 export function GetGesturePinchAngle(): float {
@@ -3506,12 +1416,7 @@ export function GetShapesTexture(): Texture2D {
 
 export function GetShapesTextureRectangle(): Rectangle {
   const buffer = lib.GetShapesTextureRectangle();
-  const view = new DataView(buffer.buffer);
-  const x = view.getFloat32(0);
-  const y = view.getFloat32(4);
-  const width = view.getFloat32(8);
-  const height = view.getFloat32(12);
-  return new Rectangle(x, y, width, height);
+  return Rectangle.fromBuffer(buffer.buffer, buffer.byteOffset);
 }
 
 export function DrawPixel(posX: int, posY: int, color: Color): void {
@@ -3550,13 +1455,8 @@ export function DrawLineEx(
 }
 
 export function DrawLineStrip(points: Vector2[], color: Color): void {
-  const line_strip_buffer = new Float32Array(points.length * 2);
-  for (let i = 0; i < points.length; i++) {
-    line_strip_buffer[i * 2] = points[i].x;
-    line_strip_buffer[i * 2 + 1] = points[i].y;
-  }
-  const line_ptr = Deno.UnsafePointer.of(line_strip_buffer.buffer);
-  lib.DrawLineStrip(line_ptr, points.length, color.buffer);
+  const line_strip_buffer = concatVector2(points);
+  lib.DrawLineStrip(line_strip_buffer as BufferSource, points.length, color.buffer);
 }
 
 export function DrawLineBezier(
@@ -3890,7 +1790,7 @@ export function DrawTriangleFan(
     points_buffer[i * 2] = points[i].x;
     points_buffer[i * 2 + 1] = points[i].y;
   }
-  const points_ptr = Deno.UnsafePointer.of(points_buffer.buffer);
+  const points_ptr = points_buffer;
   lib.DrawTriangleFan(points_ptr, points.length, color.buffer);
 }
 
@@ -3903,7 +1803,7 @@ export function DrawTriangleStrip(
     points_buffer[i * 2] = points[i].x;
     points_buffer[i * 2 + 1] = points[i].y;
   }
-  const points_ptr = Deno.UnsafePointer.of(points_buffer.buffer);
+  const points_ptr = points_buffer;
   lib.DrawTriangleStrip(points_ptr, points.length, color.buffer);
 }
 
@@ -3955,7 +1855,7 @@ export function DrawSplineLinear(
     points_buffer[i * 2] = points[i].x;
     points_buffer[i * 2 + 1] = points[i].y;
   }
-  const points_ptr = Deno.UnsafePointer.of(points_buffer.buffer);
+  const points_ptr = points_buffer;
   lib.DrawSplineLinear(points_ptr, points.length, thickness, color.buffer);
 }
 
@@ -3969,7 +1869,7 @@ export function DrawSplineBasis(
     points_buffer[i * 2] = points[i].x;
     points_buffer[i * 2 + 1] = points[i].y;
   }
-  const points_ptr = Deno.UnsafePointer.of(points_buffer.buffer);
+  const points_ptr = points_buffer;
   lib.DrawSplineBasis(points_ptr, points.length, thickness, color.buffer);
 }
 
@@ -3983,7 +1883,7 @@ export function DrawSplineCatmullRom(
     points_buffer[i * 2] = points[i].x;
     points_buffer[i * 2 + 1] = points[i].y;
   }
-  const points_ptr = Deno.UnsafePointer.of(points_buffer.buffer);
+  const points_ptr = points_buffer;
   lib.DrawSplineCatmullRom(points_ptr, points.length, thickness, color.buffer);
 }
 
@@ -3997,7 +1897,7 @@ export function DrawSplineBezierQuadratic(
     points_buffer[i * 2] = points[i].x;
     points_buffer[i * 2 + 1] = points[i].y;
   }
-  const points_ptr = Deno.UnsafePointer.of(points_buffer.buffer);
+  const points_ptr = points_buffer;
   lib.DrawSplineBezierQuadratic(
     points_ptr,
     points.length,
@@ -4016,7 +1916,7 @@ export function DrawSplineBezierCubic(
     points_buffer[i * 2] = points[i].x;
     points_buffer[i * 2 + 1] = points[i].y;
   }
-  const points_ptr = Deno.UnsafePointer.of(points_buffer.buffer);
+  const points_ptr = points_buffer;
   lib.DrawSplineBezierCubic(points_ptr, points.length, thickness, color.buffer);
 }
 
@@ -4296,11 +2196,11 @@ export function CheckCollisionPointPoly(
   const count = points.length;
   if (count === 0) return false;
 
-  const pts = concatVector2(points);
+  const V2_Buffer = concatVector2(points);
 
   return !!lib.CheckCollisionPointPoly(
     point.buffer,
-    Deno.UnsafePointer.of(pts.buffer),
+    V2_Buffer as BufferSource,
     count,
   );
 }
@@ -4317,7 +2217,7 @@ export function CheckCollisionLines(
     p2.buffer,
     p3.buffer,
     p4.buffer,
-    Deno.UnsafePointer.of(collisionPoint.buffer),
+    collisionPoint.buffer,
   );
 }
 
@@ -4674,7 +2574,7 @@ export function ImageFormat(
   newFormat: int,
 ): void {
   lib.ImageFormat(
-    Deno.UnsafePointer.of(image.buffer),
+    image.buffer,
     newFormat,
   );
 }
@@ -4684,7 +2584,7 @@ export function ImageToPOT(
   fill: Color,
 ): void {
   lib.ImageToPOT(
-    Deno.UnsafePointer.of(image.buffer),
+    image.buffer,
     fill.buffer,
   );
 }
@@ -4694,7 +2594,7 @@ export function ImageCrop(
   crop: Rectangle,
 ): void {
   lib.ImageCrop(
-    Deno.UnsafePointer.of(image.buffer),
+    image.buffer,
     crop.buffer,
   );
 }
@@ -4704,7 +2604,7 @@ export function ImageAlphaCrop(
   threshold: float,
 ): void {
   lib.ImageAlphaCrop(
-    Deno.UnsafePointer.of(image.buffer),
+    image.buffer,
     threshold,
   );
 }
@@ -4715,7 +2615,7 @@ export function ImageAlphaClear(
   threshold: float,
 ): void {
   lib.ImageAlphaClear(
-    Deno.UnsafePointer.of(image.buffer),
+    image.buffer,
     color.buffer,
     threshold,
   );
@@ -4726,7 +2626,7 @@ export function ImageAlphaMask(
   alphaMask: Image,
 ): void {
   lib.ImageAlphaMask(
-    Deno.UnsafePointer.of(image.buffer),
+    image.buffer,
     alphaMask.buffer,
   );
 }
@@ -4735,7 +2635,7 @@ export function ImageAlphaPremultiply(
   image: Image,
 ): void {
   lib.ImageAlphaPremultiply(
-    Deno.UnsafePointer.of(image.buffer),
+    image.buffer,
   );
 }
 
@@ -4744,7 +2644,7 @@ export function ImageBlurGaussian(
   blurSize: int,
 ): void {
   lib.ImageBlurGaussian(
-    Deno.UnsafePointer.of(image.buffer),
+    image.buffer,
     blurSize,
   );
 }
@@ -4755,7 +2655,7 @@ export function ImageKernelConvolution(
   kernelSize: int,
 ): void {
   lib.ImageKernelConvolution(
-    Deno.UnsafePointer.of(image.buffer),
+    image.buffer,
     Deno.UnsafePointer.of(kernel.buffer as ArrayBuffer),
     kernelSize,
   );
@@ -4767,7 +2667,7 @@ export function ImageResize(
   newHeight: int,
 ): void {
   lib.ImageResize(
-    Deno.UnsafePointer.of(image.buffer),
+    image.buffer,
     newWidth,
     newHeight,
   );
@@ -4779,7 +2679,7 @@ export function ImageResizeNN(
   newHeight: int,
 ): void {
   lib.ImageResizeNN(
-    Deno.UnsafePointer.of(image.buffer),
+    image.buffer,
     newWidth,
     newHeight,
   );
@@ -4794,7 +2694,7 @@ export function ImageResizeCanvas(
   fill: Color,
 ): void {
   lib.ImageResizeCanvas(
-    Deno.UnsafePointer.of(image.buffer),
+    image.buffer,
     newWidth,
     newHeight,
     offsetX,
@@ -4807,7 +2707,7 @@ export function ImageMipmaps(
   image: Image,
 ): void {
   lib.ImageMipmaps(
-    Deno.UnsafePointer.of(image.buffer),
+    image.buffer,
   );
 }
 
@@ -4819,7 +2719,7 @@ export function ImageDither(
   aBpp: int,
 ): void {
   lib.ImageDither(
-    Deno.UnsafePointer.of(image.buffer),
+    image.buffer,
     rBpp,
     gBpp,
     bBpp,
@@ -4831,7 +2731,7 @@ export function ImageFlipVertical(
   image: Image,
 ): void {
   lib.ImageFlipVertical(
-    Deno.UnsafePointer.of(image.buffer),
+    image.buffer,
   );
 }
 
@@ -4839,7 +2739,7 @@ export function ImageFlipHorizontal(
   image: Image,
 ): void {
   lib.ImageFlipHorizontal(
-    Deno.UnsafePointer.of(image.buffer),
+    image.buffer,
   );
 }
 
@@ -4848,7 +2748,7 @@ export function ImageRotate(
   degrees: int,
 ): void {
   lib.ImageRotate(
-    Deno.UnsafePointer.of(image.buffer),
+    image.buffer,
     degrees,
   );
 }
@@ -4857,7 +2757,7 @@ export function ImageRotateCW(
   image: Image,
 ): void {
   lib.ImageRotateCW(
-    Deno.UnsafePointer.of(image.buffer),
+    image.buffer,
   );
 }
 
@@ -4865,7 +2765,7 @@ export function ImageRotateCCW(
   image: Image,
 ): void {
   lib.ImageRotateCCW(
-    Deno.UnsafePointer.of(image.buffer),
+    image.buffer,
   );
 }
 
@@ -4874,7 +2774,7 @@ export function ImageColorTint(
   color: Color,
 ): void {
   lib.ImageColorTint(
-    Deno.UnsafePointer.of(image.buffer),
+    image.buffer,
     color.buffer,
   );
 }
@@ -4883,7 +2783,7 @@ export function ImageColorInvert(
   image: Image,
 ): void {
   lib.ImageColorInvert(
-    Deno.UnsafePointer.of(image.buffer),
+    image.buffer,
   );
 }
 
@@ -4893,7 +2793,7 @@ export function ImageColorGrayscale(
   image: Image,
 ): void {
   lib.ImageColorGrayscale(
-    Deno.UnsafePointer.of(image.buffer),
+    image.buffer,
   );
 }
 
@@ -4902,7 +2802,7 @@ export function ImageColorContrast(
   contrast: float,
 ): void {
   lib.ImageColorContrast(
-    Deno.UnsafePointer.of(image.buffer),
+    image.buffer,
     contrast,
   );
 }
@@ -4912,7 +2812,7 @@ export function ImageColorBrightness(
   brightness: int,
 ): void {
   lib.ImageColorBrightness(
-    Deno.UnsafePointer.of(image.buffer),
+    image.buffer,
     brightness,
   );
 }
@@ -4923,7 +2823,7 @@ export function ImageColorReplace(
   replace: Color,
 ): void {
   lib.ImageColorReplace(
-    Deno.UnsafePointer.of(image.buffer),
+    image.buffer,
     color.buffer,
     replace.buffer,
   );
@@ -4965,15 +2865,15 @@ export function LoadImagePalette(
 }
 
 export function UnloadImageColors(
-  colorsPtr: Deno.PointerValue,
+  colors: Uint8Array,
 ): void {
-  lib.UnloadImageColors(colorsPtr);
+  lib.UnloadImageColors(colors as BufferSource);
 }
 
 export function UnloadImagePalette(
-  colorsPtr: Deno.PointerValue,
+  colors: Uint8Array,
 ): void {
-  lib.UnloadImagePalette(colorsPtr);
+  lib.UnloadImagePalette(colors as BufferSource);
 }
 
 export function GetImageAlphaBorder(
@@ -5019,7 +2919,7 @@ export function ImageClearBackground(
   color: Color,
 ): void {
   lib.ImageClearBackground(
-    Deno.UnsafePointer.of(dst.buffer),
+    dst.buffer,
     color.buffer,
   );
 }
@@ -5031,7 +2931,7 @@ export function ImageDrawPixel(
   color: Color,
 ): void {
   lib.ImageDrawPixel(
-    Deno.UnsafePointer.of(dst.buffer),
+    dst.buffer,
     posX,
     posY,
     color.buffer,
@@ -5044,7 +2944,7 @@ export function ImageDrawPixelV(
   color: Color,
 ): void {
   lib.ImageDrawPixelV(
-    Deno.UnsafePointer.of(dst.buffer),
+    dst.buffer,
     position.buffer,
     color.buffer,
   );
@@ -5059,7 +2959,7 @@ export function ImageDrawLine(
   color: Color,
 ): void {
   lib.ImageDrawLine(
-    Deno.UnsafePointer.of(dst.buffer),
+    dst.buffer,
     startPosX,
     startPosY,
     endPosX,
@@ -5075,7 +2975,7 @@ export function ImageDrawLineV(
   color: Color,
 ): void {
   lib.ImageDrawLineV(
-    Deno.UnsafePointer.of(dst.buffer),
+    dst.buffer,
     start.buffer,
     end.buffer,
     color.buffer,
@@ -5090,7 +2990,7 @@ export function ImageDrawLineEx(
   color: Color,
 ): void {
   lib.ImageDrawLineEx(
-    Deno.UnsafePointer.of(dst.buffer),
+    dst.buffer,
     start.buffer,
     end.buffer,
     thick,
@@ -5106,7 +3006,7 @@ export function ImageDrawCircle(
   color: Color,
 ): void {
   lib.ImageDrawCircle(
-    Deno.UnsafePointer.of(dst.buffer),
+    dst.buffer,
     centerX,
     centerY,
     radius,
@@ -5121,7 +3021,7 @@ export function ImageDrawCircleV(
   color: Color,
 ): void {
   lib.ImageDrawCircleV(
-    Deno.UnsafePointer.of(dst.buffer),
+    dst.buffer,
     center.buffer,
     radius,
     color.buffer,
@@ -5136,7 +3036,7 @@ export function ImageDrawCircleLines(
   color: Color,
 ): void {
   lib.ImageDrawCircleLines(
-    Deno.UnsafePointer.of(dst.buffer),
+    dst.buffer,
     centerX,
     centerY,
     radius,
@@ -5151,7 +3051,7 @@ export function ImageDrawCircleLinesV(
   color: Color,
 ): void {
   lib.ImageDrawCircleLinesV(
-    Deno.UnsafePointer.of(dst.buffer),
+    dst.buffer,
     center.buffer,
     radius,
     color.buffer,
@@ -5167,7 +3067,7 @@ export function ImageDrawRectangle(
   color: Color,
 ): void {
   lib.ImageDrawRectangle(
-    Deno.UnsafePointer.of(dst.buffer),
+    dst.buffer,
     posX,
     posY,
     width,
@@ -5183,7 +3083,7 @@ export function ImageDrawRectangleV(
   color: Color,
 ): void {
   lib.ImageDrawRectangleV(
-    Deno.UnsafePointer.of(dst.buffer),
+    dst.buffer,
     position.buffer,
     size.buffer,
     color.buffer,
@@ -5196,7 +3096,7 @@ export function ImageDrawRectangleRec(
   color: Color,
 ): void {
   lib.ImageDrawRectangleRec(
-    Deno.UnsafePointer.of(dst.buffer),
+    dst.buffer,
     rec.buffer,
     color.buffer,
   );
@@ -5209,7 +3109,7 @@ export function ImageDrawRectangleLines(
   color: Color,
 ): void {
   lib.ImageDrawRectangleLines(
-    Deno.UnsafePointer.of(dst.buffer),
+    dst.buffer,
     rec.buffer,
     thick,
     color.buffer,
@@ -5224,7 +3124,7 @@ export function ImageDrawTriangle(
   color: Color,
 ): void {
   lib.ImageDrawTriangle(
-    Deno.UnsafePointer.of(dst.buffer),
+    dst.buffer,
     v1.buffer,
     v2.buffer,
     v3.buffer,
@@ -5242,7 +3142,7 @@ export function ImageDrawTriangleEx(
   c3: Color,
 ): void {
   lib.ImageDrawTriangleEx(
-    Deno.UnsafePointer.of(dst.buffer),
+    dst.buffer,
     v1.buffer,
     v2.buffer,
     v3.buffer,
@@ -5262,7 +3162,7 @@ export function ImageDrawTriangleLines(
   color: Color,
 ): void {
   lib.ImageDrawTriangleLines(
-    Deno.UnsafePointer.of(dst.buffer),
+    dst.buffer,
     v1.buffer,
     v2.buffer,
     v3.buffer,
@@ -5276,11 +3176,11 @@ export function ImageDrawTriangleFan(
   pointCount: int,
   color: Color,
 ): void {
-  const ptr = concatVector2(points);
+  const V2_Buffer = concatVector2(points);
 
   lib.ImageDrawTriangleFan(
-    Deno.UnsafePointer.of(dst.buffer),
-    Deno.UnsafePointer.of(ptr),
+    dst.buffer,
+    V2_Buffer as BufferSource,
     pointCount,
     color.buffer,
   );
@@ -5292,11 +3192,11 @@ export function ImageDrawTriangleStrip(
   pointCount: int,
   color: Color,
 ): void {
-  const ptr = concatVector2(points);
+  const V2_Buffer = concatVector2(points);
 
   lib.ImageDrawTriangleStrip(
-    Deno.UnsafePointer.of(dst.buffer),
-    Deno.UnsafePointer.of(ptr),
+    dst.buffer,
+    V2_Buffer as BufferSource,
     pointCount,
     color.buffer,
   );
@@ -5310,7 +3210,7 @@ export function ImageDraw(
   tint: Color,
 ): void {
   lib.ImageDraw(
-    Deno.UnsafePointer.of(dst.buffer),
+    dst.buffer,
     src.buffer,
     srcRec.buffer,
     dstRec.buffer,
@@ -5327,7 +3227,7 @@ export function ImageDrawText(
   color: Color,
 ): void {
   lib.ImageDrawText(
-    Deno.UnsafePointer.of(dst.buffer),
+    dst.buffer,
     new TextEncoder().encode(text + "\0").buffer,
     posX,
     posY,
@@ -5346,7 +3246,7 @@ export function ImageDrawTextEx(
   tint: Color,
 ): void {
   lib.ImageDrawTextEx(
-    Deno.UnsafePointer.of(dst.buffer),
+    dst.buffer,
     font.buffer,
     new TextEncoder().encode(text + "\0").buffer,
     position.buffer,
@@ -5410,7 +3310,7 @@ export function UpdateTextureRec(
 }
 
 export function GenTextureMipmaps(texture: Texture2D): void {
-  lib.GenTextureMipmaps(Deno.UnsafePointer.of(texture.buffer));
+  lib.GenTextureMipmaps(texture.buffer);
 }
 
 export function SetTextureFilter(
@@ -5527,7 +3427,7 @@ export function Fade(
   alpha: float,
 ): Color {
   const buf = lib.Fade(color.buffer, alpha);
-  return new Color(buf[0], buf[1], buf[2], buf[3]);
+  return Color.fromBuffer(buf.buffer, buf.byteOffset);
 }
 
 export function ColorToInt(color: Color): int {
@@ -5536,17 +3436,17 @@ export function ColorToInt(color: Color): int {
 
 export function ColorNormalize(color: Color): Vector4 {
   const buf = lib.ColorNormalize(color.buffer);
-  return new Vector4(buf[0], buf[1], buf[2], buf[3]);
+  return Vector4.fromBuffer(buf.buffer, buf.byteOffset);
 }
 
 export function ColorFromNormalized(normalized: Vector4): Color {
   const buf = lib.ColorFromNormalized(normalized.buffer);
-  return new Color(buf[0], buf[1], buf[2], buf[3]);
+  return Color.fromBuffer(buf.buffer, buf.byteOffset);
 }
 
 export function ColorToHSV(color: Color): Vector3 {
   const buf = lib.ColorToHSV(color.buffer);
-  return new Vector3(buf[0], buf[1], buf[2]);
+  return Vector3.fromBuffer(buf.buffer, buf.byteOffset);
 }
 
 export function ColorFromHSV(
@@ -5555,27 +3455,27 @@ export function ColorFromHSV(
   value: float,
 ): Color {
   const buf = lib.ColorFromHSV(hue, saturation, value);
-  return new Color(buf[0], buf[1], buf[2], buf[3]);
+  return Color.fromBuffer(buf.buffer, buf.byteOffset);
 }
 
 export function ColorTint(color: Color, tint: Color): Color {
   const buf = lib.ColorTint(color.buffer, tint.buffer);
-  return new Color(buf[0], buf[1], buf[2], buf[3]);
+  return Color.fromBuffer(buf.buffer, buf.byteOffset);
 }
 
 export function ColorBrightness(color: Color, factor: float): Color {
   const buf = lib.ColorBrightness(color.buffer, factor);
-  return new Color(buf[0], buf[1], buf[2], buf[3]);
+  return Color.fromBuffer(buf.buffer, buf.byteOffset);
 }
 
 export function ColorContrast(color: Color, contrast: float): Color {
   const buf = lib.ColorContrast(color.buffer, contrast);
-  return new Color(buf[0], buf[1], buf[2], buf[3]);
+  return Color.fromBuffer(buf.buffer, buf.byteOffset);
 }
 
 export function ColorAlpha(color: Color, alpha: float): Color {
   const buf = lib.ColorAlpha(color.buffer, alpha);
-  return new Color(buf[0], buf[1], buf[2], buf[3]);
+  return Color.fromBuffer(buf.buffer, buf.byteOffset);
 }
 
 export function ColorAlphaBlend(
@@ -5584,17 +3484,17 @@ export function ColorAlphaBlend(
   tint: Color,
 ): Color {
   const buf = lib.ColorAlphaBlend(dst.buffer, src.buffer, tint.buffer);
-  return new Color(buf[0], buf[1], buf[2], buf[3]);
+  return Color.fromBuffer(buf.buffer, buf.byteOffset);
 }
 
 export function ColorLerp(color1: Color, color2: Color, amount: float): Color {
   const buf = lib.ColorLerp(color1.buffer, color2.buffer, amount);
-  return new Color(buf[0], buf[1], buf[2], buf[3]);
+  return Color.fromBuffer(buf.buffer, buf.byteOffset);
 }
 
 export function GetColor(hex: int): Color {
   const buf = lib.GetColor(hex);
-  return new Color(buf[0], buf[1], buf[2], buf[3]);
+  return Color.fromBuffer(buf.buffer, buf.byteOffset);
 }
 
 export function GetPixelColor(srcPtr: Uint8Array, format: PixelFormat): Color {
@@ -5602,7 +3502,7 @@ export function GetPixelColor(srcPtr: Uint8Array, format: PixelFormat): Color {
     Deno.UnsafePointer.of(srcPtr.buffer as BufferSource),
     format,
   );
-  return new Color(buf[0], buf[1], buf[2], buf[3]);
+  return Color.fromBuffer(buf.buffer, buf.byteOffset);
 }
 
 export function SetPixelColor(
@@ -5672,17 +3572,22 @@ export function LoadFontFromMemory(
   codepoints: Int32Array | null,
   codepointCount: int,
 ): Font {
+  const codepointsPtr = codepoints
+    ? Deno.UnsafePointer.of(codepoints.buffer as BufferSource)
+    : null;
+
   return new Font(
     lib.LoadFontFromMemory(
       new TextEncoder().encode(fileType + "\0"),
-      fileData.buffer as BufferSource,
+      fileData as BufferSource,
       fileData.byteLength,
       fontSize,
-      (codepoints ?? null) as BufferSource | null,
+      codepointsPtr,
       codepointCount,
     ),
   );
 }
+
 
 export function IsFontValid(font: Font): boolean {
   return !!lib.IsFontValid(font.buffer);
@@ -5695,11 +3600,14 @@ export function LoadFontData(
   codepointCount: number,
   type: number,
 ): { glyphs: GlyphInfo[]; ptr: Deno.UnsafePointer } {
+  const codepointsPtr = codepoints
+    ? Deno.UnsafePointer.of(codepoints.buffer as BufferSource)
+    : null;
   const ptr = lib.LoadFontData(
-    fileData.buffer as BufferSource,
+    fileData as BufferSource,
     fileData.byteLength,
     fontSize,
-    codepoints as BufferSource | null,
+    codepointsPtr,
     codepointCount,
     type,
   );
@@ -5739,14 +3647,11 @@ export function GenImageFontAtlas(
     glyphBuf.set(glyphs[i].buffer, i * 40);
   }
 
-  const glyphPtr = Deno.UnsafePointer.of(glyphBuf.buffer as BufferSource);
-  const glyphRecsPtr = Deno.UnsafePointer.of(
-    glyphRecsOut.buffer as BufferSource,
-  );
+  const glyphRecsPtr = Deno.UnsafePointer.of(glyphRecsOut.buffer as BufferSource);
 
   return new Image(
     lib.GenImageFontAtlas(
-      glyphPtr,
+      glyphBuf,
       glyphRecsPtr,
       glyphCount,
       fontSize,
@@ -5766,9 +3671,7 @@ export function UnloadFontData(
     buff.set(glyphs[i].buffer, i * 40);
   }
 
-  const glyphPtr = Deno.UnsafePointer.of(buff.buffer as BufferSource);
-
-  lib.UnloadFontData(glyphPtr, glyphCount);
+  lib.UnloadFontData(buff, glyphCount);
 }
 
 export function UnloadFont(font: Font): void {
@@ -5904,7 +3807,7 @@ export function MeasureTextEx(
     fontSize,
     spacing,
   );
-  return new Vector2(buf[0], buf[1]);
+  return Vector2.fromBuffer(buf.buffer, buf.byteOffset);
 }
 
 export function GetGlyphIndex(font: Font, codepoint: int): int {
@@ -5918,12 +3821,7 @@ export function GetGlyphInfo(font: Font, codepoint: int): GlyphInfo {
 
 export function GetGlyphAtlasRec(font: Font, codepoint: int): Rectangle {
   const buf = lib.GetGlyphAtlasRec(font.buffer, codepoint);
-  return new Rectangle(
-    buf[0],
-    buf[1],
-    buf[2],
-    buf[3],
-  );
+  return Rectangle.fromBuffer(buf.buffer, buf.byteOffset);
 }
 
 // implement in javascript
@@ -6013,10 +3911,7 @@ export function DrawTriangleStrip3D(
   color: Color,
 ): void {
   const points_buffer = concatVector3(points);
-  const points_ptr = Deno.UnsafePointer.of(
-    points_buffer.buffer as BufferSource,
-  );
-  lib.DrawTriangleStrip3D(points_ptr, points.length, color.buffer);
+  lib.DrawTriangleStrip3D(points_buffer.buffer as BufferSource, points.length, color.buffer);
 }
 
 export function DrawCube(
@@ -6224,9 +4119,7 @@ export function UnloadModel(model: Model): void {
 
 export function GetModelBoundingBox(model: Model): BoundingBox {
   const buf = lib.GetModelBoundingBox(model.buffer);
-  const min = new Vector3(buf[0], buf[1], buf[2]);
-  const max = new Vector3(buf[3], buf[4], buf[5]);
-  return new BoundingBox(min, max);
+  return BoundingBox.fromBuffer(buf.buffer, buf.byteOffset);
 }
 
 export function DrawModel(
@@ -6248,11 +4141,11 @@ export function DrawModelEx(
 ): void {
   lib.DrawModelEx(
     model.buffer,
-    position,
-    rotationAxis,
+    position.buffer,
+    rotationAxis.buffer,
     rotationAngle,
-    scale,
-    tint,
+    scale.buffer,
+    tint.buffer,
   );
 }
 
@@ -6264,9 +4157,9 @@ export function DrawModelWires(
 ): void {
   lib.DrawModelWires(
     model.buffer,
-    position,
+    position.buffer,
     scale,
-    tint,
+    tint.buffer,
   );
 }
 
@@ -6280,11 +4173,11 @@ export function DrawModelWiresEx(
 ): void {
   lib.DrawModelWiresEx(
     model.buffer,
-    position,
-    rotationAxis,
+    position.buffer,
+    rotationAxis.buffer,
     rotationAngle,
-    scale,
-    tint,
+    scale.buffer,
+    tint.buffer,
   );
 }
 
@@ -6296,9 +4189,9 @@ export function DrawModelPoints(
 ): void {
   lib.DrawModelPoints(
     model.buffer,
-    position,
+    position.buffer,
     scale,
-    tint,
+    tint.buffer,
   );
 }
 
@@ -6312,11 +4205,11 @@ export function DrawModelPointsEx(
 ): void {
   lib.DrawModelPointsEx(
     model.buffer,
-    position,
-    rotationAxis,
+    position.buffer,
+    rotationAxis.buffer,
     rotationAngle,
-    scale,
-    tint,
+    scale.buffer,
+    tint.buffer,
   );
 }
 
@@ -6325,8 +4218,8 @@ export function DrawBoundingBox(
   color: Color,
 ): void {
   lib.DrawBoundingBox(
-    box,
-    color,
+    box.buffer,
+    color.buffer,
   );
 }
 
@@ -6340,9 +4233,9 @@ export function DrawBillboard(
   lib.DrawBillboard(
     camera.buffer,
     texture.buffer,
-    position,
+    position.buffer,
     scale,
-    tint,
+    tint.buffer,
   );
 }
 
@@ -6357,10 +4250,10 @@ export function DrawBillboardRec(
   lib.DrawBillboardRec(
     camera.buffer,
     texture.buffer,
-    source,
-    position,
-    size,
-    tint,
+    source.buffer,
+    position.buffer,
+    size.buffer,
+    tint.buffer,
   );
 }
 
@@ -6378,13 +4271,13 @@ export function DrawBillboardPro(
   lib.DrawBillboardPro(
     camera.buffer,
     texture.buffer,
-    source,
-    position,
-    up,
-    size,
-    origin,
+    source.buffer,
+    position.buffer,
+    up.buffer,
+    size.buffer,
+    origin.buffer,
     rotation,
-    tint,
+    tint.buffer,
   );
 }
 
@@ -6408,7 +4301,7 @@ export function UpdateMeshBuffer(
   lib.UpdateMeshBuffer(
     mesh.buffer,
     index,
-    data,
+    Deno.UnsafePointer.of(data),
     dataSize,
     offset,
   );
@@ -6426,7 +4319,7 @@ export function DrawMesh(
   lib.DrawMesh(
     mesh.buffer,
     material.buffer,
-    transform,
+    transform.buffer,
   );
 }
 
@@ -6446,9 +4339,7 @@ export function DrawMeshInstanced(
 
 export function GetMeshBoundingBox(mesh: Mesh): BoundingBox {
   const buf = lib.GetMeshBoundingBox(mesh.buffer);
-  const min = new Vector3(buf[0], buf[1], buf[2]);
-  const max = new Vector3(buf[3], buf[4], buf[5]);
-  return new BoundingBox(min, max);
+  return BoundingBox.fromBuffer(buf.buffer, buf.byteOffset);
 }
 
 export function GenMeshTangents(mesh: Mesh): void {
@@ -6612,7 +4503,7 @@ export function GenMeshHeightmap(
   return new Mesh(
     lib.GenMeshHeightmap(
       heightmap.buffer,
-      size,
+      size.buffer,
     ),
   );
 }
@@ -6624,7 +4515,7 @@ export function GenMeshCubicmap(
   return new Mesh(
     lib.GenMeshCubicmap(
       cubicmap.buffer,
-      cubeSize,
+      cubeSize.buffer,
     ),
   );
 }
@@ -6636,7 +4527,7 @@ export function LoadMaterials(
 
   const ptr = lib.LoadMaterials(
     new TextEncoder().encode(fileName + "\0").buffer,
-    countBuf,
+    Deno.UnsafePointer.of(countBuf.buffer),
   );
 
   if (!ptr) {
@@ -6679,7 +4570,7 @@ export function SetMaterialTexture(
   texture: Texture2D,
 ): void {
   lib.SetMaterialTexture(
-    Deno.UnsafePointer.of(material.buffer),
+    material.buffer,
     mapType,
     texture.buffer,
   );
@@ -6691,7 +4582,7 @@ export function SetModelMeshMaterial(
   materialId: int,
 ): void {
   lib.SetModelMeshMaterial(
-    Deno.UnsafePointer.of(model.buffer),
+    model.buffer,
     meshId,
     materialId,
   );
@@ -6713,13 +4604,13 @@ export function LoadModelAnimations(
 
   const count = countBuf[0];
   const view = new Deno.UnsafePointerView(ptr);
-  const buf = view.getArrayBuffer(count * 72);
+  const buf = view.getArrayBuffer(count * ModelAnimation.SIZE);
 
   const animations: ModelAnimation[] = [];
   for (let i = 0; i < count; i++) {
     animations.push(
       new ModelAnimation(
-        new Uint8Array(buf, i * 72, 72) as Uint8Array<ArrayBuffer>,
+        new Uint8Array(buf, i * ModelAnimation.SIZE, ModelAnimation.SIZE) as Uint8Array<ArrayBuffer>,
       ),
     );
   }
@@ -6761,7 +4652,7 @@ export function UnloadModelAnimations(
   if (animations.length === 0) return;
 
   lib.UnloadModelAnimations(
-    Deno.UnsafePointer.of(animations[0].buffer),
+    animations[0].buffer,
     animations.length,
   );
 }
@@ -6847,7 +4738,7 @@ export function GetRayCollisionMesh(
     lib.GetRayCollisionMesh(
       ray.buffer,
       mesh.buffer,
-      transform,
+      transform.buffer,
     ),
   );
 }
@@ -6860,7 +4751,7 @@ export function GetRayCollisionTriangle(
 ): RayCollision {
   return new RayCollision(
     lib.GetRayCollisionTriangle(
-      ray,
+      ray.buffer,
       p1.buffer,
       p2.buffer,
       p3.buffer,
@@ -6877,7 +4768,7 @@ export function GetRayCollisionQuad(
 ): RayCollision {
   return new RayCollision(
     lib.GetRayCollisionQuad(
-      ray,
+      ray.buffer,
       p1.buffer,
       p2.buffer,
       p3.buffer,
@@ -6958,7 +4849,7 @@ export function UpdateSound(
 ): void {
   lib.UpdateSound(
     sound.buffer,
-    data,
+    Deno.UnsafePointer.of(data as ArrayBuffer),
     sampleCount,
   );
 }
@@ -7234,105 +5125,812 @@ export function SetAudioStreamBufferSizeDefault(size: int): void {
   lib.SetAudioStreamBufferSizeDefault(size);
 }
 
-// NOTE: Audio callbacks are unsafe in JS runtimes.
-// Expose only if you deliberately support UnsafeCallback.
-type AudioStreamCallbackDef = {
-  parameters: ["pointer", "u32"];
-  result: "void";
-};
+// // NOTE: Audio callbacks are unsafe in JS runtimes.
+// // Expose only if you deliberately support UnsafeCallback.
+// type AudioStreamCallbackDef = {
+//   parameters: ["pointer", "u32"];
+//   result: "void";
+// };
 
-const audioCallbacks = new WeakMap<
-  AudioStream,
-  Deno.UnsafeCallback<AudioStreamCallbackDef>
->();
+// const audioCallbacks = new WeakMap<
+//   AudioStream,
+//   Deno.UnsafeCallback<AudioStreamCallbackDef>
+// >();
 
-export function SetAudioStreamCallback(
-  stream: AudioStream,
-  callback: (buffer: Deno.PointerObject<unknown>, frames: int) => void,
-): void {
-  if (audioCallbacks.has(stream)) throw new Error("Audio callback already set");
+// export function SetAudioStreamCallback(
+//   stream: AudioStream,
+//   callback: (buffer: Deno.PointerObject<unknown>, frames: int) => void,
+// ): void {
+//   if (audioCallbacks.has(stream)) throw new Error("Audio callback already set");
 
-  const cb = new Deno.UnsafeCallback<AudioStreamCallbackDef>(
-    { parameters: ["pointer", "u32"], result: "void" },
-    (buf, frames) => {
-      if (buf === null) return;
-      callback(buf, frames as int);
-    },
-  );
+//   const cb = new Deno.UnsafeCallback<AudioStreamCallbackDef>(
+//     { parameters: ["pointer", "u32"], result: "void" },
+//     (buf, frames) => {
+//       if (buf === null) return;
+//       callback(buf, frames as int);
+//     },
+//   );
 
-  audioCallbacks.set(stream, cb);
+//   audioCallbacks.set(stream, cb);
 
-  lib.SetAudioStreamCallback(
-    stream.buffer,
-    cb.pointer as unknown as Deno.PointerObject<unknown>,
+//   lib.SetAudioStreamCallback(
+//     stream.buffer,
+//     cb.pointer as unknown as Deno.PointerObject<unknown>,
+//   );
+// }
+
+// export type AudioCallbackDef = {
+//   parameters: ["pointer", "u32"];
+//   result: "void";
+// };
+
+// const audioProcessors = new Set<Deno.UnsafeCallback<AudioCallbackDef>>();
+
+// export function AttachAudioStreamProcessor(
+//   stream: AudioStream,
+//   processor: (buffer: Deno.PointerObject<unknown>, frames: int) => void,
+// ): Deno.UnsafeCallback<AudioCallbackDef> {
+//   const cb = new Deno.UnsafeCallback<AudioCallbackDef>(
+//     { parameters: ["pointer", "u32"], result: "void" },
+//     (buf, frames) => {
+//       if (buf === null) return;
+//       processor(buf, frames as int);
+//     },
+//   );
+
+//   audioProcessors.add(cb);
+
+//   lib.AttachAudioStreamProcessor(
+//     stream.buffer,
+//     cb.pointer as unknown as Deno.PointerObject<unknown>,
+//   );
+
+//   return cb;
+// }
+
+// export function DetachAudioStreamProcessor(
+//   stream: AudioStream,
+//   processor: Deno.UnsafeCallback<AudioCallbackDef>,
+// ): void {
+//   audioProcessors.delete(processor);
+
+//   lib.DetachAudioStreamProcessor(
+//     stream.buffer,
+//     processor.pointer as unknown as Deno.PointerObject<unknown>,
+//   );
+// }
+
+// export function AttachAudioMixedProcessor(
+//   processor: (buffer: Deno.PointerObject<unknown>, frames: int) => void,
+// ): Deno.UnsafeCallback<AudioCallbackDef> {
+//   const cb = new Deno.UnsafeCallback<AudioCallbackDef>(
+//     { parameters: ["pointer", "u32"], result: "void" },
+//     (buf, frames) => {
+//       if (buf === null) return;
+//       processor(buf, frames as int);
+//     },
+//   );
+
+//   audioProcessors.add(cb);
+
+//   lib.AttachAudioMixedProcessor(
+//     cb.pointer as unknown as Deno.PointerObject<unknown>,
+//   );
+
+//   return cb;
+// }
+
+// export function DetachAudioMixedProcessor(
+//   processor: Deno.UnsafeCallback<AudioCallbackDef>,
+// ): void {
+//   audioProcessors.delete(processor);
+
+//   lib.DetachAudioMixedProcessor(
+//     processor.pointer as unknown as Deno.PointerObject<unknown>,
+//   );
+// }
+
+
+//-----------------------------------------------------------------------
+// RL MATH API
+//-----------------------------------------------------------------------
+
+export function Clamp(value: float, min: float, max: float): float {
+  return lib.Clamp(value, min, max);
+}
+
+export function Lerp(start: float, end: float, amount: float): float {
+  return lib.Lerp(start, end, amount);
+}
+
+export function Normalize(value: float, start: float, end: float): float {
+  return lib.Normalize(value, start, end);
+}
+
+export function Remap(value: float, inputStart: float, inputEnd: float, outputStart: float, outputEnd: float): float {
+  return lib.Remap(value, inputStart, inputEnd, outputStart, outputEnd);
+}
+
+export function Wrap(value: float, min: float, max: float): float {
+  return lib.Wrap(value, min, max);
+}
+
+export function FloatEquals(x: float, y: float): boolean {
+  return !!lib.FloatEquals(x, y);
+}
+
+export function Vector2Zero(): Vector2 {
+  const buf = lib.Vector2Zero();
+  return Vector2.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function Vector2One(): Vector2 {
+  const buf = lib.Vector2One();
+  return Vector2.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function Vector2Add(v1: Vector2, v2: Vector2): Vector2 {
+  const buf = lib.Vector2Add(v1.buffer, v2.buffer);
+  return Vector2.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function Vector2AddValue(v: Vector2, add: float): Vector2 {
+  const buf = lib.Vector2AddValue(v.buffer, add);
+  return Vector2.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function Vector2Subtract(v1: Vector2, v2: Vector2): Vector2 {
+  const buf = lib.Vector2Subtract(v1.buffer, v2.buffer);
+  return Vector2.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function Vector2SubtractValue(v: Vector2, sub: float): Vector2 {
+  const buf = lib.Vector2SubtractValue(v.buffer, sub);
+  return Vector2.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function Vector2Length(v: Vector2): float {
+  return lib.Vector2Length(v.buffer);
+}
+
+export function Vector2LengthSqr(v: Vector2): float {
+  return lib.Vector2LengthSqr(v.buffer);
+}
+
+export function Vector2DotProduct(v1: Vector2, v2: Vector2): float {
+  return lib.Vector2DotProduct(v1.buffer, v2.buffer);
+}
+
+export function Vector2Distance(v1: Vector2, v2: Vector2): float {
+  return lib.Vector2Distance(v1.buffer, v2.buffer);
+}
+
+export function Vector2DistanceSqr(v1: Vector2, v2: Vector2): float {
+  return lib.Vector2DistanceSqr(v1.buffer, v2.buffer);
+}
+
+export function Vector2Angle(v1: Vector2, v2: Vector2): float {
+  return lib.Vector2Angle(v1.buffer, v2.buffer);
+}
+
+export function Vector2LineAngle(start: Vector2, end: Vector2): float {
+  return lib.Vector2LineAngle(start.buffer, end.buffer);
+}
+
+export function Vector2Scale(v: Vector2, scale: float): Vector2 {
+  const buf = lib.Vector2Scale(v.buffer, scale);
+  return Vector2.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function Vector2Multiply(v1: Vector2, v2: Vector2): Vector2 {
+  const buf = lib.Vector2Multiply(v1.buffer, v2.buffer);
+  return Vector2.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function Vector2Negate(v: Vector2): Vector2 {
+  const buf = lib.Vector2Negate(v.buffer);
+  return Vector2.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function Vector2Divide(v1: Vector2, v2: Vector2): Vector2 {
+  const buf = lib.Vector2Divide(v1.buffer, v2.buffer);
+  return Vector2.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function Vector2Normalize(v: Vector2): Vector2 {
+  const buf = lib.Vector2Normalize(v.buffer);
+  return Vector2.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function Vector2Transform(v: Vector2, mat: Matrix): Vector2 {
+  const buf = lib.Vector2Transform(v.buffer, mat.buffer);
+  return Vector2.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function Vector2Lerp(v1: Vector2, v2: Vector2, amount: float): Vector2 {
+  const buf = lib.Vector2Lerp(v1.buffer, v2.buffer, amount);
+  return Vector2.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function Vector2Reflect(v: Vector2, normal: Vector2): Vector2 {
+  const buf = lib.Vector2Reflect(v.buffer, normal.buffer);
+  return Vector2.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function Vector2Min(v1: Vector2, v2: Vector2): Vector2 {
+  const buf = lib.Vector2Min(v1.buffer, v2.buffer);
+  return Vector2.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function Vector2Max(v1: Vector2, v2: Vector2): Vector2 {
+  const buf = lib.Vector2Max(v1.buffer, v2.buffer);
+  return Vector2.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function Vector2Rotate(v: Vector2, angle: float): Vector2 {
+  const buf = lib.Vector2Rotate(v.buffer, angle);
+  return Vector2.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function Vector2MoveTowards(v: Vector2, target: Vector2, maxDistance: float): Vector2 {
+  const buf = lib.Vector2MoveTowards(v.buffer, target.buffer, maxDistance);
+  return Vector2.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function Vector2Invert(v: Vector2): Vector2 {
+  const buf = lib.Vector2Invert(v.buffer);
+  return Vector2.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function Vector2Clamp(v: Vector2, min: Vector2, max: Vector2): Vector2 {
+  const buf = lib.Vector2Clamp(v.buffer, min.buffer, max.buffer);
+  return Vector2.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function Vector2ClampValue(v: Vector2, min: float, max: float): Vector2 {
+  const buf = lib.Vector2ClampValue(v.buffer, min, max);
+  return Vector2.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function Vector2Equals(p: Vector2, q: Vector2): boolean {
+  return !!lib.Vector2Equals(p.buffer, q.buffer);
+}
+
+export function Vector2Refract(v: Vector2, n: Vector2, r: float): Vector2 {
+  const buf = lib.Vector2Refract(v.buffer, n.buffer, r);
+  return Vector2.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function Vector3Zero(): Vector3 {
+  const buf = lib.Vector3Zero();
+  return Vector3.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function Vector3One(): Vector3 {
+  const buf = lib.Vector3One();
+  return Vector3.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function Vector3Add(v1: Vector3, v2: Vector3): Vector3 {
+  const buf = lib.Vector3Add(v1.buffer, v2.buffer);
+  return Vector3.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function Vector3AddValue(v: Vector3, add: float): Vector3 {
+  const buf = lib.Vector3AddValue(v.buffer, add);
+  return Vector3.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function Vector3Subtract(v1: Vector3, v2: Vector3): Vector3 {
+  const buf = lib.Vector3Subtract(v1.buffer, v2.buffer);
+  return Vector3.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function Vector3SubtractValue(v: Vector3, sub: float): Vector3 {
+  const buf = lib.Vector3SubtractValue(v.buffer, sub);
+  return Vector3.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function Vector3Scale(v: Vector3, scalar: float): Vector3 {
+  const buf = lib.Vector3Scale(v.buffer, scalar);
+  return Vector3.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function Vector3Multiply(v1: Vector3, v2: Vector3): Vector3 {
+  const buf = lib.Vector3Multiply(v1.buffer, v2.buffer);
+  return Vector3.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function Vector3CrossProduct(v1: Vector3, v2: Vector3): Vector3 {
+  const buf = lib.Vector3CrossProduct(v1.buffer, v2.buffer);
+  return Vector3.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function Vector3Perpendicular(v: Vector3): Vector3 {
+  const buf = lib.Vector3Perpendicular(v.buffer);
+  return Vector3.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function Vector3Length(v: Vector3): float {
+  return lib.Vector3Length(v.buffer);
+}
+
+export function Vector3LengthSqr(v: Vector3): float {
+  return lib.Vector3LengthSqr(v.buffer);
+}
+
+export function Vector3DotProduct(v1: Vector3, v2: Vector3): float {
+  return lib.Vector3DotProduct(v1.buffer, v2.buffer);
+}
+
+export function Vector3Distance(v1: Vector3, v2: Vector3): float {
+  return lib.Vector3Distance(v1.buffer, v2.buffer);
+}
+
+export function Vector3DistanceSqr(v1: Vector3, v2: Vector3): float {
+  return lib.Vector3DistanceSqr(v1.buffer, v2.buffer);
+}
+
+export function Vector3Angle(v1: Vector3, v2: Vector3): float {
+  return lib.Vector3Angle(v1.buffer, v2.buffer);
+}
+
+export function Vector3Negate(v: Vector3): Vector3 {
+  const buf = lib.Vector3Negate(v.buffer);
+  return Vector3.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function Vector3Divide(v1: Vector3, v2: Vector3): Vector3 {
+  const buf = lib.Vector3Divide(v1.buffer, v2.buffer);
+  return Vector3.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function Vector3Normalize(v: Vector3): Vector3 {
+  const buf = lib.Vector3Normalize(v.buffer);
+  return Vector3.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function Vector3Project(v1: Vector3, v2: Vector3): Vector3 {
+  const buf = lib.Vector3Project(v1.buffer, v2.buffer);
+  return Vector3.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function Vector3Reject(v1: Vector3, v2: Vector3): Vector3 {
+  const buf = lib.Vector3Reject(v1.buffer, v2.buffer);
+  return Vector3.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function Vector3OrthoNormalize(v1: Vector3, v2: Vector3): void {
+  lib.Vector3OrthoNormalize(
+    Deno.UnsafePointer.of(v1.buffer),
+    Deno.UnsafePointer.of(v2.buffer),
   );
 }
 
-type AudioCallbackDef = {
-  parameters: ["pointer", "u32"];
-  result: "void";
-};
-
-const audioProcessors = new Set<Deno.UnsafeCallback<AudioCallbackDef>>();
-
-export function AttachAudioStreamProcessor(
-  stream: AudioStream,
-  processor: (buffer: Deno.PointerObject<unknown>, frames: int) => void,
-): void {
-  const cb = new Deno.UnsafeCallback<AudioCallbackDef>(
-    { parameters: ["pointer", "u32"], result: "void" },
-    (buf, frames) => {
-      if (buf === null) return;
-      processor(buf, frames as int);
-    },
-  );
-
-  audioProcessors.add(cb);
-
-  lib.AttachAudioStreamProcessor(
-    stream.buffer,
-    cb.pointer as unknown as Deno.PointerObject<unknown>,
-  );
+export function Vector3Transform(v: Vector3, mat: Matrix): Vector3 {
+  const buf = lib.Vector3Transform(v.buffer, mat.buffer);
+  return Vector3.fromBuffer(buf.buffer, buf.byteOffset);
 }
 
-export function DetachAudioStreamProcessor(
-  stream: AudioStream,
-  processor: Deno.UnsafeCallback<AudioCallbackDef>,
-): void {
-  audioProcessors.delete(processor);
-
-  lib.DetachAudioStreamProcessor(
-    stream.buffer,
-    processor.pointer as unknown as Deno.PointerObject<unknown>,
-  );
+export function Vector3RotateByQuaternion(v: Vector3, q: Quaternion): Vector3 {
+  const buf = lib.Vector3RotateByQuaternion(v.buffer, q.buffer);
+  return Vector3.fromBuffer(buf.buffer, buf.byteOffset);
 }
 
-export function AttachAudioMixedProcessor(
-  processor: (buffer: Deno.PointerObject<unknown>, frames: int) => void,
-): Deno.UnsafeCallback<AudioCallbackDef> {
-  const cb = new Deno.UnsafeCallback<AudioCallbackDef>(
-    { parameters: ["pointer", "u32"], result: "void" },
-    (buf, frames) => {
-      if (buf === null) return;
-      processor(buf, frames as int);
-    },
-  );
-
-  audioProcessors.add(cb);
-
-  lib.AttachAudioMixedProcessor(
-    cb.pointer as unknown as Deno.PointerObject<unknown>,
-  );
-
-  return cb;
+export function Vector3RotateByAxisAngle(v: Vector3, axis: Vector3, angle: float): Vector3 {
+  const buf = lib.Vector3RotateByAxisAngle(v.buffer, axis.buffer, angle);
+  return Vector3.fromBuffer(buf.buffer, buf.byteOffset);
 }
 
-export function DetachAudioMixedProcessor(
-  processor: Deno.UnsafeCallback<AudioCallbackDef>,
-): void {
-  audioProcessors.delete(processor);
+export function Vector3MoveTowards(v: Vector3, target: Vector3, maxDistance: float): Vector3 {
+  const buf = lib.Vector3MoveTowards(v.buffer, target.buffer, maxDistance);
+  return Vector3.fromBuffer(buf.buffer, buf.byteOffset);
+}
 
-  lib.DetachAudioMixedProcessor(
-    processor.pointer as unknown as Deno.PointerObject<unknown>,
+export function Vector3Lerp(v1: Vector3, v2: Vector3, amount: float): Vector3 {
+  const buf = lib.Vector3Lerp(v1.buffer, v2.buffer, amount);
+  return Vector3.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function Vector3CubicHermite(v1: Vector3, tangent1: Vector3, v2: Vector3, tangent2: Vector3, amount: float): Vector3 {
+  const buf = lib.Vector3CubicHermite(v1.buffer, tangent1.buffer, v2.buffer, tangent2.buffer, amount);
+  return Vector3.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function Vector3Reflect(v: Vector3, normal: Vector3): Vector3 {
+  const buf = lib.Vector3Reflect(v.buffer, normal.buffer);
+  return Vector3.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function Vector3Min(v1: Vector3, v2: Vector3): Vector3 {
+  const buf = lib.Vector3Min(v1.buffer, v2.buffer);
+  return Vector3.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function Vector3Max(v1: Vector3, v2: Vector3): Vector3 {
+  const buf = lib.Vector3Max(v1.buffer, v2.buffer);
+  return Vector3.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function Vector3Barycenter(p: Vector3, a: Vector3, b: Vector3, c: Vector3): Vector3 {
+  const buf = lib.Vector3Barycenter(p.buffer, a.buffer, b.buffer, c.buffer);
+  return Vector3.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function Vector3Unproject(source: Vector3, projection: Matrix, view: Matrix): Vector3 {
+  const buf = lib.Vector3Unproject(source.buffer, projection.buffer, view.buffer);
+  return Vector3.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function Vector3ToFloatV(v: Vector3): Float32Array {
+  const buf = lib.Vector3ToFloatV(v.buffer);
+  return new Float32Array(buf.buffer, buf.byteOffset, 3);
+}
+
+export function Vector3Invert(v: Vector3): Vector3 {
+  const buf = lib.Vector3Invert(v.buffer);
+  return Vector3.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function Vector3Clamp(v: Vector3, min: Vector3, max: Vector3): Vector3 {
+  const buf = lib.Vector3Clamp(v.buffer, min.buffer, max.buffer);
+  return Vector3.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function Vector3ClampValue(v: Vector3, min: float, max: float): Vector3 {
+  const buf = lib.Vector3ClampValue(v.buffer, min, max);
+  return Vector3.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function Vector3Equals(p: Vector3, q: Vector3): boolean {
+  return !!lib.Vector3Equals(p.buffer, q.buffer);
+}
+
+export function Vector3Refract(v: Vector3, n: Vector3, r: float): Vector3 {
+  const buf = lib.Vector3Refract(v.buffer, n.buffer, r);
+  return Vector3.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function Vector4Zero(): Vector4 {
+  const buf = lib.Vector4Zero();
+  return Vector4.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function Vector4One(): Vector4 {
+  const buf = lib.Vector4One();
+  return Vector4.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function Vector4Add(v1: Vector4, v2: Vector4): Vector4 {
+  const buf = lib.Vector4Add(v1.buffer, v2.buffer);
+  return Vector4.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function Vector4AddValue(v: Vector4, add: float): Vector4 {
+  const buf = lib.Vector4AddValue(v.buffer, add);
+  return Vector4.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function Vector4Subtract(v1: Vector4, v2: Vector4): Vector4 {
+  const buf = lib.Vector4Subtract(v1.buffer, v2.buffer);
+  return Vector4.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function Vector4SubtractValue(v: Vector4, add: float): Vector4 {
+  const buf = lib.Vector4SubtractValue(v.buffer, add);
+  return Vector4.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function Vector4Length(v: Vector4): float {
+  return lib.Vector4Length(v.buffer);
+}
+
+export function Vector4LengthSqr(v: Vector4): float {
+  return lib.Vector4LengthSqr(v.buffer);
+}
+
+export function Vector4DotProduct(v1: Vector4, v2: Vector4): float {
+  return lib.Vector4DotProduct(v1.buffer, v2.buffer);
+}
+
+export function Vector4Distance(v1: Vector4, v2: Vector4): float {
+  return lib.Vector4Distance(v1.buffer, v2.buffer);
+}
+
+export function Vector4DistanceSqr(v1: Vector4, v2: Vector4): float {
+  return lib.Vector4DistanceSqr(v1.buffer, v2.buffer);
+}
+
+export function Vector4Scale(v: Vector4, scale: float): Vector4 {
+  const buf = lib.Vector4Scale(v.buffer, scale);
+  return Vector4.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function Vector4Multiply(v1: Vector4, v2: Vector4): Vector4 {
+  const buf = lib.Vector4Multiply(v1.buffer, v2.buffer);
+  return Vector4.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function Vector4Negate(v: Vector4): Vector4 {
+  const buf = lib.Vector4Negate(v.buffer);
+  return Vector4.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function Vector4Divide(v1: Vector4, v2: Vector4): Vector4 {
+  const buf = lib.Vector4Divide(v1.buffer, v2.buffer);
+  return Vector4.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function Vector4Normalize(v: Vector4): Vector4 {
+  const buf = lib.Vector4Normalize(v.buffer);
+  return Vector4.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function Vector4Min(v1: Vector4, v2: Vector4): Vector4 {
+  const buf = lib.Vector4Min(v1.buffer, v2.buffer);
+  return Vector4.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function Vector4Max(v1: Vector4, v2: Vector4): Vector4 {
+  const buf = lib.Vector4Max(v1.buffer, v2.buffer);
+  return Vector4.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function Vector4Lerp(v1: Vector4, v2: Vector4, amount: float): Vector4 {
+  const buf = lib.Vector4Lerp(v1.buffer, v2.buffer, amount);
+  return Vector4.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function Vector4MoveTowards(v: Vector4, target: Vector4, maxDistance: float): Vector4 {
+  const buf = lib.Vector4MoveTowards(v.buffer, target.buffer, maxDistance);
+  return Vector4.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function Vector4Invert(v: Vector4): Vector4 {
+  const buf = lib.Vector4Invert(v.buffer);
+  return Vector4.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function Vector4Equals(p: Vector4, q: Vector4): boolean {
+  return !!lib.Vector4Equals(p.buffer, q.buffer);
+}
+
+export function MatrixDeterminant(mat: Matrix): float {
+  return lib.MatrixDeterminant(mat.buffer);
+}
+
+export function MatrixTrace(mat: Matrix): float {
+  return lib.MatrixTrace(mat.buffer);
+}
+
+export function MatrixTranspose(mat: Matrix): Matrix {
+  const buf = lib.MatrixTranspose(mat.buffer);
+  return Matrix.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function MatrixInvert(mat: Matrix): Matrix {
+  const buf = lib.MatrixInvert(mat.buffer);
+  return Matrix.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function MatrixIdentity(): Matrix {
+  const buf = lib.MatrixIdentity();
+  return Matrix.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function MatrixAdd(left: Matrix, right: Matrix): Matrix {
+  const buf = lib.MatrixAdd(left.buffer, right.buffer);
+  return Matrix.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function MatrixSubtract(left: Matrix, right: Matrix): Matrix {
+  const buf = lib.MatrixSubtract(left.buffer, right.buffer);
+  return Matrix.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function MatrixMultiply(left: Matrix, right: Matrix): Matrix {
+  const buf = lib.MatrixMultiply(left.buffer, right.buffer);
+  return Matrix.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function MatrixTranslate(x: float, y: float, z: float): Matrix {
+  const buf = lib.MatrixTranslate(x, y, z);
+  return Matrix.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function MatrixRotate(axis: Vector3, angle: float): Matrix {
+  const buf = lib.MatrixRotate(axis.buffer, angle);
+  return Matrix.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function MatrixRotateX(angle: float): Matrix {
+  const buf = lib.MatrixRotateX(angle);
+  return Matrix.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function MatrixRotateY(angle: float): Matrix {
+  const buf = lib.MatrixRotateY(angle);
+  return Matrix.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function MatrixRotateZ(angle: float): Matrix {
+  const buf = lib.MatrixRotateZ(angle);
+  return Matrix.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function MatrixRotateXYZ(angle: Vector3): Matrix {
+  const buf = lib.MatrixRotateXYZ(angle.buffer);
+  return Matrix.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function MatrixRotateZYX(angle: Vector3): Matrix {
+  const buf = lib.MatrixRotateZYX(angle.buffer);
+  return Matrix.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function MatrixScale(x: float, y: float, z: float): Matrix {
+  const buf = lib.MatrixScale(x, y, z);
+  return Matrix.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function MatrixFrustum(left: float, right: float, bottom: float, top: float, nearPlane: float, farPlane: float): Matrix {
+  const buf = lib.MatrixFrustum(left, right, bottom, top, nearPlane, farPlane);
+  return Matrix.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function MatrixPerspective(fovY: float, aspect: float, nearPlane: float, farPlane: float): Matrix {
+  const buf = lib.MatrixPerspective(fovY, aspect, nearPlane, farPlane);
+  return Matrix.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function MatrixOrtho(left: float, right: float, bottom: float, top: float, nearPlane: float, farPlane: float): Matrix {
+  const buf = lib.MatrixOrtho(left, right, bottom, top, nearPlane, farPlane);
+  return Matrix.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function MatrixLookAt(eye: Vector3, target: Vector3, up: Vector3): Matrix {
+  const buf = lib.MatrixLookAt(eye.buffer, target.buffer, up.buffer);
+  return Matrix.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function MatrixToFloatV(mat: Matrix): Float32Array {
+  const buf = lib.MatrixToFloatV(mat.buffer);
+  return new Float32Array(buf.buffer, buf.byteOffset, 16);
+}
+
+export function QuaternionAdd(q1: Quaternion, q2: Quaternion): Quaternion {
+  const buf = lib.QuaternionAdd(q1.buffer, q2.buffer);
+  return Quaternion.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function QuaternionAddValue(q: Quaternion, add: float): Quaternion {
+  const buf = lib.QuaternionAddValue(q.buffer, add);
+  return Quaternion.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function QuaternionSubtract(q1: Quaternion, q2: Quaternion): Quaternion {
+  const buf = lib.QuaternionSubtract(q1.buffer, q2.buffer);
+  return Quaternion.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function QuaternionSubtractValue(q: Quaternion, sub: float): Quaternion {
+  const buf = lib.QuaternionSubtractValue(q.buffer, sub);
+  return Quaternion.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function QuaternionIdentity(): Quaternion {
+  const buf = lib.QuaternionIdentity();
+  return Quaternion.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function QuaternionLength(q: Quaternion): float {
+  return lib.QuaternionLength(q.buffer);
+}
+
+export function QuaternionNormalize(q: Quaternion): Quaternion {
+  const buf = lib.QuaternionNormalize(q.buffer);
+  return Quaternion.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function QuaternionInvert(q: Quaternion): Quaternion {
+  const buf = lib.QuaternionInvert(q.buffer);
+  return Quaternion.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function QuaternionMultiply(q1: Quaternion, q2: Quaternion): Quaternion {
+  const buf = lib.QuaternionMultiply(q1.buffer, q2.buffer);
+  return Quaternion.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function QuaternionScale(q: Quaternion, mul: float): Quaternion {
+  const buf = lib.QuaternionScale(q.buffer, mul);
+  return Quaternion.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function QuaternionDivide(q1: Quaternion, q2: Quaternion): Quaternion {
+  const buf = lib.QuaternionDivide(q1.buffer, q2.buffer);
+  return Quaternion.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function QuaternionLerp(q1: Quaternion, q2: Quaternion, amount: float): Quaternion {
+  const buf = lib.QuaternionLerp(q1.buffer, q2.buffer, amount);
+  return Quaternion.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function QuaternionNlerp(q1: Quaternion, q2: Quaternion, amount: float): Quaternion {
+  const buf = lib.QuaternionNlerp(q1.buffer, q2.buffer, amount);
+  return Quaternion.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function QuaternionSlerp(q1: Quaternion, q2: Quaternion, amount: float): Quaternion {
+  const buf = lib.QuaternionSlerp(q1.buffer, q2.buffer, amount);
+  return Quaternion.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function QuaternionCubicHermiteSpline(q1: Quaternion, outTangent1: Quaternion, q2: Quaternion, inTangent2: Quaternion, t: float): Quaternion {
+  const buf = lib.QuaternionCubicHermiteSpline(q1.buffer, outTangent1.buffer, q2.buffer, inTangent2.buffer, t);
+  return Quaternion.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function QuaternionFromVector3ToVector3(from: Vector3, to: Vector3): Quaternion {
+  const buf = lib.QuaternionFromVector3ToVector3(from.buffer, to.buffer);
+  return Quaternion.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function QuaternionFromMatrix(mat: Matrix): Quaternion {
+  const buf = lib.QuaternionFromMatrix(mat.buffer);
+  return Quaternion.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function QuaternionToMatrix(q: Quaternion): Matrix {
+  const buf = lib.QuaternionToMatrix(q.buffer);
+  return Matrix.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function QuaternionFromAxisAngle(axis: Vector3, angle: float): Quaternion {
+  const buf = lib.QuaternionFromAxisAngle(axis.buffer, angle);
+  return Quaternion.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function QuaternionToAxisAngle(q: Quaternion): { axis: Vector3; angle: float } {
+  const axis = new Vector3(0, 0, 0);
+  const angle = new Float32Array(1);
+  lib.QuaternionToAxisAngle(
+    q.buffer,
+    Deno.UnsafePointer.of(axis.buffer),
+    Deno.UnsafePointer.of(angle.buffer),
   );
+  return { axis, angle: angle[0] };
+}
+
+export function QuaternionFromEuler(pitch: float, yaw: float, roll: float): Quaternion {
+  const buf = lib.QuaternionFromEuler(pitch, yaw, roll);
+  return Quaternion.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function QuaternionToEuler(q: Quaternion): Vector3 {
+  const buf = lib.QuaternionToEuler(q.buffer);
+  return Vector3.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function QuaternionTransform(q: Quaternion, mat: Matrix): Quaternion {
+  const buf = lib.QuaternionTransform(q.buffer, mat.buffer);
+  return Quaternion.fromBuffer(buf.buffer, buf.byteOffset);
+}
+
+export function QuaternionEquals(p: Quaternion, q: Quaternion): boolean {
+  return !!lib.QuaternionEquals(p.buffer, q.buffer);
+}
+
+export function MatrixDecompose(mat: Matrix): { translation: Vector3; rotation: Quaternion; scale: Vector3 } {
+  const translation = new Vector3(0, 0, 0);
+  const rotation = new Quaternion(0, 0, 0, 1);
+  const scale = new Vector3(0, 0, 0);
+  lib.MatrixDecompose(
+    mat.buffer,
+    Deno.UnsafePointer.of(translation.buffer),
+    Deno.UnsafePointer.of(rotation.buffer),
+    Deno.UnsafePointer.of(scale.buffer),
+  );
+  return { translation, rotation, scale };
 }
