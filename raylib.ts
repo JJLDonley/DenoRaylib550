@@ -2003,8 +2003,7 @@ export function DrawTriangle(
   const cross = (v2.x - v1.x) * (v3.y - v1.y) -
     (v2.y - v1.y) * (v3.x - v1.x);
 
-  // If clockwise, swap v2 and v3
-  if (cross < 0) {
+  if (cross > 0) {
     lib.DrawTriangle(v1.buffer, v3.buffer, v2.buffer, color.buffer);
   } else {
     lib.DrawTriangle(v1.buffer, v2.buffer, v3.buffer, color.buffer);
@@ -2020,7 +2019,7 @@ export function DrawTriangleLines(
   const cross = (v2.x - v1.x) * (v3.y - v1.y) -
     (v2.y - v1.y) * (v3.x - v1.x);
 
-  if (cross < 0) {
+  if (cross > 0) {
     lib.DrawTriangleLines(v1.buffer, v3.buffer, v2.buffer, color.buffer);
   } else {
     lib.DrawTriangleLines(v1.buffer, v2.buffer, v3.buffer, color.buffer);
