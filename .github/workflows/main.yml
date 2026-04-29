@@ -1,0 +1,113 @@
+name: Download raylib blobs
+
+on:
+  workflow_dispatch:
+    inputs:
+      raylib_version:
+        description: "raylib version"
+        required: true
+        default: "6.0"
+
+permissions:
+  contents: write
+
+jobs:
+  download-blobs:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download and extract raylib blobs
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          VERSION="${{ github.event.inputs.raylib_version }}"
+          API="https://api.github.com/repos/raysan5/raylib/releases/tags/$VERSION"
+
+          rm -rf blobs _raylib_tmp
+          mkdir -p blobs _raylib_tmp
+
+          echo "Fetching raylib $VERSION release metadata..."
+          ASSETS_JSON="$(curl -sL "$API")"
+
+          download_asset() {
+            local pattern="$1"
+            local out_name="$2"
+
+            local url
+            url="$(echo "$ASSETS_JSON" \
+              | grep browser_download_url \
+              | grep -E "$pattern" \
+              | cut -d '"' -f 4 \
+              | head -n 1)"
+
+            if [ -z "$url" ]; then
+              echo "Missing asset for pattern: $pattern"
+              echo "Available assets:"
+              echo "$ASSETS_JSON" | grep browser_download_url | cut -d '"' -f 4
+              exit 1
+            fi
+
+            local archive="_raylib_tmp/$(basename "$url")"
+            local extract_dir="_raylib_tmp/${out_name}_extract"
+
+            mkdir -p "$extract_dir"
+
+            echo "Downloading $url"
+            curl -L "$url" -o "$archive"
+
+            echo "Extracting $archive"
+            case "$archive" in
+              *.zip)
+                unzip -q "$archive" -d "$extract_dir"
+                ;;
+              *.tar.gz)
+                tar -xzf "$archive" -C "$extract_dir"
+                ;;
+              *)
+                echo "Unsupported archive: $archive"
+                exit 1
+                ;;
+            esac
+
+            local found
+            case "$out_name" in
+              raylib.dll)
+                found="$(find "$extract_dir" -type f -name "raylib.dll" | head -n 1)"
+                ;;
+              libraylib.so)
+                found="$(find "$extract_dir" -type f \( -name "libraylib.so" -o -name "libraylib.so.*" \) | head -n 1)"
+                ;;
+              libraylib.dylib)
+                found="$(find "$extract_dir" -type f -name "libraylib.dylib" | head -n 1)"
+                ;;
+              *)
+                echo "Unknown output name: $out_name"
+                exit 1
+                ;;
+            esac
+
+            if [ -z "$found" ]; then
+              echo "Could not find $out_name in $archive"
+              find "$extract_dir" -type f
+              exit 1
+            fi
+
+            cp "$found" "blobs/$out_name"
+            echo "Wrote blobs/$out_name"
+          }
+
+          download_asset "win64.*\\.zip$" "raylib.dll"
+          download_asset "linux.*(amd64|x86_64).*\\.tar\\.gz$" "libraylib.so"
+          download_asset "macos.*\\.tar\\.gz$" "libraylib.dylib"
+
+          rm -rf _raylib_tmp
+
+      - name: Commit blobs
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "Update raylib blobs"
+          file_pattern: blobs/*
