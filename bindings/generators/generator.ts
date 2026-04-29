@@ -1,9 +1,9 @@
 // deno-lint-ignore-file no-explicit-any
-// Generate bindings.ts from raylib_api.json (raylib 5.5)
+// Generate bindings.ts from raylib_api.json
 
 type Native = Deno.NativeType | "void";
 
-const apiPath = new URL("../raylib_api.json", import.meta.url);
+const apiPath = new URL("./raylib_api.json", import.meta.url);
 const api = JSON.parse(Deno.readTextFileSync(apiPath));
 
 const aliasMap = new Map<string, string>(
@@ -77,7 +77,7 @@ function flattenType(type: string, seen = new Set<string>()): Native[] {
   if (t.includes("*")) {
     const stars = starCount(t);
     const base = basePointerType(t);
-    if (/char\s*$/.test(base)) return ["buffer"];
+    if (/char\s*$/.test(base)) return stars === 1 ? ["buffer"] : ["pointer"];
     const resolved = resolveAlias(base);
     if (stars === 1 && structMap.has(resolved)) return ["buffer"];
     return ["pointer"];
@@ -123,7 +123,17 @@ function isDirectStruct(type: string): string | null {
   return null;
 }
 
-function ffiTypeExpr(type: string): string {
+function ffiTypeExpr(type: string, fnName?: string): string {
+  if (fnName === "UnloadFontData" && type.trim() === "GlyphInfo *") {
+    return JSON.stringify("pointer");
+  }
+  if (
+    (fnName === "UnloadUTF8" || fnName === "UnloadFileText") &&
+    type.trim() === "char *"
+  ) {
+    return JSON.stringify("pointer");
+  }
+
   const direct = isDirectStruct(type);
   if (direct) return `FFI_STRUCTS.${direct}`;
   const flat = flattenType(type);
@@ -168,16 +178,16 @@ for (const fn of api.functions as any[]) {
   }
 
   const parameters = (fn.params ?? []).map((param: any) =>
-    ffiTypeExpr(param.type)
+    ffiTypeExpr(param.type, fn.name)
   ).join(", ");
 
   result += `\t// ${fn.description ?? ""}\n`;
   result += `\t${fn.name}: { parameters: [${parameters}], result: ${
-    ffiTypeExpr(fn.returnType)
+    ffiTypeExpr(fn.returnType, fn.name)
   } },\n`;
 }
 
-result += "  },\n);\n\n";
+result += "  } as const,\n);\n\n";
 
 result += "// Write the result to the bindings file\n";
 const outputPath = new URL("../bindings.ts", import.meta.url);

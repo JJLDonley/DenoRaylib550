@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "exports": "./raylib.ts",
   "tasks": {
-    "generate": "cd bindings && deno run --allow-read --allow-write generator.ts && deno fmt"
+    "generate": "deno run --allow-read --allow-write bindings/generators/generate_layouts.ts && deno run --allow-read --allow-write bindings/generators/generate_ffi_structs.ts && deno run --allow-read --allow-write bindings/generators/generate_structs.ts && deno run --allow-read --allow-write bindings/generators/generator.ts && deno fmt deno.jsonc bindings"
   },
   "compilerOptions": {
     "types": [

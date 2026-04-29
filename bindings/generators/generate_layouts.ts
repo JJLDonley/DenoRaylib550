@@ -268,7 +268,9 @@ for (const layout of layouts) {
   out += `    fields: [\n`;
   for (const field of layout.fields) {
     out +=
-      `      { name: ${JSON.stringify(field.name)}, type: ${JSON.stringify(field.type)}, offset: ${field.offset}, size: ${field.size}, align: ${field.align}` +
+      `      { name: ${JSON.stringify(field.name)}, type: ${
+        JSON.stringify(field.type)
+      }, offset: ${field.offset}, size: ${field.size}, align: ${field.align}` +
       (field.count ? `, count: ${field.count}` : "") +
       " },\n";
   }
@@ -277,5 +279,5 @@ for (const layout of layouts) {
 }
 out += "} as const;\n";
 
-const outputPath = new URL("./layouts.ts", import.meta.url);
+const outputPath = new URL("../layouts.ts", import.meta.url);
 Deno.writeTextFileSync(outputPath, out);

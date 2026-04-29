@@ -90,12 +90,11 @@ export const FFI_STRUCTS = {
       "pointer",
       "buffer",
       "pointer",
-      "pointer",
-      "pointer",
+      "i32",
       "buffer",
       "pointer",
       "pointer",
-      "i32",
+      "pointer",
       "u32",
       "pointer",
     ],
@@ -158,6 +157,7 @@ export const FFI_STRUCTS = {
       "i32",
     ],
   },
+  ModelSkeleton: { struct: ["i32", "pointer", "pointer"] },
   Model: {
     struct: [
       "f32",
@@ -184,46 +184,47 @@ export const FFI_STRUCTS = {
       "i32",
       "pointer",
       "pointer",
+      "pointer",
+      "pointer",
     ],
   },
   ModelAnimation: {
     struct: [
+      "i8",
+      "i8",
+      "i8",
+      "i8",
+      "i8",
+      "i8",
+      "i8",
+      "i8",
+      "i8",
+      "i8",
+      "i8",
+      "i8",
+      "i8",
+      "i8",
+      "i8",
+      "i8",
+      "i8",
+      "i8",
+      "i8",
+      "i8",
+      "i8",
+      "i8",
+      "i8",
+      "i8",
+      "i8",
+      "i8",
+      "i8",
+      "i8",
+      "i8",
+      "i8",
+      "i8",
+      "i8",
       "i32",
       "i32",
       "pointer",
-      "pointer",
-      "i8",
-      "i8",
-      "i8",
-      "i8",
-      "i8",
-      "i8",
-      "i8",
-      "i8",
-      "i8",
-      "i8",
-      "i8",
-      "i8",
-      "i8",
-      "i8",
-      "i8",
-      "i8",
-      "i8",
-      "i8",
-      "i8",
-      "i8",
-      "i8",
-      "i8",
-      "i8",
-      "i8",
-      "i8",
-      "i8",
-      "i8",
-      "i8",
-      "i8",
-      "i8",
-      "i8",
-      "i8",
     ],
   },
   Ray: { struct: ["f32", "f32", "f32", "f32", "f32", "f32"] },
@@ -231,54 +232,19 @@ export const FFI_STRUCTS = {
     struct: ["u8", "f32", "f32", "f32", "f32", "f32", "f32", "f32"],
   },
   BoundingBox: { struct: ["f32", "f32", "f32", "f32", "f32", "f32"] },
-  AudioStream: {
-    struct: [
-      "pointer", // buffer
-      "pointer", // processor
-      "u32", // sampleRate
-      "u32", // sampleSize
-      "u32", // channels
-      "u32", // padding to 32 bytes on 64-bit
-    ],
-  },
-
-  Sound: {
-    struct: [
-      // AudioStream (32 bytes)
-      "pointer",
-      "pointer",
-      "u32",
-      "u32",
-      "u32",
-      "u32",
-      "u32", // frameCount
-      "u32", // padding to 40 bytes
-    ],
-  },
-
+  Wave: { struct: ["u32", "u32", "u32", "u32", "pointer"] },
+  AudioStream: { struct: ["pointer", "pointer", "u32", "u32", "u32"] },
+  Sound: { struct: ["pointer", "pointer", "u32", "u32", "u32", "u32"] },
   Music: {
     struct: [
-      // AudioStream (32 bytes)
       "pointer",
       "pointer",
       "u32",
       "u32",
       "u32",
       "u32",
-      "u32", // frameCount
-      "i32", // looping  (raylib bool == int)
-      "i32", // ctxType
-      "u32", // padding so pointer aligns on 8 bytes
-      "pointer", // ctxData
-    ],
-  },
-
-  Wave: {
-    struct: [
-      "u32",
-      "u32",
-      "u32",
-      "u32",
+      "u8",
+      "i32",
       "pointer",
     ],
   },
@@ -381,9 +347,30 @@ export const FFI_STRUCTS = {
       "f32",
     ],
   },
-  FilePathList: { struct: ["u32", "u32", "buffer"] },
+  FilePathList: { struct: ["u32", "buffer"] },
   AutomationEvent: { struct: ["u32", "u32", "i32", "i32", "i32", "i32"] },
   AutomationEventList: { struct: ["u32", "u32", "pointer"] },
+  float3: { struct: ["f32", "f32", "f32"] },
+  float16: {
+    struct: [
+      "f32",
+      "f32",
+      "f32",
+      "f32",
+      "f32",
+      "f32",
+      "f32",
+      "f32",
+      "f32",
+      "f32",
+      "f32",
+      "f32",
+      "f32",
+      "f32",
+      "f32",
+      "f32",
+    ],
+  },
   Matrix_2: {
     struct: [
       "f32",

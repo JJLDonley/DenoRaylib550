@@ -3,7 +3,7 @@
 
 import { STRUCT_LAYOUTS } from "../layouts.ts";
 
-const apiPath = new URL("../raylib_api.json", import.meta.url);
+const apiPath = new URL("./raylib_api.json", import.meta.url);
 const api = JSON.parse(Deno.readTextFileSync(apiPath));
 
 const aliasMap = new Map<string, string>(
@@ -204,42 +204,57 @@ function emitClass(struct: StructDef): string {
   if (canConvenience) {
     const params = struct.fields.map((field) => {
       const type = normalizeType(field.type);
-      if (isPrimitive(type)) return `${field.name}: ${tsTypeForPrimitive(type)}`;
+      if (isPrimitive(type)) {
+        return `${field.name}: ${tsTypeForPrimitive(type)}`;
+      }
       if (structSet.has(type)) return `${field.name}: ${type}`;
       return `${field.name}: unknown`;
     });
-    const optionsType = `Partial<{ ${struct.fields.map((field) => {
-      const type = normalizeType(field.type);
-      if (isPrimitive(type)) return `${field.name}: ${tsTypeForPrimitive(type)}`;
-      if (structSet.has(type)) return `${field.name}: ${type}`;
-      return `${field.name}: unknown`;
-    }).join("; ")} }>`;
+    const optionsType = `Partial<{ ${
+      struct.fields.map((field) => {
+        const type = normalizeType(field.type);
+        if (isPrimitive(type)) {
+          return `${field.name}: ${tsTypeForPrimitive(type)}`;
+        }
+        if (structSet.has(type)) return `${field.name}: ${type}`;
+        return `${field.name}: unknown`;
+      }).join("; ")
+    } }>`;
     out += `  constructor(buffer: Uint8Array<ArrayBuffer>);\n`;
     out += `  constructor(options: ${optionsType});\n`;
     out += `  constructor(${params.join(", ")});\n`;
-    out += `  constructor(arg0: Uint8Array<ArrayBuffer> | ${optionsType} | ${params[0]?.split(":")[1]?.trim() ?? "unknown"}, ...rest: unknown[]) {\n`;
+    out += `  constructor(arg0: Uint8Array<ArrayBuffer> | ${optionsType} | ${
+      params[0]?.split(":")[1]?.trim() ?? "unknown"
+    }, ...rest: unknown[]) {\n`;
     out += `    if (arg0 instanceof Uint8Array) {\n`;
     out += `      this.#buffer = arg0;\n`;
-    out += `      this.#view = new DataView(this.#buffer.buffer, this.#buffer.byteOffset, this.#buffer.byteLength);\n`;
+    out +=
+      `      this.#view = new DataView(this.#buffer.buffer, this.#buffer.byteOffset, this.#buffer.byteLength);\n`;
     out += `      return;\n`;
     out += `    }\n`;
-    out += `    this.#buffer = new Uint8Array(new ArrayBuffer(${struct.name}.SIZE));\n`;
-    out += `    this.#view = new DataView(this.#buffer.buffer, this.#buffer.byteOffset, this.#buffer.byteLength);\n`;
-    out += `    if (arg0 && typeof arg0 === "object" && !("buffer" in (arg0 as object))) {\n`;
+    out +=
+      `    this.#buffer = new Uint8Array(new ArrayBuffer(${struct.name}.SIZE));\n`;
+    out +=
+      `    this.#view = new DataView(this.#buffer.buffer, this.#buffer.byteOffset, this.#buffer.byteLength);\n`;
+    out +=
+      `    if (arg0 && typeof arg0 === "object" && !("buffer" in (arg0 as object))) {\n`;
     struct.fields.forEach((field) => {
-      out += `      if ((arg0 as any).${field.name} !== undefined) this.${field.name} = (arg0 as any).${field.name};\n`;
+      out +=
+        `      if ((arg0 as any).${field.name} !== undefined) this.${field.name} = (arg0 as any).${field.name};\n`;
     });
     out += `      return;\n`;
     out += `    }\n`;
     out += `    const args = [arg0, ...rest];\n`;
     struct.fields.forEach((field, idx) => {
-      out += `    if (args[${idx}] !== undefined) this.${field.name} = args[${idx}] as any;\n`;
+      out +=
+        `    if (args[${idx}] !== undefined) this.${field.name} = args[${idx}] as any;\n`;
     });
     out += `  }\n\n`;
   } else {
     out += `  constructor(buffer: Uint8Array<ArrayBuffer>) {\n`;
     out += `    this.#buffer = buffer;\n`;
-    out += `    this.#view = new DataView(this.#buffer.buffer, this.#buffer.byteOffset, this.#buffer.byteLength);\n`;
+    out +=
+      `    this.#view = new DataView(this.#buffer.buffer, this.#buffer.byteOffset, this.#buffer.byteLength);\n`;
     out += `  }\n\n`;
   }
   out +=
@@ -267,8 +282,7 @@ function emitClass(struct: StructDef): string {
           `    const bytes = new Uint8Array(this.#buffer.buffer, this.#buffer.byteOffset + ${offset}, ${count});\n`;
         out += `    let end = bytes.indexOf(0);\n`;
         out += `    if (end === -1) end = ${count};\n`;
-        out +=
-          `    return new TextDecoder().decode(bytes.subarray(0, end));\n`;
+        out += `    return new TextDecoder().decode(bytes.subarray(0, end));\n`;
         out += `  }\n\n`;
         out += `  set ${field.name}(value: string) {\n`;
         out +=
@@ -307,23 +321,29 @@ function emitClass(struct: StructDef): string {
         out +=
           `    return new ${ctor}(this.#buffer.buffer, this.#buffer.byteOffset + ${offset}, ${arrayInfo.count});\n`;
         out += `  }\n\n`;
-        out +=
-          `  set ${field.name}(values: ArrayLike<${tsTypeForPrimitive(base)}>) {\n`;
+        out += `  set ${field.name}(values: ArrayLike<${
+          tsTypeForPrimitive(base)
+        }>) {\n`;
         out += `    const view = this.${field.name};\n`;
         out += `    const count = Math.min(values.length, view.length);\n`;
-        out += `    for (let i = 0; i < count; i++) view[i] = values[i] as any;\n`;
+        out +=
+          `    for (let i = 0; i < count; i++) view[i] = values[i] as any;\n`;
         out += `  }\n\n`;
       }
       continue;
     }
 
-    if (isPointer(type) || callbackSet.has(type)) {
+    if (
+      isPointer(type) || callbackSet.has(type) || fieldLayout.type === "pointer"
+    ) {
       const name = `${field.name}Ptr`;
       out += `  get ${name}(): bigint {\n`;
-      out += `    return this.#view.getBigUint64(${offset}, ${littleEndianExpr});\n`;
+      out +=
+        `    return this.#view.getBigUint64(${offset}, ${littleEndianExpr});\n`;
       out += `  }\n\n`;
       out += `  set ${name}(value: bigint) {\n`;
-      out += `    this.#view.setBigUint64(${offset}, value, ${littleEndianExpr});\n`;
+      out +=
+        `    this.#view.setBigUint64(${offset}, value, ${littleEndianExpr});\n`;
       out += `  }\n\n`;
       continue;
     }
@@ -387,10 +407,12 @@ function emitClass(struct: StructDef): string {
         out += `  }\n\n`;
       } else if (getter.startsWith("getBig")) {
         out += `  get ${field.name}(): ${tsType} {\n`;
-        out += `    return this.#view.${getter}(${offset}, ${littleEndianExpr});\n`;
+        out +=
+          `    return this.#view.${getter}(${offset}, ${littleEndianExpr});\n`;
         out += `  }\n\n`;
         out += `  set ${field.name}(value: ${tsType}) {\n`;
-        out += `    this.#view.${setter}(${offset}, value, ${littleEndianExpr});\n`;
+        out +=
+          `    this.#view.${setter}(${offset}, value, ${littleEndianExpr});\n`;
         out += `  }\n\n`;
       } else {
         out += `  get ${field.name}(): ${tsType} {\n`;

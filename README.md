@@ -1,37 +1,69 @@
-# Deno Raylib 5.5
+# Deno Raylib 6.0
 
-Deno TypeScript bindings for raylib 5.5 with a focus on staying as close to
-1:1 with the C API as possible.
+Deno TypeScript bindings for raylib 6.0 with a focus on staying as close to 1:1
+with the C API as possible.
 
 ## Versions
 
-- Deno: v2.6.3
-- Raylib: 5.5
+- Deno: v2.7.14+
+- Raylib: 6.0
 
 ## Install
 
 ```bash
-git clone https://github.com/JJLDonley/DenoRaylib550
-mv DenoRaylib550 raylib
+git clone https://github.com/JJLDonley/Deno-Raylib
+mv Deno-Raylib raylib
 ```
 
-IMPORTANT: Copy `blobs` to your project root.
-The blobs are the platform DLLs shipped in the `raylib/blobs` folder.
-Raylib will not run without them.
+## Native Blobs (Required)
 
-Options:
-- Run `./blobs.ps1` in your project root (requires 7zip).
-- Download blobs from the raylib 5.5 release page.
+Raylib requires native shared libraries at runtime.
 
-Create `deno.json` with:
+You **must have the correct platform library in your project root under `./blobs/`**.
+
+Expected layout:
+
+```text
+./blobs/
+  raylib.dll          (Windows)
+  libraylib.so        (Linux)
+  libraylib.dylib     (macOS)
+```
+
+## Download Blobs
+
+### Linux / macOS
+
+```bash
+chmod +x blobs.sh
+./blobs.sh
+```
+
+### Windows
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\blobs.ps1
+```
+
+These scripts:
+
+- Download the correct raylib 6.0 release
+- Extract the native library
+- Place it directly into `./blobs/`
+
+No manual copying required.
+
+## Configuration
+
+Create `deno.json`:
 
 ```json
 {
   "tasks": {
-    "dev": "deno run --watch main.ts",
-    "W_Build": "deno compile --target x86_64-pc-windows-msvc --no-terminal --output mygame.exe -Ar main.ts",
-    "L_Build": "deno compile --target x86_64-unknown-linux-gnu --output mygame.exe -Ar main.ts",
-    "M_Build": "deno compile --target x86_64-apple-darwin --output mygame.exe -Ar main.ts"
+    "dev": "deno run --watch -Ar main.ts",
+    "build:win": "deno compile --target x86_64-pc-windows-msvc --no-terminal -Ar -o game.exe main.ts",
+    "build:linux": "deno compile --target x86_64-unknown-linux-gnu -Ar -o game main.ts",
+    "build:mac": "deno compile --target x86_64-apple-darwin -Ar -o mygame main.ts"
   },
   "compilerOptions": {
     "types": ["./raylib/global.d.ts"]
@@ -41,17 +73,18 @@ Create `deno.json` with:
   }
 }
 ```
-## Using Raylib
 
-Import `raylib` with:
+## Usage
 
-```typescript
+Import raylib:
+
+```ts
 import * as raylib from "raylib";
 ```
 
-Here is a simple raylib example:
+### Example
 
-```typescript
+```ts
 import * as raylib from "raylib";
 
 function main() {
@@ -71,13 +104,17 @@ function main() {
 main();
 ```
 
-## Examples
+## Notes
 
-You can run examples with:
+- Loads from:
+  ```ts
+  ./blobs/${platform}
+  ```
 
-```bash
-deno run ./raylib/examples/core/<file_name>.ts
-```
+- Mapping:
+  - windows → raylib.dll
+  - linux → libraylib.so
+  - darwin → libraylib.dylib
 
 ## License
 

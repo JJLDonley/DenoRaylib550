@@ -1,60 +1,63 @@
-# raylib 5.5 – cross-platform blobs (Windows, explicit 7-Zip path)
+param(
+    [string]$Version = "6.0",
+    [string]$OutDir = "blobs"
+)
 
 $ErrorActionPreference = "Stop"
 
-$SEVEN_ZIP = "C:\Program Files\7-Zip\7z.exe"
-if (-not (Test-Path $SEVEN_ZIP)) {
-    throw "7-Zip not found at $SEVEN_ZIP"
+$Root  = Get-Location
+$Tmp   = Join-Path $Root "_raylib_tmp"
+$Blobs = Join-Path $Root $OutDir
+
+if (Test-Path $Tmp) {
+    Remove-Item $Tmp -Recurse -Force
 }
 
-$VER  = "5.5"
-$BASE = "https://github.com/raysan5/raylib/releases/download/$VER"
+New-Item -ItemType Directory -Force $Tmp, $Blobs | Out-Null
 
-$ROOT  = Get-Location
-$BLOBS = Join-Path $ROOT "blobs"
-$TMP   = Join-Path $ROOT "_raylib_tmp"
+$Api = "https://api.github.com/repos/raysan5/raylib/releases/tags/$Version"
 
-if (Test-Path $TMP) { Remove-Item $TMP -Recurse -Force }
-New-Item -ItemType Directory -Force $TMP, $BLOBS | Out-Null
+Write-Output "Fetching raylib $Version release metadata..."
 
-function Extract-TarGz-RealFile {
-    param ($pkg, $regex, $outName, $outDir)
+$Release = Invoke-RestMethod `
+    -Uri $Api `
+    -Headers @{ "User-Agent" = "raylib-windows-blob-downloader" }
 
-    $pkgPath = Join-Path $TMP $pkg
-    Invoke-WebRequest "$BASE/$pkg" -OutFile $pkgPath
+$Asset = $Release.assets |
+    Where-Object { $_.name -match "raylib-$Version.*win64.*\.zip$" } |
+    Select-Object -First 1
 
-    & $SEVEN_ZIP x $pkgPath "-o$TMP" -y | Out-Null
-    & $SEVEN_ZIP x ($pkgPath -replace '\.gz$','') "-o$TMP" -y | Out-Null
-
-    $bin = Get-ChildItem $TMP -Recurse | Where-Object { $_.Name -match $regex } | Select-Object -First 1
-    if (-not $bin) { throw "$outName not found in $pkg" }
-
-    New-Item -ItemType Directory -Force $outDir | Out-Null
-    Copy-Item $bin.FullName (Join-Path $outDir $outName) -Force
+if (-not $Asset) {
+    Write-Output "Available assets:"
+    $Release.assets | ForEach-Object { Write-Output "  $($_.name)" }
+    throw "No Windows x64 asset found for raylib $Version"
 }
 
-# ---- WINDOWS ----
-Invoke-WebRequest "$BASE/raylib-5.5_win64_msvc16.zip" -OutFile "$TMP/win.zip"
-Expand-Archive -Force "$TMP/win.zip" $TMP
+$Zip = Join-Path $Tmp $Asset.name
 
-$winDll = Get-ChildItem $TMP -Recurse -Filter raylib.dll | Select-Object -First 1
-New-Item -ItemType Directory -Force "$BLOBS/windows/x64" | Out-Null
-Copy-Item $winDll.FullName "$BLOBS/windows/x64/raylib.dll" -Force
+Write-Output "Downloading $($Asset.name)..."
 
-# ---- LINUX ----
-Extract-TarGz-RealFile `
-    "raylib-5.5_linux_amd64.tar.gz" `
-    "^libraylib\.so\.[0-9]+" `
-    "libraylib.so" `
-    "$BLOBS/linux/x64"
+Invoke-WebRequest `
+    -Uri $Asset.browser_download_url `
+    -OutFile $Zip `
+    -Headers @{ "User-Agent" = "raylib-windows-blob-downloader" }
 
-# ---- MACOS ----
-Extract-TarGz-RealFile `
-    "raylib-5.5_macos.tar.gz" `
-    "^libraylib\.dylib" `
-    "libraylib.dylib" `
-    "$BLOBS/macos/x64"
+Write-Output "Extracting..."
 
-Remove-Item $TMP -Recurse -Force
+Expand-Archive -Force $Zip $Tmp
 
-Write-Output "raylib 5.5 blobs ready in ./blobs"
+$Dll = Get-ChildItem $Tmp -Recurse -Filter "raylib.dll" |
+    Select-Object -First 1
+
+if (-not $Dll) {
+    throw "raylib.dll not found in downloaded archive"
+}
+
+$Out = Join-Path $Blobs "raylib.dll"
+
+Copy-Item $Dll.FullName $Out -Force
+
+Remove-Item $Tmp -Recurse -Force
+
+Write-Output "Done:"
+Write-Output "  $Out"

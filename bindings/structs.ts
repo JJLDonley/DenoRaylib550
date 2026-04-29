@@ -17,14 +17,25 @@ export class Vector2 {
   constructor(buffer: Uint8Array<ArrayBuffer>);
   constructor(options: Partial<{ x: number; y: number }>);
   constructor(x: number, y: number);
-  constructor(arg0: Uint8Array<ArrayBuffer> | Partial<{ x: number; y: number }> | number, ...rest: unknown[]) {
+  constructor(
+    arg0: Uint8Array<ArrayBuffer> | Partial<{ x: number; y: number }> | number,
+    ...rest: unknown[]
+  ) {
     if (arg0 instanceof Uint8Array) {
       this.#buffer = arg0;
-      this.#view = new DataView(this.#buffer.buffer, this.#buffer.byteOffset, this.#buffer.byteLength);
+      this.#view = new DataView(
+        this.#buffer.buffer,
+        this.#buffer.byteOffset,
+        this.#buffer.byteLength,
+      );
       return;
     }
     this.#buffer = new Uint8Array(new ArrayBuffer(Vector2.SIZE));
-    this.#view = new DataView(this.#buffer.buffer, this.#buffer.byteOffset, this.#buffer.byteLength);
+    this.#view = new DataView(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset,
+      this.#buffer.byteLength,
+    );
     if (arg0 && typeof arg0 === "object" && !("buffer" in (arg0 as object))) {
       if ((arg0 as any).x !== undefined) this.x = (arg0 as any).x;
       if ((arg0 as any).y !== undefined) this.y = (arg0 as any).y;
@@ -36,7 +47,9 @@ export class Vector2 {
   }
 
   static fromBuffer(buffer: ArrayBufferLike, byteOffset = 0): Vector2 {
-    return new Vector2(new Uint8Array(buffer as ArrayBuffer, byteOffset, Vector2.SIZE));
+    return new Vector2(
+      new Uint8Array(buffer as ArrayBuffer, byteOffset, Vector2.SIZE),
+    );
   }
 
   get buffer(): Uint8Array<ArrayBuffer> {
@@ -58,7 +71,6 @@ export class Vector2 {
   set y(value: number) {
     this.#view.setFloat32(4, value as any, littleEndian);
   }
-
 }
 
 export class Vector3 {
@@ -69,14 +81,28 @@ export class Vector3 {
   constructor(buffer: Uint8Array<ArrayBuffer>);
   constructor(options: Partial<{ x: number; y: number; z: number }>);
   constructor(x: number, y: number, z: number);
-  constructor(arg0: Uint8Array<ArrayBuffer> | Partial<{ x: number; y: number; z: number }> | number, ...rest: unknown[]) {
+  constructor(
+    arg0:
+      | Uint8Array<ArrayBuffer>
+      | Partial<{ x: number; y: number; z: number }>
+      | number,
+    ...rest: unknown[]
+  ) {
     if (arg0 instanceof Uint8Array) {
       this.#buffer = arg0;
-      this.#view = new DataView(this.#buffer.buffer, this.#buffer.byteOffset, this.#buffer.byteLength);
+      this.#view = new DataView(
+        this.#buffer.buffer,
+        this.#buffer.byteOffset,
+        this.#buffer.byteLength,
+      );
       return;
     }
     this.#buffer = new Uint8Array(new ArrayBuffer(Vector3.SIZE));
-    this.#view = new DataView(this.#buffer.buffer, this.#buffer.byteOffset, this.#buffer.byteLength);
+    this.#view = new DataView(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset,
+      this.#buffer.byteLength,
+    );
     if (arg0 && typeof arg0 === "object" && !("buffer" in (arg0 as object))) {
       if ((arg0 as any).x !== undefined) this.x = (arg0 as any).x;
       if ((arg0 as any).y !== undefined) this.y = (arg0 as any).y;
@@ -90,7 +116,9 @@ export class Vector3 {
   }
 
   static fromBuffer(buffer: ArrayBufferLike, byteOffset = 0): Vector3 {
-    return new Vector3(new Uint8Array(buffer as ArrayBuffer, byteOffset, Vector3.SIZE));
+    return new Vector3(
+      new Uint8Array(buffer as ArrayBuffer, byteOffset, Vector3.SIZE),
+    );
   }
 
   get buffer(): Uint8Array<ArrayBuffer> {
@@ -120,7 +148,6 @@ export class Vector3 {
   set z(value: number) {
     this.#view.setFloat32(8, value as any, littleEndian);
   }
-
 }
 
 export class Vector4 {
@@ -131,14 +158,28 @@ export class Vector4 {
   constructor(buffer: Uint8Array<ArrayBuffer>);
   constructor(options: Partial<{ x: number; y: number; z: number; w: number }>);
   constructor(x: number, y: number, z: number, w: number);
-  constructor(arg0: Uint8Array<ArrayBuffer> | Partial<{ x: number; y: number; z: number; w: number }> | number, ...rest: unknown[]) {
+  constructor(
+    arg0:
+      | Uint8Array<ArrayBuffer>
+      | Partial<{ x: number; y: number; z: number; w: number }>
+      | number,
+    ...rest: unknown[]
+  ) {
     if (arg0 instanceof Uint8Array) {
       this.#buffer = arg0;
-      this.#view = new DataView(this.#buffer.buffer, this.#buffer.byteOffset, this.#buffer.byteLength);
+      this.#view = new DataView(
+        this.#buffer.buffer,
+        this.#buffer.byteOffset,
+        this.#buffer.byteLength,
+      );
       return;
     }
     this.#buffer = new Uint8Array(new ArrayBuffer(Vector4.SIZE));
-    this.#view = new DataView(this.#buffer.buffer, this.#buffer.byteOffset, this.#buffer.byteLength);
+    this.#view = new DataView(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset,
+      this.#buffer.byteLength,
+    );
     if (arg0 && typeof arg0 === "object" && !("buffer" in (arg0 as object))) {
       if ((arg0 as any).x !== undefined) this.x = (arg0 as any).x;
       if ((arg0 as any).y !== undefined) this.y = (arg0 as any).y;
@@ -154,7 +195,9 @@ export class Vector4 {
   }
 
   static fromBuffer(buffer: ArrayBufferLike, byteOffset = 0): Vector4 {
-    return new Vector4(new Uint8Array(buffer as ArrayBuffer, byteOffset, Vector4.SIZE));
+    return new Vector4(
+      new Uint8Array(buffer as ArrayBuffer, byteOffset, Vector4.SIZE),
+    );
   }
 
   get buffer(): Uint8Array<ArrayBuffer> {
@@ -192,7 +235,6 @@ export class Vector4 {
   set w(value: number) {
     this.#view.setFloat32(12, value as any, littleEndian);
   }
-
 }
 
 export class Matrix {
@@ -201,16 +243,87 @@ export class Matrix {
   #view: DataView;
 
   constructor(buffer: Uint8Array<ArrayBuffer>);
-  constructor(options: Partial<{ m0: number; m4: number; m8: number; m12: number; m1: number; m5: number; m9: number; m13: number; m2: number; m6: number; m10: number; m14: number; m3: number; m7: number; m11: number; m15: number }>);
-  constructor(m0: number, m4: number, m8: number, m12: number, m1: number, m5: number, m9: number, m13: number, m2: number, m6: number, m10: number, m14: number, m3: number, m7: number, m11: number, m15: number);
-  constructor(arg0: Uint8Array<ArrayBuffer> | Partial<{ m0: number; m4: number; m8: number; m12: number; m1: number; m5: number; m9: number; m13: number; m2: number; m6: number; m10: number; m14: number; m3: number; m7: number; m11: number; m15: number }> | number, ...rest: unknown[]) {
+  constructor(
+    options: Partial<
+      {
+        m0: number;
+        m4: number;
+        m8: number;
+        m12: number;
+        m1: number;
+        m5: number;
+        m9: number;
+        m13: number;
+        m2: number;
+        m6: number;
+        m10: number;
+        m14: number;
+        m3: number;
+        m7: number;
+        m11: number;
+        m15: number;
+      }
+    >,
+  );
+  constructor(
+    m0: number,
+    m4: number,
+    m8: number,
+    m12: number,
+    m1: number,
+    m5: number,
+    m9: number,
+    m13: number,
+    m2: number,
+    m6: number,
+    m10: number,
+    m14: number,
+    m3: number,
+    m7: number,
+    m11: number,
+    m15: number,
+  );
+  constructor(
+    arg0:
+      | Uint8Array<ArrayBuffer>
+      | Partial<
+        {
+          m0: number;
+          m4: number;
+          m8: number;
+          m12: number;
+          m1: number;
+          m5: number;
+          m9: number;
+          m13: number;
+          m2: number;
+          m6: number;
+          m10: number;
+          m14: number;
+          m3: number;
+          m7: number;
+          m11: number;
+          m15: number;
+        }
+      >
+      | number,
+    ...rest: unknown[]
+  ) {
     if (arg0 instanceof Uint8Array) {
       this.#buffer = arg0;
-      this.#view = new DataView(this.#buffer.buffer, this.#buffer.byteOffset, this.#buffer.byteLength);
+      this.#view = new DataView(
+        this.#buffer.buffer,
+        this.#buffer.byteOffset,
+        this.#buffer.byteLength,
+      );
       return;
     }
     this.#buffer = new Uint8Array(new ArrayBuffer(Matrix.SIZE));
-    this.#view = new DataView(this.#buffer.buffer, this.#buffer.byteOffset, this.#buffer.byteLength);
+    this.#view = new DataView(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset,
+      this.#buffer.byteLength,
+    );
     if (arg0 && typeof arg0 === "object" && !("buffer" in (arg0 as object))) {
       if ((arg0 as any).m0 !== undefined) this.m0 = (arg0 as any).m0;
       if ((arg0 as any).m4 !== undefined) this.m4 = (arg0 as any).m4;
@@ -250,7 +363,9 @@ export class Matrix {
   }
 
   static fromBuffer(buffer: ArrayBufferLike, byteOffset = 0): Matrix {
-    return new Matrix(new Uint8Array(buffer as ArrayBuffer, byteOffset, Matrix.SIZE));
+    return new Matrix(
+      new Uint8Array(buffer as ArrayBuffer, byteOffset, Matrix.SIZE),
+    );
   }
 
   get buffer(): Uint8Array<ArrayBuffer> {
@@ -384,7 +499,6 @@ export class Matrix {
   set m15(value: number) {
     this.#view.setFloat32(60, value as any, littleEndian);
   }
-
 }
 
 export class Color {
@@ -395,14 +509,28 @@ export class Color {
   constructor(buffer: Uint8Array<ArrayBuffer>);
   constructor(options: Partial<{ r: number; g: number; b: number; a: number }>);
   constructor(r: number, g: number, b: number, a: number);
-  constructor(arg0: Uint8Array<ArrayBuffer> | Partial<{ r: number; g: number; b: number; a: number }> | number, ...rest: unknown[]) {
+  constructor(
+    arg0:
+      | Uint8Array<ArrayBuffer>
+      | Partial<{ r: number; g: number; b: number; a: number }>
+      | number,
+    ...rest: unknown[]
+  ) {
     if (arg0 instanceof Uint8Array) {
       this.#buffer = arg0;
-      this.#view = new DataView(this.#buffer.buffer, this.#buffer.byteOffset, this.#buffer.byteLength);
+      this.#view = new DataView(
+        this.#buffer.buffer,
+        this.#buffer.byteOffset,
+        this.#buffer.byteLength,
+      );
       return;
     }
     this.#buffer = new Uint8Array(new ArrayBuffer(Color.SIZE));
-    this.#view = new DataView(this.#buffer.buffer, this.#buffer.byteOffset, this.#buffer.byteLength);
+    this.#view = new DataView(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset,
+      this.#buffer.byteLength,
+    );
     if (arg0 && typeof arg0 === "object" && !("buffer" in (arg0 as object))) {
       if ((arg0 as any).r !== undefined) this.r = (arg0 as any).r;
       if ((arg0 as any).g !== undefined) this.g = (arg0 as any).g;
@@ -418,7 +546,9 @@ export class Color {
   }
 
   static fromBuffer(buffer: ArrayBufferLike, byteOffset = 0): Color {
-    return new Color(new Uint8Array(buffer as ArrayBuffer, byteOffset, Color.SIZE));
+    return new Color(
+      new Uint8Array(buffer as ArrayBuffer, byteOffset, Color.SIZE),
+    );
   }
 
   get buffer(): Uint8Array<ArrayBuffer> {
@@ -456,7 +586,6 @@ export class Color {
   set a(value: number) {
     this.#view.setUint8(3, value);
   }
-
 }
 
 export class Rectangle {
@@ -465,21 +594,39 @@ export class Rectangle {
   #view: DataView;
 
   constructor(buffer: Uint8Array<ArrayBuffer>);
-  constructor(options: Partial<{ x: number; y: number; width: number; height: number }>);
+  constructor(
+    options: Partial<{ x: number; y: number; width: number; height: number }>,
+  );
   constructor(x: number, y: number, width: number, height: number);
-  constructor(arg0: Uint8Array<ArrayBuffer> | Partial<{ x: number; y: number; width: number; height: number }> | number, ...rest: unknown[]) {
+  constructor(
+    arg0:
+      | Uint8Array<ArrayBuffer>
+      | Partial<{ x: number; y: number; width: number; height: number }>
+      | number,
+    ...rest: unknown[]
+  ) {
     if (arg0 instanceof Uint8Array) {
       this.#buffer = arg0;
-      this.#view = new DataView(this.#buffer.buffer, this.#buffer.byteOffset, this.#buffer.byteLength);
+      this.#view = new DataView(
+        this.#buffer.buffer,
+        this.#buffer.byteOffset,
+        this.#buffer.byteLength,
+      );
       return;
     }
     this.#buffer = new Uint8Array(new ArrayBuffer(Rectangle.SIZE));
-    this.#view = new DataView(this.#buffer.buffer, this.#buffer.byteOffset, this.#buffer.byteLength);
+    this.#view = new DataView(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset,
+      this.#buffer.byteLength,
+    );
     if (arg0 && typeof arg0 === "object" && !("buffer" in (arg0 as object))) {
       if ((arg0 as any).x !== undefined) this.x = (arg0 as any).x;
       if ((arg0 as any).y !== undefined) this.y = (arg0 as any).y;
       if ((arg0 as any).width !== undefined) this.width = (arg0 as any).width;
-      if ((arg0 as any).height !== undefined) this.height = (arg0 as any).height;
+      if ((arg0 as any).height !== undefined) {
+        this.height = (arg0 as any).height;
+      }
       return;
     }
     const args = [arg0, ...rest];
@@ -490,7 +637,9 @@ export class Rectangle {
   }
 
   static fromBuffer(buffer: ArrayBufferLike, byteOffset = 0): Rectangle {
-    return new Rectangle(new Uint8Array(buffer as ArrayBuffer, byteOffset, Rectangle.SIZE));
+    return new Rectangle(
+      new Uint8Array(buffer as ArrayBuffer, byteOffset, Rectangle.SIZE),
+    );
   }
 
   get buffer(): Uint8Array<ArrayBuffer> {
@@ -528,7 +677,6 @@ export class Rectangle {
   set height(value: number) {
     this.#view.setFloat32(12, value as any, littleEndian);
   }
-
 }
 
 export class Image {
@@ -538,11 +686,17 @@ export class Image {
 
   constructor(buffer: Uint8Array<ArrayBuffer>) {
     this.#buffer = buffer;
-    this.#view = new DataView(this.#buffer.buffer, this.#buffer.byteOffset, this.#buffer.byteLength);
+    this.#view = new DataView(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset,
+      this.#buffer.byteLength,
+    );
   }
 
   static fromBuffer(buffer: ArrayBufferLike, byteOffset = 0): Image {
-    return new Image(new Uint8Array(buffer as ArrayBuffer, byteOffset, Image.SIZE));
+    return new Image(
+      new Uint8Array(buffer as ArrayBuffer, byteOffset, Image.SIZE),
+    );
   }
 
   get buffer(): Uint8Array<ArrayBuffer> {
@@ -588,7 +742,6 @@ export class Image {
   set format(value: number) {
     this.#view.setInt32(20, value as any, littleEndian);
   }
-
 }
 
 export class Texture {
@@ -597,22 +750,66 @@ export class Texture {
   #view: DataView;
 
   constructor(buffer: Uint8Array<ArrayBuffer>);
-  constructor(options: Partial<{ id: number; width: number; height: number; mipmaps: number; format: number }>);
-  constructor(id: number, width: number, height: number, mipmaps: number, format: number);
-  constructor(arg0: Uint8Array<ArrayBuffer> | Partial<{ id: number; width: number; height: number; mipmaps: number; format: number }> | number, ...rest: unknown[]) {
+  constructor(
+    options: Partial<
+      {
+        id: number;
+        width: number;
+        height: number;
+        mipmaps: number;
+        format: number;
+      }
+    >,
+  );
+  constructor(
+    id: number,
+    width: number,
+    height: number,
+    mipmaps: number,
+    format: number,
+  );
+  constructor(
+    arg0:
+      | Uint8Array<ArrayBuffer>
+      | Partial<
+        {
+          id: number;
+          width: number;
+          height: number;
+          mipmaps: number;
+          format: number;
+        }
+      >
+      | number,
+    ...rest: unknown[]
+  ) {
     if (arg0 instanceof Uint8Array) {
       this.#buffer = arg0;
-      this.#view = new DataView(this.#buffer.buffer, this.#buffer.byteOffset, this.#buffer.byteLength);
+      this.#view = new DataView(
+        this.#buffer.buffer,
+        this.#buffer.byteOffset,
+        this.#buffer.byteLength,
+      );
       return;
     }
     this.#buffer = new Uint8Array(new ArrayBuffer(Texture.SIZE));
-    this.#view = new DataView(this.#buffer.buffer, this.#buffer.byteOffset, this.#buffer.byteLength);
+    this.#view = new DataView(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset,
+      this.#buffer.byteLength,
+    );
     if (arg0 && typeof arg0 === "object" && !("buffer" in (arg0 as object))) {
       if ((arg0 as any).id !== undefined) this.id = (arg0 as any).id;
       if ((arg0 as any).width !== undefined) this.width = (arg0 as any).width;
-      if ((arg0 as any).height !== undefined) this.height = (arg0 as any).height;
-      if ((arg0 as any).mipmaps !== undefined) this.mipmaps = (arg0 as any).mipmaps;
-      if ((arg0 as any).format !== undefined) this.format = (arg0 as any).format;
+      if ((arg0 as any).height !== undefined) {
+        this.height = (arg0 as any).height;
+      }
+      if ((arg0 as any).mipmaps !== undefined) {
+        this.mipmaps = (arg0 as any).mipmaps;
+      }
+      if ((arg0 as any).format !== undefined) {
+        this.format = (arg0 as any).format;
+      }
       return;
     }
     const args = [arg0, ...rest];
@@ -624,7 +821,9 @@ export class Texture {
   }
 
   static fromBuffer(buffer: ArrayBufferLike, byteOffset = 0): Texture {
-    return new Texture(new Uint8Array(buffer as ArrayBuffer, byteOffset, Texture.SIZE));
+    return new Texture(
+      new Uint8Array(buffer as ArrayBuffer, byteOffset, Texture.SIZE),
+    );
   }
 
   get buffer(): Uint8Array<ArrayBuffer> {
@@ -670,7 +869,6 @@ export class Texture {
   set format(value: number) {
     this.#view.setInt32(16, value as any, littleEndian);
   }
-
 }
 
 export class RenderTexture {
@@ -679,19 +877,37 @@ export class RenderTexture {
   #view: DataView;
 
   constructor(buffer: Uint8Array<ArrayBuffer>);
-  constructor(options: Partial<{ id: number; texture: Texture; depth: Texture }>);
+  constructor(
+    options: Partial<{ id: number; texture: Texture; depth: Texture }>,
+  );
   constructor(id: number, texture: Texture, depth: Texture);
-  constructor(arg0: Uint8Array<ArrayBuffer> | Partial<{ id: number; texture: Texture; depth: Texture }> | number, ...rest: unknown[]) {
+  constructor(
+    arg0:
+      | Uint8Array<ArrayBuffer>
+      | Partial<{ id: number; texture: Texture; depth: Texture }>
+      | number,
+    ...rest: unknown[]
+  ) {
     if (arg0 instanceof Uint8Array) {
       this.#buffer = arg0;
-      this.#view = new DataView(this.#buffer.buffer, this.#buffer.byteOffset, this.#buffer.byteLength);
+      this.#view = new DataView(
+        this.#buffer.buffer,
+        this.#buffer.byteOffset,
+        this.#buffer.byteLength,
+      );
       return;
     }
     this.#buffer = new Uint8Array(new ArrayBuffer(RenderTexture.SIZE));
-    this.#view = new DataView(this.#buffer.buffer, this.#buffer.byteOffset, this.#buffer.byteLength);
+    this.#view = new DataView(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset,
+      this.#buffer.byteLength,
+    );
     if (arg0 && typeof arg0 === "object" && !("buffer" in (arg0 as object))) {
       if ((arg0 as any).id !== undefined) this.id = (arg0 as any).id;
-      if ((arg0 as any).texture !== undefined) this.texture = (arg0 as any).texture;
+      if ((arg0 as any).texture !== undefined) {
+        this.texture = (arg0 as any).texture;
+      }
       if ((arg0 as any).depth !== undefined) this.depth = (arg0 as any).depth;
       return;
     }
@@ -702,7 +918,9 @@ export class RenderTexture {
   }
 
   static fromBuffer(buffer: ArrayBufferLike, byteOffset = 0): RenderTexture {
-    return new RenderTexture(new Uint8Array(buffer as ArrayBuffer, byteOffset, RenderTexture.SIZE));
+    return new RenderTexture(
+      new Uint8Array(buffer as ArrayBuffer, byteOffset, RenderTexture.SIZE),
+    );
   }
 
   get buffer(): Uint8Array<ArrayBuffer> {
@@ -722,19 +940,29 @@ export class RenderTexture {
   }
 
   set texture(value: Texture) {
-    const target = new Uint8Array(this.#buffer.buffer, this.#buffer.byteOffset + 4, Texture.SIZE);
+    const target = new Uint8Array(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset + 4,
+      Texture.SIZE,
+    );
     target.set(value.buffer);
   }
 
   get depth(): Texture {
-    return Texture.fromBuffer(this.#buffer.buffer, this.#buffer.byteOffset + 24);
+    return Texture.fromBuffer(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset + 24,
+    );
   }
 
   set depth(value: Texture) {
-    const target = new Uint8Array(this.#buffer.buffer, this.#buffer.byteOffset + 24, Texture.SIZE);
+    const target = new Uint8Array(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset + 24,
+      Texture.SIZE,
+    );
     target.set(value.buffer);
   }
-
 }
 
 export class NPatchInfo {
@@ -743,23 +971,70 @@ export class NPatchInfo {
   #view: DataView;
 
   constructor(buffer: Uint8Array<ArrayBuffer>);
-  constructor(options: Partial<{ source: Rectangle; left: number; top: number; right: number; bottom: number; layout: number }>);
-  constructor(source: Rectangle, left: number, top: number, right: number, bottom: number, layout: number);
-  constructor(arg0: Uint8Array<ArrayBuffer> | Partial<{ source: Rectangle; left: number; top: number; right: number; bottom: number; layout: number }> | Rectangle, ...rest: unknown[]) {
+  constructor(
+    options: Partial<
+      {
+        source: Rectangle;
+        left: number;
+        top: number;
+        right: number;
+        bottom: number;
+        layout: number;
+      }
+    >,
+  );
+  constructor(
+    source: Rectangle,
+    left: number,
+    top: number,
+    right: number,
+    bottom: number,
+    layout: number,
+  );
+  constructor(
+    arg0:
+      | Uint8Array<ArrayBuffer>
+      | Partial<
+        {
+          source: Rectangle;
+          left: number;
+          top: number;
+          right: number;
+          bottom: number;
+          layout: number;
+        }
+      >
+      | Rectangle,
+    ...rest: unknown[]
+  ) {
     if (arg0 instanceof Uint8Array) {
       this.#buffer = arg0;
-      this.#view = new DataView(this.#buffer.buffer, this.#buffer.byteOffset, this.#buffer.byteLength);
+      this.#view = new DataView(
+        this.#buffer.buffer,
+        this.#buffer.byteOffset,
+        this.#buffer.byteLength,
+      );
       return;
     }
     this.#buffer = new Uint8Array(new ArrayBuffer(NPatchInfo.SIZE));
-    this.#view = new DataView(this.#buffer.buffer, this.#buffer.byteOffset, this.#buffer.byteLength);
+    this.#view = new DataView(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset,
+      this.#buffer.byteLength,
+    );
     if (arg0 && typeof arg0 === "object" && !("buffer" in (arg0 as object))) {
-      if ((arg0 as any).source !== undefined) this.source = (arg0 as any).source;
+      if ((arg0 as any).source !== undefined) {
+        this.source = (arg0 as any).source;
+      }
       if ((arg0 as any).left !== undefined) this.left = (arg0 as any).left;
       if ((arg0 as any).top !== undefined) this.top = (arg0 as any).top;
       if ((arg0 as any).right !== undefined) this.right = (arg0 as any).right;
-      if ((arg0 as any).bottom !== undefined) this.bottom = (arg0 as any).bottom;
-      if ((arg0 as any).layout !== undefined) this.layout = (arg0 as any).layout;
+      if ((arg0 as any).bottom !== undefined) {
+        this.bottom = (arg0 as any).bottom;
+      }
+      if ((arg0 as any).layout !== undefined) {
+        this.layout = (arg0 as any).layout;
+      }
       return;
     }
     const args = [arg0, ...rest];
@@ -772,7 +1047,9 @@ export class NPatchInfo {
   }
 
   static fromBuffer(buffer: ArrayBufferLike, byteOffset = 0): NPatchInfo {
-    return new NPatchInfo(new Uint8Array(buffer as ArrayBuffer, byteOffset, NPatchInfo.SIZE));
+    return new NPatchInfo(
+      new Uint8Array(buffer as ArrayBuffer, byteOffset, NPatchInfo.SIZE),
+    );
   }
 
   get buffer(): Uint8Array<ArrayBuffer> {
@@ -780,11 +1057,18 @@ export class NPatchInfo {
   }
 
   get source(): Rectangle {
-    return Rectangle.fromBuffer(this.#buffer.buffer, this.#buffer.byteOffset + 0);
+    return Rectangle.fromBuffer(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset + 0,
+    );
   }
 
   set source(value: Rectangle) {
-    const target = new Uint8Array(this.#buffer.buffer, this.#buffer.byteOffset + 0, Rectangle.SIZE);
+    const target = new Uint8Array(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset + 0,
+      Rectangle.SIZE,
+    );
     target.set(value.buffer);
   }
 
@@ -827,7 +1111,6 @@ export class NPatchInfo {
   set layout(value: number) {
     this.#view.setInt32(32, value as any, littleEndian);
   }
-
 }
 
 export class GlyphInfo {
@@ -836,21 +1119,65 @@ export class GlyphInfo {
   #view: DataView;
 
   constructor(buffer: Uint8Array<ArrayBuffer>);
-  constructor(options: Partial<{ value: number; offsetX: number; offsetY: number; advanceX: number; image: Image }>);
-  constructor(value: number, offsetX: number, offsetY: number, advanceX: number, image: Image);
-  constructor(arg0: Uint8Array<ArrayBuffer> | Partial<{ value: number; offsetX: number; offsetY: number; advanceX: number; image: Image }> | number, ...rest: unknown[]) {
+  constructor(
+    options: Partial<
+      {
+        value: number;
+        offsetX: number;
+        offsetY: number;
+        advanceX: number;
+        image: Image;
+      }
+    >,
+  );
+  constructor(
+    value: number,
+    offsetX: number,
+    offsetY: number,
+    advanceX: number,
+    image: Image,
+  );
+  constructor(
+    arg0:
+      | Uint8Array<ArrayBuffer>
+      | Partial<
+        {
+          value: number;
+          offsetX: number;
+          offsetY: number;
+          advanceX: number;
+          image: Image;
+        }
+      >
+      | number,
+    ...rest: unknown[]
+  ) {
     if (arg0 instanceof Uint8Array) {
       this.#buffer = arg0;
-      this.#view = new DataView(this.#buffer.buffer, this.#buffer.byteOffset, this.#buffer.byteLength);
+      this.#view = new DataView(
+        this.#buffer.buffer,
+        this.#buffer.byteOffset,
+        this.#buffer.byteLength,
+      );
       return;
     }
     this.#buffer = new Uint8Array(new ArrayBuffer(GlyphInfo.SIZE));
-    this.#view = new DataView(this.#buffer.buffer, this.#buffer.byteOffset, this.#buffer.byteLength);
+    this.#view = new DataView(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset,
+      this.#buffer.byteLength,
+    );
     if (arg0 && typeof arg0 === "object" && !("buffer" in (arg0 as object))) {
       if ((arg0 as any).value !== undefined) this.value = (arg0 as any).value;
-      if ((arg0 as any).offsetX !== undefined) this.offsetX = (arg0 as any).offsetX;
-      if ((arg0 as any).offsetY !== undefined) this.offsetY = (arg0 as any).offsetY;
-      if ((arg0 as any).advanceX !== undefined) this.advanceX = (arg0 as any).advanceX;
+      if ((arg0 as any).offsetX !== undefined) {
+        this.offsetX = (arg0 as any).offsetX;
+      }
+      if ((arg0 as any).offsetY !== undefined) {
+        this.offsetY = (arg0 as any).offsetY;
+      }
+      if ((arg0 as any).advanceX !== undefined) {
+        this.advanceX = (arg0 as any).advanceX;
+      }
       if ((arg0 as any).image !== undefined) this.image = (arg0 as any).image;
       return;
     }
@@ -863,7 +1190,9 @@ export class GlyphInfo {
   }
 
   static fromBuffer(buffer: ArrayBufferLike, byteOffset = 0): GlyphInfo {
-    return new GlyphInfo(new Uint8Array(buffer as ArrayBuffer, byteOffset, GlyphInfo.SIZE));
+    return new GlyphInfo(
+      new Uint8Array(buffer as ArrayBuffer, byteOffset, GlyphInfo.SIZE),
+    );
   }
 
   get buffer(): Uint8Array<ArrayBuffer> {
@@ -907,10 +1236,13 @@ export class GlyphInfo {
   }
 
   set image(value: Image) {
-    const target = new Uint8Array(this.#buffer.buffer, this.#buffer.byteOffset + 16, Image.SIZE);
+    const target = new Uint8Array(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset + 16,
+      Image.SIZE,
+    );
     target.set(value.buffer);
   }
-
 }
 
 export class Font {
@@ -920,11 +1252,17 @@ export class Font {
 
   constructor(buffer: Uint8Array<ArrayBuffer>) {
     this.#buffer = buffer;
-    this.#view = new DataView(this.#buffer.buffer, this.#buffer.byteOffset, this.#buffer.byteLength);
+    this.#view = new DataView(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset,
+      this.#buffer.byteLength,
+    );
   }
 
   static fromBuffer(buffer: ArrayBufferLike, byteOffset = 0): Font {
-    return new Font(new Uint8Array(buffer as ArrayBuffer, byteOffset, Font.SIZE));
+    return new Font(
+      new Uint8Array(buffer as ArrayBuffer, byteOffset, Font.SIZE),
+    );
   }
 
   get buffer(): Uint8Array<ArrayBuffer> {
@@ -956,11 +1294,18 @@ export class Font {
   }
 
   get texture(): Texture {
-    return Texture.fromBuffer(this.#buffer.buffer, this.#buffer.byteOffset + 12);
+    return Texture.fromBuffer(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset + 12,
+    );
   }
 
   set texture(value: Texture) {
-    const target = new Uint8Array(this.#buffer.buffer, this.#buffer.byteOffset + 12, Texture.SIZE);
+    const target = new Uint8Array(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset + 12,
+      Texture.SIZE,
+    );
     target.set(value.buffer);
   }
 
@@ -979,7 +1324,6 @@ export class Font {
   set glyphsPtr(value: bigint) {
     this.#view.setBigUint64(40, value, littleEndian);
   }
-
 }
 
 export class Camera3D {
@@ -988,22 +1332,66 @@ export class Camera3D {
   #view: DataView;
 
   constructor(buffer: Uint8Array<ArrayBuffer>);
-  constructor(options: Partial<{ position: Vector3; target: Vector3; up: Vector3; fovy: number; projection: number }>);
-  constructor(position: Vector3, target: Vector3, up: Vector3, fovy: number, projection: number);
-  constructor(arg0: Uint8Array<ArrayBuffer> | Partial<{ position: Vector3; target: Vector3; up: Vector3; fovy: number; projection: number }> | Vector3, ...rest: unknown[]) {
+  constructor(
+    options: Partial<
+      {
+        position: Vector3;
+        target: Vector3;
+        up: Vector3;
+        fovy: number;
+        projection: number;
+      }
+    >,
+  );
+  constructor(
+    position: Vector3,
+    target: Vector3,
+    up: Vector3,
+    fovy: number,
+    projection: number,
+  );
+  constructor(
+    arg0:
+      | Uint8Array<ArrayBuffer>
+      | Partial<
+        {
+          position: Vector3;
+          target: Vector3;
+          up: Vector3;
+          fovy: number;
+          projection: number;
+        }
+      >
+      | Vector3,
+    ...rest: unknown[]
+  ) {
     if (arg0 instanceof Uint8Array) {
       this.#buffer = arg0;
-      this.#view = new DataView(this.#buffer.buffer, this.#buffer.byteOffset, this.#buffer.byteLength);
+      this.#view = new DataView(
+        this.#buffer.buffer,
+        this.#buffer.byteOffset,
+        this.#buffer.byteLength,
+      );
       return;
     }
     this.#buffer = new Uint8Array(new ArrayBuffer(Camera3D.SIZE));
-    this.#view = new DataView(this.#buffer.buffer, this.#buffer.byteOffset, this.#buffer.byteLength);
+    this.#view = new DataView(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset,
+      this.#buffer.byteLength,
+    );
     if (arg0 && typeof arg0 === "object" && !("buffer" in (arg0 as object))) {
-      if ((arg0 as any).position !== undefined) this.position = (arg0 as any).position;
-      if ((arg0 as any).target !== undefined) this.target = (arg0 as any).target;
+      if ((arg0 as any).position !== undefined) {
+        this.position = (arg0 as any).position;
+      }
+      if ((arg0 as any).target !== undefined) {
+        this.target = (arg0 as any).target;
+      }
       if ((arg0 as any).up !== undefined) this.up = (arg0 as any).up;
       if ((arg0 as any).fovy !== undefined) this.fovy = (arg0 as any).fovy;
-      if ((arg0 as any).projection !== undefined) this.projection = (arg0 as any).projection;
+      if ((arg0 as any).projection !== undefined) {
+        this.projection = (arg0 as any).projection;
+      }
       return;
     }
     const args = [arg0, ...rest];
@@ -1015,7 +1403,9 @@ export class Camera3D {
   }
 
   static fromBuffer(buffer: ArrayBufferLike, byteOffset = 0): Camera3D {
-    return new Camera3D(new Uint8Array(buffer as ArrayBuffer, byteOffset, Camera3D.SIZE));
+    return new Camera3D(
+      new Uint8Array(buffer as ArrayBuffer, byteOffset, Camera3D.SIZE),
+    );
   }
 
   get buffer(): Uint8Array<ArrayBuffer> {
@@ -1027,25 +1417,43 @@ export class Camera3D {
   }
 
   set position(value: Vector3) {
-    const target = new Uint8Array(this.#buffer.buffer, this.#buffer.byteOffset + 0, Vector3.SIZE);
+    const target = new Uint8Array(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset + 0,
+      Vector3.SIZE,
+    );
     target.set(value.buffer);
   }
 
   get target(): Vector3 {
-    return Vector3.fromBuffer(this.#buffer.buffer, this.#buffer.byteOffset + 12);
+    return Vector3.fromBuffer(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset + 12,
+    );
   }
 
   set target(value: Vector3) {
-    const target = new Uint8Array(this.#buffer.buffer, this.#buffer.byteOffset + 12, Vector3.SIZE);
+    const target = new Uint8Array(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset + 12,
+      Vector3.SIZE,
+    );
     target.set(value.buffer);
   }
 
   get up(): Vector3 {
-    return Vector3.fromBuffer(this.#buffer.buffer, this.#buffer.byteOffset + 24);
+    return Vector3.fromBuffer(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset + 24,
+    );
   }
 
   set up(value: Vector3) {
-    const target = new Uint8Array(this.#buffer.buffer, this.#buffer.byteOffset + 24, Vector3.SIZE);
+    const target = new Uint8Array(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset + 24,
+      Vector3.SIZE,
+    );
     target.set(value.buffer);
   }
 
@@ -1064,7 +1472,6 @@ export class Camera3D {
   set projection(value: number) {
     this.#view.setInt32(40, value as any, littleEndian);
   }
-
 }
 
 export class Camera2D {
@@ -1073,20 +1480,46 @@ export class Camera2D {
   #view: DataView;
 
   constructor(buffer: Uint8Array<ArrayBuffer>);
-  constructor(options: Partial<{ offset: Vector2; target: Vector2; rotation: number; zoom: number }>);
+  constructor(
+    options: Partial<
+      { offset: Vector2; target: Vector2; rotation: number; zoom: number }
+    >,
+  );
   constructor(offset: Vector2, target: Vector2, rotation: number, zoom: number);
-  constructor(arg0: Uint8Array<ArrayBuffer> | Partial<{ offset: Vector2; target: Vector2; rotation: number; zoom: number }> | Vector2, ...rest: unknown[]) {
+  constructor(
+    arg0:
+      | Uint8Array<ArrayBuffer>
+      | Partial<
+        { offset: Vector2; target: Vector2; rotation: number; zoom: number }
+      >
+      | Vector2,
+    ...rest: unknown[]
+  ) {
     if (arg0 instanceof Uint8Array) {
       this.#buffer = arg0;
-      this.#view = new DataView(this.#buffer.buffer, this.#buffer.byteOffset, this.#buffer.byteLength);
+      this.#view = new DataView(
+        this.#buffer.buffer,
+        this.#buffer.byteOffset,
+        this.#buffer.byteLength,
+      );
       return;
     }
     this.#buffer = new Uint8Array(new ArrayBuffer(Camera2D.SIZE));
-    this.#view = new DataView(this.#buffer.buffer, this.#buffer.byteOffset, this.#buffer.byteLength);
+    this.#view = new DataView(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset,
+      this.#buffer.byteLength,
+    );
     if (arg0 && typeof arg0 === "object" && !("buffer" in (arg0 as object))) {
-      if ((arg0 as any).offset !== undefined) this.offset = (arg0 as any).offset;
-      if ((arg0 as any).target !== undefined) this.target = (arg0 as any).target;
-      if ((arg0 as any).rotation !== undefined) this.rotation = (arg0 as any).rotation;
+      if ((arg0 as any).offset !== undefined) {
+        this.offset = (arg0 as any).offset;
+      }
+      if ((arg0 as any).target !== undefined) {
+        this.target = (arg0 as any).target;
+      }
+      if ((arg0 as any).rotation !== undefined) {
+        this.rotation = (arg0 as any).rotation;
+      }
       if ((arg0 as any).zoom !== undefined) this.zoom = (arg0 as any).zoom;
       return;
     }
@@ -1098,7 +1531,9 @@ export class Camera2D {
   }
 
   static fromBuffer(buffer: ArrayBufferLike, byteOffset = 0): Camera2D {
-    return new Camera2D(new Uint8Array(buffer as ArrayBuffer, byteOffset, Camera2D.SIZE));
+    return new Camera2D(
+      new Uint8Array(buffer as ArrayBuffer, byteOffset, Camera2D.SIZE),
+    );
   }
 
   get buffer(): Uint8Array<ArrayBuffer> {
@@ -1110,7 +1545,11 @@ export class Camera2D {
   }
 
   set offset(value: Vector2) {
-    const target = new Uint8Array(this.#buffer.buffer, this.#buffer.byteOffset + 0, Vector2.SIZE);
+    const target = new Uint8Array(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset + 0,
+      Vector2.SIZE,
+    );
     target.set(value.buffer);
   }
 
@@ -1119,7 +1558,11 @@ export class Camera2D {
   }
 
   set target(value: Vector2) {
-    const target = new Uint8Array(this.#buffer.buffer, this.#buffer.byteOffset + 8, Vector2.SIZE);
+    const target = new Uint8Array(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset + 8,
+      Vector2.SIZE,
+    );
     target.set(value.buffer);
   }
 
@@ -1138,7 +1581,6 @@ export class Camera2D {
   set zoom(value: number) {
     this.#view.setFloat32(20, value as any, littleEndian);
   }
-
 }
 
 export class Mesh {
@@ -1148,11 +1590,17 @@ export class Mesh {
 
   constructor(buffer: Uint8Array<ArrayBuffer>) {
     this.#buffer = buffer;
-    this.#view = new DataView(this.#buffer.buffer, this.#buffer.byteOffset, this.#buffer.byteLength);
+    this.#view = new DataView(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset,
+      this.#buffer.byteLength,
+    );
   }
 
   static fromBuffer(buffer: ArrayBufferLike, byteOffset = 0): Mesh {
-    return new Mesh(new Uint8Array(buffer as ArrayBuffer, byteOffset, Mesh.SIZE));
+    return new Mesh(
+      new Uint8Array(buffer as ArrayBuffer, byteOffset, Mesh.SIZE),
+    );
   }
 
   get buffer(): Uint8Array<ArrayBuffer> {
@@ -1231,60 +1679,52 @@ export class Mesh {
     this.#view.setBigUint64(56, value, littleEndian);
   }
 
-  get animVerticesPtr(): bigint {
-    return this.#view.getBigUint64(64, littleEndian);
-  }
-
-  set animVerticesPtr(value: bigint) {
-    this.#view.setBigUint64(64, value, littleEndian);
-  }
-
-  get animNormalsPtr(): bigint {
-    return this.#view.getBigUint64(72, littleEndian);
-  }
-
-  set animNormalsPtr(value: bigint) {
-    this.#view.setBigUint64(72, value, littleEndian);
-  }
-
-  get boneIdsPtr(): bigint {
-    return this.#view.getBigUint64(80, littleEndian);
-  }
-
-  set boneIdsPtr(value: bigint) {
-    this.#view.setBigUint64(80, value, littleEndian);
-  }
-
-  get boneWeightsPtr(): bigint {
-    return this.#view.getBigUint64(88, littleEndian);
-  }
-
-  set boneWeightsPtr(value: bigint) {
-    this.#view.setBigUint64(88, value, littleEndian);
-  }
-
-  get boneMatricesPtr(): bigint {
-    return this.#view.getBigUint64(96, littleEndian);
-  }
-
-  set boneMatricesPtr(value: bigint) {
-    this.#view.setBigUint64(96, value, littleEndian);
-  }
-
   get boneCount(): number {
-    return this.#view.getInt32(104, littleEndian) as number;
+    return this.#view.getInt32(64, littleEndian) as number;
   }
 
   set boneCount(value: number) {
-    this.#view.setInt32(104, value as any, littleEndian);
+    this.#view.setInt32(64, value as any, littleEndian);
+  }
+
+  get boneIndicesPtr(): bigint {
+    return this.#view.getBigUint64(72, littleEndian);
+  }
+
+  set boneIndicesPtr(value: bigint) {
+    this.#view.setBigUint64(72, value, littleEndian);
+  }
+
+  get boneWeightsPtr(): bigint {
+    return this.#view.getBigUint64(80, littleEndian);
+  }
+
+  set boneWeightsPtr(value: bigint) {
+    this.#view.setBigUint64(80, value, littleEndian);
+  }
+
+  get animVerticesPtr(): bigint {
+    return this.#view.getBigUint64(88, littleEndian);
+  }
+
+  set animVerticesPtr(value: bigint) {
+    this.#view.setBigUint64(88, value, littleEndian);
+  }
+
+  get animNormalsPtr(): bigint {
+    return this.#view.getBigUint64(96, littleEndian);
+  }
+
+  set animNormalsPtr(value: bigint) {
+    this.#view.setBigUint64(96, value, littleEndian);
   }
 
   get vaoId(): number {
-    return this.#view.getUint32(108, littleEndian) as number;
+    return this.#view.getUint32(104, littleEndian) as number;
   }
 
   set vaoId(value: number) {
-    this.#view.setUint32(108, value as any, littleEndian);
+    this.#view.setUint32(104, value as any, littleEndian);
   }
 
   get vboIdPtr(): bigint {
@@ -1294,7 +1734,6 @@ export class Mesh {
   set vboIdPtr(value: bigint) {
     this.#view.setBigUint64(112, value, littleEndian);
   }
-
 }
 
 export class Shader {
@@ -1304,11 +1743,17 @@ export class Shader {
 
   constructor(buffer: Uint8Array<ArrayBuffer>) {
     this.#buffer = buffer;
-    this.#view = new DataView(this.#buffer.buffer, this.#buffer.byteOffset, this.#buffer.byteLength);
+    this.#view = new DataView(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset,
+      this.#buffer.byteLength,
+    );
   }
 
   static fromBuffer(buffer: ArrayBufferLike, byteOffset = 0): Shader {
-    return new Shader(new Uint8Array(buffer as ArrayBuffer, byteOffset, Shader.SIZE));
+    return new Shader(
+      new Uint8Array(buffer as ArrayBuffer, byteOffset, Shader.SIZE),
+    );
   }
 
   get buffer(): Uint8Array<ArrayBuffer> {
@@ -1330,7 +1775,6 @@ export class Shader {
   set locsPtr(value: bigint) {
     this.#view.setBigUint64(8, value, littleEndian);
   }
-
 }
 
 export class MaterialMap {
@@ -1339,18 +1783,36 @@ export class MaterialMap {
   #view: DataView;
 
   constructor(buffer: Uint8Array<ArrayBuffer>);
-  constructor(options: Partial<{ texture: Texture; color: Color; value: number }>);
+  constructor(
+    options: Partial<{ texture: Texture; color: Color; value: number }>,
+  );
   constructor(texture: Texture, color: Color, value: number);
-  constructor(arg0: Uint8Array<ArrayBuffer> | Partial<{ texture: Texture; color: Color; value: number }> | Texture, ...rest: unknown[]) {
+  constructor(
+    arg0:
+      | Uint8Array<ArrayBuffer>
+      | Partial<{ texture: Texture; color: Color; value: number }>
+      | Texture,
+    ...rest: unknown[]
+  ) {
     if (arg0 instanceof Uint8Array) {
       this.#buffer = arg0;
-      this.#view = new DataView(this.#buffer.buffer, this.#buffer.byteOffset, this.#buffer.byteLength);
+      this.#view = new DataView(
+        this.#buffer.buffer,
+        this.#buffer.byteOffset,
+        this.#buffer.byteLength,
+      );
       return;
     }
     this.#buffer = new Uint8Array(new ArrayBuffer(MaterialMap.SIZE));
-    this.#view = new DataView(this.#buffer.buffer, this.#buffer.byteOffset, this.#buffer.byteLength);
+    this.#view = new DataView(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset,
+      this.#buffer.byteLength,
+    );
     if (arg0 && typeof arg0 === "object" && !("buffer" in (arg0 as object))) {
-      if ((arg0 as any).texture !== undefined) this.texture = (arg0 as any).texture;
+      if ((arg0 as any).texture !== undefined) {
+        this.texture = (arg0 as any).texture;
+      }
       if ((arg0 as any).color !== undefined) this.color = (arg0 as any).color;
       if ((arg0 as any).value !== undefined) this.value = (arg0 as any).value;
       return;
@@ -1362,7 +1824,9 @@ export class MaterialMap {
   }
 
   static fromBuffer(buffer: ArrayBufferLike, byteOffset = 0): MaterialMap {
-    return new MaterialMap(new Uint8Array(buffer as ArrayBuffer, byteOffset, MaterialMap.SIZE));
+    return new MaterialMap(
+      new Uint8Array(buffer as ArrayBuffer, byteOffset, MaterialMap.SIZE),
+    );
   }
 
   get buffer(): Uint8Array<ArrayBuffer> {
@@ -1374,7 +1838,11 @@ export class MaterialMap {
   }
 
   set texture(value: Texture) {
-    const target = new Uint8Array(this.#buffer.buffer, this.#buffer.byteOffset + 0, Texture.SIZE);
+    const target = new Uint8Array(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset + 0,
+      Texture.SIZE,
+    );
     target.set(value.buffer);
   }
 
@@ -1383,7 +1851,11 @@ export class MaterialMap {
   }
 
   set color(value: Color) {
-    const target = new Uint8Array(this.#buffer.buffer, this.#buffer.byteOffset + 20, Color.SIZE);
+    const target = new Uint8Array(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset + 20,
+      Color.SIZE,
+    );
     target.set(value.buffer);
   }
 
@@ -1394,7 +1866,6 @@ export class MaterialMap {
   set value(value: number) {
     this.#view.setFloat32(24, value as any, littleEndian);
   }
-
 }
 
 export class Material {
@@ -1404,11 +1875,17 @@ export class Material {
 
   constructor(buffer: Uint8Array<ArrayBuffer>) {
     this.#buffer = buffer;
-    this.#view = new DataView(this.#buffer.buffer, this.#buffer.byteOffset, this.#buffer.byteLength);
+    this.#view = new DataView(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset,
+      this.#buffer.byteLength,
+    );
   }
 
   static fromBuffer(buffer: ArrayBufferLike, byteOffset = 0): Material {
-    return new Material(new Uint8Array(buffer as ArrayBuffer, byteOffset, Material.SIZE));
+    return new Material(
+      new Uint8Array(buffer as ArrayBuffer, byteOffset, Material.SIZE),
+    );
   }
 
   get buffer(): Uint8Array<ArrayBuffer> {
@@ -1420,7 +1897,11 @@ export class Material {
   }
 
   set shader(value: Shader) {
-    const target = new Uint8Array(this.#buffer.buffer, this.#buffer.byteOffset + 0, Shader.SIZE);
+    const target = new Uint8Array(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset + 0,
+      Shader.SIZE,
+    );
     target.set(value.buffer);
   }
 
@@ -1433,7 +1914,11 @@ export class Material {
   }
 
   get params(): Float32Array {
-    return new Float32Array(this.#buffer.buffer, this.#buffer.byteOffset + 24, 4);
+    return new Float32Array(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset + 24,
+      4,
+    );
   }
 
   set params(values: ArrayLike<number>) {
@@ -1441,7 +1926,6 @@ export class Material {
     const count = Math.min(values.length, view.length);
     for (let i = 0; i < count; i++) view[i] = values[i] as any;
   }
-
 }
 
 export class Transform {
@@ -1450,19 +1934,41 @@ export class Transform {
   #view: DataView;
 
   constructor(buffer: Uint8Array<ArrayBuffer>);
-  constructor(options: Partial<{ translation: Vector3; rotation: Vector4; scale: Vector3 }>);
+  constructor(
+    options: Partial<
+      { translation: Vector3; rotation: Vector4; scale: Vector3 }
+    >,
+  );
   constructor(translation: Vector3, rotation: Vector4, scale: Vector3);
-  constructor(arg0: Uint8Array<ArrayBuffer> | Partial<{ translation: Vector3; rotation: Vector4; scale: Vector3 }> | Vector3, ...rest: unknown[]) {
+  constructor(
+    arg0:
+      | Uint8Array<ArrayBuffer>
+      | Partial<{ translation: Vector3; rotation: Vector4; scale: Vector3 }>
+      | Vector3,
+    ...rest: unknown[]
+  ) {
     if (arg0 instanceof Uint8Array) {
       this.#buffer = arg0;
-      this.#view = new DataView(this.#buffer.buffer, this.#buffer.byteOffset, this.#buffer.byteLength);
+      this.#view = new DataView(
+        this.#buffer.buffer,
+        this.#buffer.byteOffset,
+        this.#buffer.byteLength,
+      );
       return;
     }
     this.#buffer = new Uint8Array(new ArrayBuffer(Transform.SIZE));
-    this.#view = new DataView(this.#buffer.buffer, this.#buffer.byteOffset, this.#buffer.byteLength);
+    this.#view = new DataView(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset,
+      this.#buffer.byteLength,
+    );
     if (arg0 && typeof arg0 === "object" && !("buffer" in (arg0 as object))) {
-      if ((arg0 as any).translation !== undefined) this.translation = (arg0 as any).translation;
-      if ((arg0 as any).rotation !== undefined) this.rotation = (arg0 as any).rotation;
+      if ((arg0 as any).translation !== undefined) {
+        this.translation = (arg0 as any).translation;
+      }
+      if ((arg0 as any).rotation !== undefined) {
+        this.rotation = (arg0 as any).rotation;
+      }
       if ((arg0 as any).scale !== undefined) this.scale = (arg0 as any).scale;
       return;
     }
@@ -1473,7 +1979,9 @@ export class Transform {
   }
 
   static fromBuffer(buffer: ArrayBufferLike, byteOffset = 0): Transform {
-    return new Transform(new Uint8Array(buffer as ArrayBuffer, byteOffset, Transform.SIZE));
+    return new Transform(
+      new Uint8Array(buffer as ArrayBuffer, byteOffset, Transform.SIZE),
+    );
   }
 
   get buffer(): Uint8Array<ArrayBuffer> {
@@ -1485,28 +1993,45 @@ export class Transform {
   }
 
   set translation(value: Vector3) {
-    const target = new Uint8Array(this.#buffer.buffer, this.#buffer.byteOffset + 0, Vector3.SIZE);
+    const target = new Uint8Array(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset + 0,
+      Vector3.SIZE,
+    );
     target.set(value.buffer);
   }
 
   get rotation(): Vector4 {
-    return Vector4.fromBuffer(this.#buffer.buffer, this.#buffer.byteOffset + 12);
+    return Vector4.fromBuffer(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset + 12,
+    );
   }
 
   set rotation(value: Vector4) {
-    const target = new Uint8Array(this.#buffer.buffer, this.#buffer.byteOffset + 12, Vector4.SIZE);
+    const target = new Uint8Array(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset + 12,
+      Vector4.SIZE,
+    );
     target.set(value.buffer);
   }
 
   get scale(): Vector3 {
-    return Vector3.fromBuffer(this.#buffer.buffer, this.#buffer.byteOffset + 28);
+    return Vector3.fromBuffer(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset + 28,
+    );
   }
 
   set scale(value: Vector3) {
-    const target = new Uint8Array(this.#buffer.buffer, this.#buffer.byteOffset + 28, Vector3.SIZE);
+    const target = new Uint8Array(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset + 28,
+      Vector3.SIZE,
+    );
     target.set(value.buffer);
   }
-
 }
 
 export class BoneInfo {
@@ -1516,11 +2041,17 @@ export class BoneInfo {
 
   constructor(buffer: Uint8Array<ArrayBuffer>) {
     this.#buffer = buffer;
-    this.#view = new DataView(this.#buffer.buffer, this.#buffer.byteOffset, this.#buffer.byteLength);
+    this.#view = new DataView(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset,
+      this.#buffer.byteLength,
+    );
   }
 
   static fromBuffer(buffer: ArrayBufferLike, byteOffset = 0): BoneInfo {
-    return new BoneInfo(new Uint8Array(buffer as ArrayBuffer, byteOffset, BoneInfo.SIZE));
+    return new BoneInfo(
+      new Uint8Array(buffer as ArrayBuffer, byteOffset, BoneInfo.SIZE),
+    );
   }
 
   get buffer(): Uint8Array<ArrayBuffer> {
@@ -1528,14 +2059,22 @@ export class BoneInfo {
   }
 
   get name(): string {
-    const bytes = new Uint8Array(this.#buffer.buffer, this.#buffer.byteOffset + 0, 32);
+    const bytes = new Uint8Array(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset + 0,
+      32,
+    );
     let end = bytes.indexOf(0);
     if (end === -1) end = 32;
     return new TextDecoder().decode(bytes.subarray(0, end));
   }
 
   set name(value: string) {
-    const bytes = new Uint8Array(this.#buffer.buffer, this.#buffer.byteOffset + 0, 32);
+    const bytes = new Uint8Array(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset + 0,
+      32,
+    );
     bytes.fill(0);
     const encoded = new TextEncoder().encode(value);
     bytes.set(encoded.subarray(0, 32));
@@ -1552,21 +2091,75 @@ export class BoneInfo {
   set parent(value: number) {
     this.#view.setInt32(32, value as any, littleEndian);
   }
-
 }
 
-export class Model {
-  static readonly SIZE = 120;
+export class ModelSkeleton {
+  static readonly SIZE = 24;
   #buffer: Uint8Array<ArrayBuffer>;
   #view: DataView;
 
   constructor(buffer: Uint8Array<ArrayBuffer>) {
     this.#buffer = buffer;
-    this.#view = new DataView(this.#buffer.buffer, this.#buffer.byteOffset, this.#buffer.byteLength);
+    this.#view = new DataView(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset,
+      this.#buffer.byteLength,
+    );
+  }
+
+  static fromBuffer(buffer: ArrayBufferLike, byteOffset = 0): ModelSkeleton {
+    return new ModelSkeleton(
+      new Uint8Array(buffer as ArrayBuffer, byteOffset, ModelSkeleton.SIZE),
+    );
+  }
+
+  get buffer(): Uint8Array<ArrayBuffer> {
+    return this.#buffer;
+  }
+
+  get boneCount(): number {
+    return this.#view.getInt32(0, littleEndian) as number;
+  }
+
+  set boneCount(value: number) {
+    this.#view.setInt32(0, value as any, littleEndian);
+  }
+
+  get bonesPtr(): bigint {
+    return this.#view.getBigUint64(8, littleEndian);
+  }
+
+  set bonesPtr(value: bigint) {
+    this.#view.setBigUint64(8, value, littleEndian);
+  }
+
+  get bindPosePtr(): bigint {
+    return this.#view.getBigUint64(16, littleEndian);
+  }
+
+  set bindPosePtr(value: bigint) {
+    this.#view.setBigUint64(16, value, littleEndian);
+  }
+}
+
+export class Model {
+  static readonly SIZE = 136;
+  #buffer: Uint8Array<ArrayBuffer>;
+  #view: DataView;
+
+  constructor(buffer: Uint8Array<ArrayBuffer>) {
+    this.#buffer = buffer;
+    this.#view = new DataView(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset,
+      this.#buffer.byteLength,
+    );
   }
 
   static fromBuffer(buffer: ArrayBufferLike, byteOffset = 0): Model {
-    return new Model(new Uint8Array(buffer as ArrayBuffer, byteOffset, Model.SIZE));
+    return new Model(
+      new Uint8Array(buffer as ArrayBuffer, byteOffset, Model.SIZE),
+    );
   }
 
   get buffer(): Uint8Array<ArrayBuffer> {
@@ -1578,7 +2171,11 @@ export class Model {
   }
 
   set transform(value: Matrix) {
-    const target = new Uint8Array(this.#buffer.buffer, this.#buffer.byteOffset + 0, Matrix.SIZE);
+    const target = new Uint8Array(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset + 0,
+      Matrix.SIZE,
+    );
     target.set(value.buffer);
   }
 
@@ -1622,100 +2219,112 @@ export class Model {
     this.#view.setBigUint64(88, value, littleEndian);
   }
 
-  get boneCount(): number {
-    return this.#view.getInt32(96, littleEndian) as number;
+  get skeleton(): ModelSkeleton {
+    return ModelSkeleton.fromBuffer(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset + 96,
+    );
   }
 
-  set boneCount(value: number) {
-    this.#view.setInt32(96, value as any, littleEndian);
+  set skeleton(value: ModelSkeleton) {
+    const target = new Uint8Array(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset + 96,
+      ModelSkeleton.SIZE,
+    );
+    target.set(value.buffer);
   }
 
-  get bonesPtr(): bigint {
-    return this.#view.getBigUint64(104, littleEndian);
+  get currentPosePtr(): bigint {
+    return this.#view.getBigUint64(120, littleEndian);
   }
 
-  set bonesPtr(value: bigint) {
-    this.#view.setBigUint64(104, value, littleEndian);
+  set currentPosePtr(value: bigint) {
+    this.#view.setBigUint64(120, value, littleEndian);
   }
 
-  get bindPosePtr(): bigint {
-    return this.#view.getBigUint64(112, littleEndian);
+  get boneMatricesPtr(): bigint {
+    return this.#view.getBigUint64(128, littleEndian);
   }
 
-  set bindPosePtr(value: bigint) {
-    this.#view.setBigUint64(112, value, littleEndian);
+  set boneMatricesPtr(value: bigint) {
+    this.#view.setBigUint64(128, value, littleEndian);
   }
-
 }
 
 export class ModelAnimation {
-  static readonly SIZE = 56;
+  static readonly SIZE = 48;
   #buffer: Uint8Array<ArrayBuffer>;
   #view: DataView;
 
   constructor(buffer: Uint8Array<ArrayBuffer>) {
     this.#buffer = buffer;
-    this.#view = new DataView(this.#buffer.buffer, this.#buffer.byteOffset, this.#buffer.byteLength);
+    this.#view = new DataView(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset,
+      this.#buffer.byteLength,
+    );
   }
 
   static fromBuffer(buffer: ArrayBufferLike, byteOffset = 0): ModelAnimation {
-    return new ModelAnimation(new Uint8Array(buffer as ArrayBuffer, byteOffset, ModelAnimation.SIZE));
+    return new ModelAnimation(
+      new Uint8Array(buffer as ArrayBuffer, byteOffset, ModelAnimation.SIZE),
+    );
   }
 
   get buffer(): Uint8Array<ArrayBuffer> {
     return this.#buffer;
   }
 
-  get boneCount(): number {
-    return this.#view.getInt32(0, littleEndian) as number;
-  }
-
-  set boneCount(value: number) {
-    this.#view.setInt32(0, value as any, littleEndian);
-  }
-
-  get frameCount(): number {
-    return this.#view.getInt32(4, littleEndian) as number;
-  }
-
-  set frameCount(value: number) {
-    this.#view.setInt32(4, value as any, littleEndian);
-  }
-
-  get bonesPtr(): bigint {
-    return this.#view.getBigUint64(8, littleEndian);
-  }
-
-  set bonesPtr(value: bigint) {
-    this.#view.setBigUint64(8, value, littleEndian);
-  }
-
-  get framePosesPtr(): bigint {
-    return this.#view.getBigUint64(16, littleEndian);
-  }
-
-  set framePosesPtr(value: bigint) {
-    this.#view.setBigUint64(16, value, littleEndian);
-  }
-
   get name(): string {
-    const bytes = new Uint8Array(this.#buffer.buffer, this.#buffer.byteOffset + 24, 32);
+    const bytes = new Uint8Array(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset + 0,
+      32,
+    );
     let end = bytes.indexOf(0);
     if (end === -1) end = 32;
     return new TextDecoder().decode(bytes.subarray(0, end));
   }
 
   set name(value: string) {
-    const bytes = new Uint8Array(this.#buffer.buffer, this.#buffer.byteOffset + 24, 32);
+    const bytes = new Uint8Array(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset + 0,
+      32,
+    );
     bytes.fill(0);
     const encoded = new TextEncoder().encode(value);
     bytes.set(encoded.subarray(0, 32));
   }
 
   get nameBytes(): Uint8Array {
-    return new Uint8Array(this.#buffer.buffer, this.#buffer.byteOffset + 24, 32);
+    return new Uint8Array(this.#buffer.buffer, this.#buffer.byteOffset + 0, 32);
   }
 
+  get boneCount(): number {
+    return this.#view.getInt32(32, littleEndian) as number;
+  }
+
+  set boneCount(value: number) {
+    this.#view.setInt32(32, value as any, littleEndian);
+  }
+
+  get keyframeCount(): number {
+    return this.#view.getInt32(36, littleEndian) as number;
+  }
+
+  set keyframeCount(value: number) {
+    this.#view.setInt32(36, value as any, littleEndian);
+  }
+
+  get keyframePosesPtr(): bigint {
+    return this.#view.getBigUint64(40, littleEndian);
+  }
+
+  set keyframePosesPtr(value: bigint) {
+    this.#view.setBigUint64(40, value, littleEndian);
+  }
 }
 
 export class Ray {
@@ -1726,17 +2335,35 @@ export class Ray {
   constructor(buffer: Uint8Array<ArrayBuffer>);
   constructor(options: Partial<{ position: Vector3; direction: Vector3 }>);
   constructor(position: Vector3, direction: Vector3);
-  constructor(arg0: Uint8Array<ArrayBuffer> | Partial<{ position: Vector3; direction: Vector3 }> | Vector3, ...rest: unknown[]) {
+  constructor(
+    arg0:
+      | Uint8Array<ArrayBuffer>
+      | Partial<{ position: Vector3; direction: Vector3 }>
+      | Vector3,
+    ...rest: unknown[]
+  ) {
     if (arg0 instanceof Uint8Array) {
       this.#buffer = arg0;
-      this.#view = new DataView(this.#buffer.buffer, this.#buffer.byteOffset, this.#buffer.byteLength);
+      this.#view = new DataView(
+        this.#buffer.buffer,
+        this.#buffer.byteOffset,
+        this.#buffer.byteLength,
+      );
       return;
     }
     this.#buffer = new Uint8Array(new ArrayBuffer(Ray.SIZE));
-    this.#view = new DataView(this.#buffer.buffer, this.#buffer.byteOffset, this.#buffer.byteLength);
+    this.#view = new DataView(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset,
+      this.#buffer.byteLength,
+    );
     if (arg0 && typeof arg0 === "object" && !("buffer" in (arg0 as object))) {
-      if ((arg0 as any).position !== undefined) this.position = (arg0 as any).position;
-      if ((arg0 as any).direction !== undefined) this.direction = (arg0 as any).direction;
+      if ((arg0 as any).position !== undefined) {
+        this.position = (arg0 as any).position;
+      }
+      if ((arg0 as any).direction !== undefined) {
+        this.direction = (arg0 as any).direction;
+      }
       return;
     }
     const args = [arg0, ...rest];
@@ -1757,19 +2384,29 @@ export class Ray {
   }
 
   set position(value: Vector3) {
-    const target = new Uint8Array(this.#buffer.buffer, this.#buffer.byteOffset + 0, Vector3.SIZE);
+    const target = new Uint8Array(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset + 0,
+      Vector3.SIZE,
+    );
     target.set(value.buffer);
   }
 
   get direction(): Vector3 {
-    return Vector3.fromBuffer(this.#buffer.buffer, this.#buffer.byteOffset + 12);
+    return Vector3.fromBuffer(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset + 12,
+    );
   }
 
   set direction(value: Vector3) {
-    const target = new Uint8Array(this.#buffer.buffer, this.#buffer.byteOffset + 12, Vector3.SIZE);
+    const target = new Uint8Array(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset + 12,
+      Vector3.SIZE,
+    );
     target.set(value.buffer);
   }
-
 }
 
 export class RayCollision {
@@ -1778,21 +2415,45 @@ export class RayCollision {
   #view: DataView;
 
   constructor(buffer: Uint8Array<ArrayBuffer>);
-  constructor(options: Partial<{ hit: boolean; distance: number; point: Vector3; normal: Vector3 }>);
+  constructor(
+    options: Partial<
+      { hit: boolean; distance: number; point: Vector3; normal: Vector3 }
+    >,
+  );
   constructor(hit: boolean, distance: number, point: Vector3, normal: Vector3);
-  constructor(arg0: Uint8Array<ArrayBuffer> | Partial<{ hit: boolean; distance: number; point: Vector3; normal: Vector3 }> | boolean, ...rest: unknown[]) {
+  constructor(
+    arg0:
+      | Uint8Array<ArrayBuffer>
+      | Partial<
+        { hit: boolean; distance: number; point: Vector3; normal: Vector3 }
+      >
+      | boolean,
+    ...rest: unknown[]
+  ) {
     if (arg0 instanceof Uint8Array) {
       this.#buffer = arg0;
-      this.#view = new DataView(this.#buffer.buffer, this.#buffer.byteOffset, this.#buffer.byteLength);
+      this.#view = new DataView(
+        this.#buffer.buffer,
+        this.#buffer.byteOffset,
+        this.#buffer.byteLength,
+      );
       return;
     }
     this.#buffer = new Uint8Array(new ArrayBuffer(RayCollision.SIZE));
-    this.#view = new DataView(this.#buffer.buffer, this.#buffer.byteOffset, this.#buffer.byteLength);
+    this.#view = new DataView(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset,
+      this.#buffer.byteLength,
+    );
     if (arg0 && typeof arg0 === "object" && !("buffer" in (arg0 as object))) {
       if ((arg0 as any).hit !== undefined) this.hit = (arg0 as any).hit;
-      if ((arg0 as any).distance !== undefined) this.distance = (arg0 as any).distance;
+      if ((arg0 as any).distance !== undefined) {
+        this.distance = (arg0 as any).distance;
+      }
       if ((arg0 as any).point !== undefined) this.point = (arg0 as any).point;
-      if ((arg0 as any).normal !== undefined) this.normal = (arg0 as any).normal;
+      if ((arg0 as any).normal !== undefined) {
+        this.normal = (arg0 as any).normal;
+      }
       return;
     }
     const args = [arg0, ...rest];
@@ -1803,7 +2464,9 @@ export class RayCollision {
   }
 
   static fromBuffer(buffer: ArrayBufferLike, byteOffset = 0): RayCollision {
-    return new RayCollision(new Uint8Array(buffer as ArrayBuffer, byteOffset, RayCollision.SIZE));
+    return new RayCollision(
+      new Uint8Array(buffer as ArrayBuffer, byteOffset, RayCollision.SIZE),
+    );
   }
 
   get buffer(): Uint8Array<ArrayBuffer> {
@@ -1831,19 +2494,29 @@ export class RayCollision {
   }
 
   set point(value: Vector3) {
-    const target = new Uint8Array(this.#buffer.buffer, this.#buffer.byteOffset + 8, Vector3.SIZE);
+    const target = new Uint8Array(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset + 8,
+      Vector3.SIZE,
+    );
     target.set(value.buffer);
   }
 
   get normal(): Vector3 {
-    return Vector3.fromBuffer(this.#buffer.buffer, this.#buffer.byteOffset + 20);
+    return Vector3.fromBuffer(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset + 20,
+    );
   }
 
   set normal(value: Vector3) {
-    const target = new Uint8Array(this.#buffer.buffer, this.#buffer.byteOffset + 20, Vector3.SIZE);
+    const target = new Uint8Array(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset + 20,
+      Vector3.SIZE,
+    );
     target.set(value.buffer);
   }
-
 }
 
 export class BoundingBox {
@@ -1854,14 +2527,28 @@ export class BoundingBox {
   constructor(buffer: Uint8Array<ArrayBuffer>);
   constructor(options: Partial<{ min: Vector3; max: Vector3 }>);
   constructor(min: Vector3, max: Vector3);
-  constructor(arg0: Uint8Array<ArrayBuffer> | Partial<{ min: Vector3; max: Vector3 }> | Vector3, ...rest: unknown[]) {
+  constructor(
+    arg0:
+      | Uint8Array<ArrayBuffer>
+      | Partial<{ min: Vector3; max: Vector3 }>
+      | Vector3,
+    ...rest: unknown[]
+  ) {
     if (arg0 instanceof Uint8Array) {
       this.#buffer = arg0;
-      this.#view = new DataView(this.#buffer.buffer, this.#buffer.byteOffset, this.#buffer.byteLength);
+      this.#view = new DataView(
+        this.#buffer.buffer,
+        this.#buffer.byteOffset,
+        this.#buffer.byteLength,
+      );
       return;
     }
     this.#buffer = new Uint8Array(new ArrayBuffer(BoundingBox.SIZE));
-    this.#view = new DataView(this.#buffer.buffer, this.#buffer.byteOffset, this.#buffer.byteLength);
+    this.#view = new DataView(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset,
+      this.#buffer.byteLength,
+    );
     if (arg0 && typeof arg0 === "object" && !("buffer" in (arg0 as object))) {
       if ((arg0 as any).min !== undefined) this.min = (arg0 as any).min;
       if ((arg0 as any).max !== undefined) this.max = (arg0 as any).max;
@@ -1873,7 +2560,9 @@ export class BoundingBox {
   }
 
   static fromBuffer(buffer: ArrayBufferLike, byteOffset = 0): BoundingBox {
-    return new BoundingBox(new Uint8Array(buffer as ArrayBuffer, byteOffset, BoundingBox.SIZE));
+    return new BoundingBox(
+      new Uint8Array(buffer as ArrayBuffer, byteOffset, BoundingBox.SIZE),
+    );
   }
 
   get buffer(): Uint8Array<ArrayBuffer> {
@@ -1885,19 +2574,29 @@ export class BoundingBox {
   }
 
   set min(value: Vector3) {
-    const target = new Uint8Array(this.#buffer.buffer, this.#buffer.byteOffset + 0, Vector3.SIZE);
+    const target = new Uint8Array(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset + 0,
+      Vector3.SIZE,
+    );
     target.set(value.buffer);
   }
 
   get max(): Vector3 {
-    return Vector3.fromBuffer(this.#buffer.buffer, this.#buffer.byteOffset + 12);
+    return Vector3.fromBuffer(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset + 12,
+    );
   }
 
   set max(value: Vector3) {
-    const target = new Uint8Array(this.#buffer.buffer, this.#buffer.byteOffset + 12, Vector3.SIZE);
+    const target = new Uint8Array(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset + 12,
+      Vector3.SIZE,
+    );
     target.set(value.buffer);
   }
-
 }
 
 export class Wave {
@@ -1907,11 +2606,17 @@ export class Wave {
 
   constructor(buffer: Uint8Array<ArrayBuffer>) {
     this.#buffer = buffer;
-    this.#view = new DataView(this.#buffer.buffer, this.#buffer.byteOffset, this.#buffer.byteLength);
+    this.#view = new DataView(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset,
+      this.#buffer.byteLength,
+    );
   }
 
   static fromBuffer(buffer: ArrayBufferLike, byteOffset = 0): Wave {
-    return new Wave(new Uint8Array(buffer as ArrayBuffer, byteOffset, Wave.SIZE));
+    return new Wave(
+      new Uint8Array(buffer as ArrayBuffer, byteOffset, Wave.SIZE),
+    );
   }
 
   get buffer(): Uint8Array<ArrayBuffer> {
@@ -1957,7 +2662,6 @@ export class Wave {
   set dataPtr(value: bigint) {
     this.#view.setBigUint64(16, value, littleEndian);
   }
-
 }
 
 export class AudioStream {
@@ -1967,11 +2671,17 @@ export class AudioStream {
 
   constructor(buffer: Uint8Array<ArrayBuffer>) {
     this.#buffer = buffer;
-    this.#view = new DataView(this.#buffer.buffer, this.#buffer.byteOffset, this.#buffer.byteLength);
+    this.#view = new DataView(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset,
+      this.#buffer.byteLength,
+    );
   }
 
   static fromBuffer(buffer: ArrayBufferLike, byteOffset = 0): AudioStream {
-    return new AudioStream(new Uint8Array(buffer as ArrayBuffer, byteOffset, AudioStream.SIZE));
+    return new AudioStream(
+      new Uint8Array(buffer as ArrayBuffer, byteOffset, AudioStream.SIZE),
+    );
   }
 
   get buffer(): Uint8Array<ArrayBuffer> {
@@ -2017,7 +2727,6 @@ export class AudioStream {
   set channels(value: number) {
     this.#view.setUint32(24, value as any, littleEndian);
   }
-
 }
 
 export class Sound {
@@ -2028,17 +2737,35 @@ export class Sound {
   constructor(buffer: Uint8Array<ArrayBuffer>);
   constructor(options: Partial<{ stream: AudioStream; frameCount: number }>);
   constructor(stream: AudioStream, frameCount: number);
-  constructor(arg0: Uint8Array<ArrayBuffer> | Partial<{ stream: AudioStream; frameCount: number }> | AudioStream, ...rest: unknown[]) {
+  constructor(
+    arg0:
+      | Uint8Array<ArrayBuffer>
+      | Partial<{ stream: AudioStream; frameCount: number }>
+      | AudioStream,
+    ...rest: unknown[]
+  ) {
     if (arg0 instanceof Uint8Array) {
       this.#buffer = arg0;
-      this.#view = new DataView(this.#buffer.buffer, this.#buffer.byteOffset, this.#buffer.byteLength);
+      this.#view = new DataView(
+        this.#buffer.buffer,
+        this.#buffer.byteOffset,
+        this.#buffer.byteLength,
+      );
       return;
     }
     this.#buffer = new Uint8Array(new ArrayBuffer(Sound.SIZE));
-    this.#view = new DataView(this.#buffer.buffer, this.#buffer.byteOffset, this.#buffer.byteLength);
+    this.#view = new DataView(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset,
+      this.#buffer.byteLength,
+    );
     if (arg0 && typeof arg0 === "object" && !("buffer" in (arg0 as object))) {
-      if ((arg0 as any).stream !== undefined) this.stream = (arg0 as any).stream;
-      if ((arg0 as any).frameCount !== undefined) this.frameCount = (arg0 as any).frameCount;
+      if ((arg0 as any).stream !== undefined) {
+        this.stream = (arg0 as any).stream;
+      }
+      if ((arg0 as any).frameCount !== undefined) {
+        this.frameCount = (arg0 as any).frameCount;
+      }
       return;
     }
     const args = [arg0, ...rest];
@@ -2047,7 +2774,9 @@ export class Sound {
   }
 
   static fromBuffer(buffer: ArrayBufferLike, byteOffset = 0): Sound {
-    return new Sound(new Uint8Array(buffer as ArrayBuffer, byteOffset, Sound.SIZE));
+    return new Sound(
+      new Uint8Array(buffer as ArrayBuffer, byteOffset, Sound.SIZE),
+    );
   }
 
   get buffer(): Uint8Array<ArrayBuffer> {
@@ -2055,11 +2784,18 @@ export class Sound {
   }
 
   get stream(): AudioStream {
-    return AudioStream.fromBuffer(this.#buffer.buffer, this.#buffer.byteOffset + 0);
+    return AudioStream.fromBuffer(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset + 0,
+    );
   }
 
   set stream(value: AudioStream) {
-    const target = new Uint8Array(this.#buffer.buffer, this.#buffer.byteOffset + 0, AudioStream.SIZE);
+    const target = new Uint8Array(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset + 0,
+      AudioStream.SIZE,
+    );
     target.set(value.buffer);
   }
 
@@ -2070,7 +2806,6 @@ export class Sound {
   set frameCount(value: number) {
     this.#view.setUint32(32, value as any, littleEndian);
   }
-
 }
 
 export class Music {
@@ -2080,11 +2815,17 @@ export class Music {
 
   constructor(buffer: Uint8Array<ArrayBuffer>) {
     this.#buffer = buffer;
-    this.#view = new DataView(this.#buffer.buffer, this.#buffer.byteOffset, this.#buffer.byteLength);
+    this.#view = new DataView(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset,
+      this.#buffer.byteLength,
+    );
   }
 
   static fromBuffer(buffer: ArrayBufferLike, byteOffset = 0): Music {
-    return new Music(new Uint8Array(buffer as ArrayBuffer, byteOffset, Music.SIZE));
+    return new Music(
+      new Uint8Array(buffer as ArrayBuffer, byteOffset, Music.SIZE),
+    );
   }
 
   get buffer(): Uint8Array<ArrayBuffer> {
@@ -2092,11 +2833,18 @@ export class Music {
   }
 
   get stream(): AudioStream {
-    return AudioStream.fromBuffer(this.#buffer.buffer, this.#buffer.byteOffset + 0);
+    return AudioStream.fromBuffer(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset + 0,
+    );
   }
 
   set stream(value: AudioStream) {
-    const target = new Uint8Array(this.#buffer.buffer, this.#buffer.byteOffset + 0, AudioStream.SIZE);
+    const target = new Uint8Array(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset + 0,
+      AudioStream.SIZE,
+    );
     target.set(value.buffer);
   }
 
@@ -2131,7 +2879,6 @@ export class Music {
   set ctxDataPtr(value: bigint) {
     this.#view.setBigUint64(48, value, littleEndian);
   }
-
 }
 
 export class VrDeviceInfo {
@@ -2141,11 +2888,17 @@ export class VrDeviceInfo {
 
   constructor(buffer: Uint8Array<ArrayBuffer>) {
     this.#buffer = buffer;
-    this.#view = new DataView(this.#buffer.buffer, this.#buffer.byteOffset, this.#buffer.byteLength);
+    this.#view = new DataView(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset,
+      this.#buffer.byteLength,
+    );
   }
 
   static fromBuffer(buffer: ArrayBufferLike, byteOffset = 0): VrDeviceInfo {
-    return new VrDeviceInfo(new Uint8Array(buffer as ArrayBuffer, byteOffset, VrDeviceInfo.SIZE));
+    return new VrDeviceInfo(
+      new Uint8Array(buffer as ArrayBuffer, byteOffset, VrDeviceInfo.SIZE),
+    );
   }
 
   get buffer(): Uint8Array<ArrayBuffer> {
@@ -2209,7 +2962,11 @@ export class VrDeviceInfo {
   }
 
   get lensDistortionValues(): Float32Array {
-    return new Float32Array(this.#buffer.buffer, this.#buffer.byteOffset + 28, 4);
+    return new Float32Array(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset + 28,
+      4,
+    );
   }
 
   set lensDistortionValues(values: ArrayLike<number>) {
@@ -2219,7 +2976,11 @@ export class VrDeviceInfo {
   }
 
   get chromaAbCorrection(): Float32Array {
-    return new Float32Array(this.#buffer.buffer, this.#buffer.byteOffset + 44, 4);
+    return new Float32Array(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset + 44,
+      4,
+    );
   }
 
   set chromaAbCorrection(values: ArrayLike<number>) {
@@ -2227,7 +2988,6 @@ export class VrDeviceInfo {
     const count = Math.min(values.length, view.length);
     for (let i = 0; i < count; i++) view[i] = values[i] as any;
   }
-
 }
 
 export class VrStereoConfig {
@@ -2237,11 +2997,17 @@ export class VrStereoConfig {
 
   constructor(buffer: Uint8Array<ArrayBuffer>) {
     this.#buffer = buffer;
-    this.#view = new DataView(this.#buffer.buffer, this.#buffer.byteOffset, this.#buffer.byteLength);
+    this.#view = new DataView(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset,
+      this.#buffer.byteLength,
+    );
   }
 
   static fromBuffer(buffer: ArrayBufferLike, byteOffset = 0): VrStereoConfig {
-    return new VrStereoConfig(new Uint8Array(buffer as ArrayBuffer, byteOffset, VrStereoConfig.SIZE));
+    return new VrStereoConfig(
+      new Uint8Array(buffer as ArrayBuffer, byteOffset, VrStereoConfig.SIZE),
+    );
   }
 
   get buffer(): Uint8Array<ArrayBuffer> {
@@ -2252,7 +3018,12 @@ export class VrStereoConfig {
     const items: Matrix[] = [];
     const size = Matrix.SIZE;
     for (let i = 0; i < 2; i++) {
-      items.push(Matrix.fromBuffer(this.#buffer.buffer, this.#buffer.byteOffset + 0 + i * size));
+      items.push(
+        Matrix.fromBuffer(
+          this.#buffer.buffer,
+          this.#buffer.byteOffset + 0 + i * size,
+        ),
+      );
     }
     return items;
   }
@@ -2261,7 +3032,11 @@ export class VrStereoConfig {
     const size = Matrix.SIZE;
     const count = Math.min(values.length, 2);
     for (let i = 0; i < count; i++) {
-      const target = new Uint8Array(this.#buffer.buffer, this.#buffer.byteOffset + 0 + i * size, size);
+      const target = new Uint8Array(
+        this.#buffer.buffer,
+        this.#buffer.byteOffset + 0 + i * size,
+        size,
+      );
       target.set(values[i].buffer);
     }
   }
@@ -2270,7 +3045,12 @@ export class VrStereoConfig {
     const items: Matrix[] = [];
     const size = Matrix.SIZE;
     for (let i = 0; i < 2; i++) {
-      items.push(Matrix.fromBuffer(this.#buffer.buffer, this.#buffer.byteOffset + 128 + i * size));
+      items.push(
+        Matrix.fromBuffer(
+          this.#buffer.buffer,
+          this.#buffer.byteOffset + 128 + i * size,
+        ),
+      );
     }
     return items;
   }
@@ -2279,13 +3059,21 @@ export class VrStereoConfig {
     const size = Matrix.SIZE;
     const count = Math.min(values.length, 2);
     for (let i = 0; i < count; i++) {
-      const target = new Uint8Array(this.#buffer.buffer, this.#buffer.byteOffset + 128 + i * size, size);
+      const target = new Uint8Array(
+        this.#buffer.buffer,
+        this.#buffer.byteOffset + 128 + i * size,
+        size,
+      );
       target.set(values[i].buffer);
     }
   }
 
   get leftLensCenter(): Float32Array {
-    return new Float32Array(this.#buffer.buffer, this.#buffer.byteOffset + 256, 2);
+    return new Float32Array(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset + 256,
+      2,
+    );
   }
 
   set leftLensCenter(values: ArrayLike<number>) {
@@ -2295,7 +3083,11 @@ export class VrStereoConfig {
   }
 
   get rightLensCenter(): Float32Array {
-    return new Float32Array(this.#buffer.buffer, this.#buffer.byteOffset + 264, 2);
+    return new Float32Array(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset + 264,
+      2,
+    );
   }
 
   set rightLensCenter(values: ArrayLike<number>) {
@@ -2305,7 +3097,11 @@ export class VrStereoConfig {
   }
 
   get leftScreenCenter(): Float32Array {
-    return new Float32Array(this.#buffer.buffer, this.#buffer.byteOffset + 272, 2);
+    return new Float32Array(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset + 272,
+      2,
+    );
   }
 
   set leftScreenCenter(values: ArrayLike<number>) {
@@ -2315,7 +3111,11 @@ export class VrStereoConfig {
   }
 
   get rightScreenCenter(): Float32Array {
-    return new Float32Array(this.#buffer.buffer, this.#buffer.byteOffset + 280, 2);
+    return new Float32Array(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset + 280,
+      2,
+    );
   }
 
   set rightScreenCenter(values: ArrayLike<number>) {
@@ -2325,7 +3125,11 @@ export class VrStereoConfig {
   }
 
   get scale(): Float32Array {
-    return new Float32Array(this.#buffer.buffer, this.#buffer.byteOffset + 288, 2);
+    return new Float32Array(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset + 288,
+      2,
+    );
   }
 
   set scale(values: ArrayLike<number>) {
@@ -2335,7 +3139,11 @@ export class VrStereoConfig {
   }
 
   get scaleIn(): Float32Array {
-    return new Float32Array(this.#buffer.buffer, this.#buffer.byteOffset + 296, 2);
+    return new Float32Array(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset + 296,
+      2,
+    );
   }
 
   set scaleIn(values: ArrayLike<number>) {
@@ -2343,7 +3151,6 @@ export class VrStereoConfig {
     const count = Math.min(values.length, view.length);
     for (let i = 0; i < count; i++) view[i] = values[i] as any;
   }
-
 }
 
 export class FilePathList {
@@ -2353,31 +3160,29 @@ export class FilePathList {
 
   constructor(buffer: Uint8Array<ArrayBuffer>) {
     this.#buffer = buffer;
-    this.#view = new DataView(this.#buffer.buffer, this.#buffer.byteOffset, this.#buffer.byteLength);
+    this.#view = new DataView(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset,
+      this.#buffer.byteLength,
+    );
   }
 
   static fromBuffer(buffer: ArrayBufferLike, byteOffset = 0): FilePathList {
-    return new FilePathList(new Uint8Array(buffer as ArrayBuffer, byteOffset, FilePathList.SIZE));
+    return new FilePathList(
+      new Uint8Array(buffer as ArrayBuffer, byteOffset, FilePathList.SIZE),
+    );
   }
 
   get buffer(): Uint8Array<ArrayBuffer> {
     return this.#buffer;
   }
 
-  get capacity(): number {
+  get count(): number {
     return this.#view.getUint32(0, littleEndian) as number;
   }
 
-  set capacity(value: number) {
-    this.#view.setUint32(0, value as any, littleEndian);
-  }
-
-  get count(): number {
-    return this.#view.getUint32(4, littleEndian) as number;
-  }
-
   set count(value: number) {
-    this.#view.setUint32(4, value as any, littleEndian);
+    this.#view.setUint32(0, value as any, littleEndian);
   }
 
   get pathsPtr(): bigint {
@@ -2387,7 +3192,6 @@ export class FilePathList {
   set pathsPtr(value: bigint) {
     this.#view.setBigUint64(8, value, littleEndian);
   }
-
 }
 
 export class AutomationEvent {
@@ -2397,11 +3201,17 @@ export class AutomationEvent {
 
   constructor(buffer: Uint8Array<ArrayBuffer>) {
     this.#buffer = buffer;
-    this.#view = new DataView(this.#buffer.buffer, this.#buffer.byteOffset, this.#buffer.byteLength);
+    this.#view = new DataView(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset,
+      this.#buffer.byteLength,
+    );
   }
 
   static fromBuffer(buffer: ArrayBufferLike, byteOffset = 0): AutomationEvent {
-    return new AutomationEvent(new Uint8Array(buffer as ArrayBuffer, byteOffset, AutomationEvent.SIZE));
+    return new AutomationEvent(
+      new Uint8Array(buffer as ArrayBuffer, byteOffset, AutomationEvent.SIZE),
+    );
   }
 
   get buffer(): Uint8Array<ArrayBuffer> {
@@ -2433,7 +3243,6 @@ export class AutomationEvent {
     const count = Math.min(values.length, view.length);
     for (let i = 0; i < count; i++) view[i] = values[i] as any;
   }
-
 }
 
 export class AutomationEventList {
@@ -2443,11 +3252,24 @@ export class AutomationEventList {
 
   constructor(buffer: Uint8Array<ArrayBuffer>) {
     this.#buffer = buffer;
-    this.#view = new DataView(this.#buffer.buffer, this.#buffer.byteOffset, this.#buffer.byteLength);
+    this.#view = new DataView(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset,
+      this.#buffer.byteLength,
+    );
   }
 
-  static fromBuffer(buffer: ArrayBufferLike, byteOffset = 0): AutomationEventList {
-    return new AutomationEventList(new Uint8Array(buffer as ArrayBuffer, byteOffset, AutomationEventList.SIZE));
+  static fromBuffer(
+    buffer: ArrayBufferLike,
+    byteOffset = 0,
+  ): AutomationEventList {
+    return new AutomationEventList(
+      new Uint8Array(
+        buffer as ArrayBuffer,
+        byteOffset,
+        AutomationEventList.SIZE,
+      ),
+    );
   }
 
   get buffer(): Uint8Array<ArrayBuffer> {
@@ -2477,6 +3299,82 @@ export class AutomationEventList {
   set eventsPtr(value: bigint) {
     this.#view.setBigUint64(8, value, littleEndian);
   }
-
 }
 
+export class float3 {
+  static readonly SIZE = 12;
+  #buffer: Uint8Array<ArrayBuffer>;
+  #view: DataView;
+
+  constructor(buffer: Uint8Array<ArrayBuffer>) {
+    this.#buffer = buffer;
+    this.#view = new DataView(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset,
+      this.#buffer.byteLength,
+    );
+  }
+
+  static fromBuffer(buffer: ArrayBufferLike, byteOffset = 0): float3 {
+    return new float3(
+      new Uint8Array(buffer as ArrayBuffer, byteOffset, float3.SIZE),
+    );
+  }
+
+  get buffer(): Uint8Array<ArrayBuffer> {
+    return this.#buffer;
+  }
+
+  get v(): Float32Array {
+    return new Float32Array(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset + 0,
+      3,
+    );
+  }
+
+  set v(values: ArrayLike<number>) {
+    const view = this.v;
+    const count = Math.min(values.length, view.length);
+    for (let i = 0; i < count; i++) view[i] = values[i] as any;
+  }
+}
+
+export class float16 {
+  static readonly SIZE = 64;
+  #buffer: Uint8Array<ArrayBuffer>;
+  #view: DataView;
+
+  constructor(buffer: Uint8Array<ArrayBuffer>) {
+    this.#buffer = buffer;
+    this.#view = new DataView(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset,
+      this.#buffer.byteLength,
+    );
+  }
+
+  static fromBuffer(buffer: ArrayBufferLike, byteOffset = 0): float16 {
+    return new float16(
+      new Uint8Array(buffer as ArrayBuffer, byteOffset, float16.SIZE),
+    );
+  }
+
+  get buffer(): Uint8Array<ArrayBuffer> {
+    return this.#buffer;
+  }
+
+  get v(): Float32Array {
+    return new Float32Array(
+      this.#buffer.buffer,
+      this.#buffer.byteOffset + 0,
+      16,
+    );
+  }
+
+  set v(values: ArrayLike<number>) {
+    const view = this.v;
+    const count = Math.min(values.length, view.length);
+    for (let i = 0; i < count; i++) view[i] = values[i] as any;
+  }
+}

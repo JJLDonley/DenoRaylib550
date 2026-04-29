@@ -135,5 +135,5 @@ for (const [key, name] of arrayStructTypes.entries()) {
 
 out += "} as const;\n";
 
-const outputPath = new URL("./ffi_structs.ts", import.meta.url);
+const outputPath = new URL("../ffi_structs.ts", import.meta.url);
 Deno.writeTextFileSync(outputPath, out);
