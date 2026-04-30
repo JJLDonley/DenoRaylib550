@@ -2451,11 +2451,11 @@ export const lib = Deno.dlopen(
     },
     // Default size for new audio streams
     SetAudioStreamBufferSizeDefault: { parameters: ["i32"], result: "void" },
-    // Audio thread callback to request new data
-    SetAudioStreamCallback: {
-      parameters: [FFI_STRUCTS.AudioStream, "function"],
-      result: "void",
-    },
+    // Disabled: main.ts probe times out after callback fires from the audio thread.
+    // SetAudioStreamCallback: {
+    //   parameters: [FFI_STRUCTS.AudioStream, "function"],
+    //   result: "void",
+    // },
     // Attach audio stream processor to stream, receives frames x 2 samples as 'float' (stereo)
     AttachAudioStreamProcessor: {
       parameters: [FFI_STRUCTS.AudioStream, "function"],

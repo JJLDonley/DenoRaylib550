@@ -5672,31 +5672,32 @@ export function SetAudioStreamBufferSizeDefault(size: int): void {
   lib.SetAudioStreamBufferSizeDefault(size);
 }
 
-type AudioStreamCallbackDef = {
-  parameters: ["pointer", "u32"];
-  result: "void";
-};
-
-const audioCallbacks = new WeakMap<
-  AudioStream,
-  Deno.UnsafeCallback<AudioStreamCallbackDef>
->();
-
-export function SetAudioStreamCallback(
-  stream: AudioStream,
-  callback: (buffer: Deno.PointerObject, frames: int) => void,
-): void {
-  const cb = new Deno.UnsafeCallback<AudioStreamCallbackDef>(
-    { parameters: ["pointer", "u32"], result: "void" },
-    (buf, frames) => {
-      if (buf === null) return;
-      callback(buf, frames as int);
-    },
-  );
-
-  audioCallbacks.set(stream, cb);
-  lib.SetAudioStreamCallback(stream.buffer, cb.pointer);
-}
+// Disabled: main.ts probe times out after callback fires from the audio thread.
+// type AudioStreamCallbackDef = {
+//   parameters: ["pointer", "u32"];
+//   result: "void";
+// };
+//
+// const audioCallbacks = new WeakMap<
+//   AudioStream,
+//   Deno.UnsafeCallback<AudioStreamCallbackDef>
+// >();
+//
+// export function SetAudioStreamCallback(
+//   stream: AudioStream,
+//   callback: (buffer: Deno.PointerObject, frames: int) => void,
+// ): void {
+//   const cb = new Deno.UnsafeCallback<AudioStreamCallbackDef>(
+//     { parameters: ["pointer", "u32"], result: "void" },
+//     (buf, frames) => {
+//       if (buf === null) return;
+//       callback(buf, frames as int);
+//     },
+//   );
+//
+//   audioCallbacks.set(stream, cb);
+//   lib.SetAudioStreamCallback(stream.buffer, cb.pointer);
+// }
 
 export type AudioCallbackDef = {
   parameters: ["pointer", "u32"];

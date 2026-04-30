@@ -145,6 +145,10 @@ function ffiTypeExpr(type: string, fnName?: string): string {
 const getDefineValue = (name: string) =>
   api.defines.find((d: any) => d.name === name)?.value;
 
+const disabledFunctions = new Set([
+  "SetAudioStreamCallback",
+]);
+
 const major = getDefineValue("RAYLIB_VERSION_MAJOR");
 const minor = getDefineValue("RAYLIB_VERSION_MINOR");
 const patch = getDefineValue("RAYLIB_VERSION_PATCH");
@@ -170,6 +174,12 @@ export const lib = Deno.dlopen(
   {\n`;
 
 for (const fn of api.functions as any[]) {
+  if (disabledFunctions.has(fn.name)) {
+    result += `\t// Disabled: see main.ts audio stream probe.\n`;
+    result += `\t// ${fn.name}: skipped,\n`;
+    continue;
+  }
+
   if (
     fn.returnType.includes("...") ||
     fn.params?.some((p: any) => p.type.includes("..."))
