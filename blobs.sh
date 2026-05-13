@@ -71,7 +71,7 @@ case "$OS" in
   darwin)  LIB_NAME="libraylib.dylib" ;;
 esac
 
-FOUND="$(find "$TMP" -type f -name "$LIB_NAME*" | head -n 1)"
+FOUND="$(find -L "$TMP" -type f -name "$LIB_NAME*" | head -n 1)"
 
 if [ -z "$FOUND" ]; then
   echo "Library not found"
