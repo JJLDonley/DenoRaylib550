@@ -55,6 +55,10 @@ if (-not $Dll) {
 
 $Out = Join-Path $Blobs "raylib.dll"
 
+if (Test-Path $Out) {
+    Remove-Item $Out -Force
+}
+
 Copy-Item $Dll.FullName $Out -Force
 
 Remove-Item $Tmp -Recurse -Force

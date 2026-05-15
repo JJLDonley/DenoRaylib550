@@ -1,16 +1,18 @@
 {
-  "name": "raylib",
-  "version": "0.1.0",
-  "exports": "./raylib.ts",
   "tasks": {
-    "generate": "deno run --allow-read --allow-write bindings/generators/generate_layouts.ts && deno run --allow-read --allow-write bindings/generators/generate_ffi_structs.ts && deno run --allow-read --allow-write bindings/generators/generate_structs.ts && deno run --allow-read --allow-write bindings/generators/generator.ts && deno fmt deno.jsonc bindings"
+    "dev": "deno run -Ar main.ts",
+    "reload": "deno run -Ar ./hotreload/reload.ts ./main.ts",
+
+    "build:win": "deno compile --target x86_64-pc-windows-msvc --no-terminal -Ar -o game.exe main.ts",
+    "build:linux": "deno compile --target x86_64-unknown-linux-gnu -Ar -o game main.ts",
+    "build:mac": "deno compile --target x86_64-apple-darwin -Ar -o game main.ts",
   },
+
   "compilerOptions": {
-    "types": [
-      "./global.d.ts"
-    ]
+    "types": ["./raylib/global.d.ts"],
   },
+
   "imports": {
-    "raylib": "./raylib.ts"
-  }
+    "raylib": "./raylib/raylib.ts",
+  },
 }
