@@ -123,24 +123,42 @@ async function setupProject() {
 
   console.log("Copying raylib bindings...");
 
-  // Use 'cp -r' to copy the entire raylib folder
-  const copyCommand = Deno.build.os === "windows"
+  // Create raylib directory
+  await Deno.mkdir("raylib", { recursive: true });
+
+  // Copy files
+  const filesToCopy = ["raylib.ts", "global.d.ts"];
+  for (const file of filesToCopy) {
+    await Deno.copyFile(join(tmpDir, file), join("raylib", file));
+  }
+
+  // Copy bindings directory
+  const copyBindingsCommand = Deno.build.os === "windows"
     ? new Deno.Command("powershell", {
       args: [
         "-Command",
         `Copy-Item -Path "${
-          join(tmpDir, "raylib")
-        }" -Destination "." -Recurse -Force`,
+          join(tmpDir, "bindings")
+        }" -Destination "raylib" -Recurse -Force`,
       ],
     })
     : new Deno.Command("cp", {
-      args: ["-r", join(tmpDir, "raylib"), "."],
+      args: ["-r", join(tmpDir, "bindings"), "raylib/"],
     });
 
-  const { success: copySuccess, stderr: copyStderr } = await copyCommand
+  const { success: copySuccess, stderr: copyStderr } = await copyBindingsCommand
     .output();
   if (!copySuccess) {
     throw new Error(`Copy failed: ${new TextDecoder().decode(copyStderr)}`);
+  }
+
+  // Remove generators from copied bindings
+  try {
+    await Deno.remove(join("raylib", "bindings", "generators"), {
+      recursive: true,
+    });
+  } catch (_e) {
+    // Ignore if it doesn't exist
   }
 
   await Deno.remove(tmpDir, { recursive: true });

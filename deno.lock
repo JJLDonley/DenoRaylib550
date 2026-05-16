@@ -6,8 +6,10 @@
     "jsr:@std/encoding@0.221": "0.221.0",
     "jsr:@std/fmt@0.221": "0.221.0",
     "jsr:@std/fs@0.221": "0.221.0",
+    "jsr:@std/internal@^1.0.12": "1.0.13",
     "jsr:@std/path@*": "0.221.0",
-    "jsr:@std/path@0.221": "0.221.0"
+    "jsr:@std/path@0.221": "0.221.0",
+    "jsr:@std/path@1.1.4": "1.1.4"
   },
   "jsr": {
     "@denosaurs/plug@1.0.6": {
@@ -35,10 +37,19 @@
         "jsr:@std/path@0.221"
       ]
     },
+    "@std/internal@1.0.13": {
+      "integrity": "2f9546691d4ac2d32859c82dff284aaeac980ddeca38430d07941e7e288725c0"
+    },
     "@std/path@0.221.0": {
       "integrity": "0a36f6b17314ef653a3a1649740cc8db51b25a133ecfe838f20b79a56ebe0095",
       "dependencies": [
         "jsr:@std/assert"
+      ]
+    },
+    "@std/path@1.1.4": {
+      "integrity": "1d2d43f39efb1b42f0b1882a25486647cb851481862dc7313390b2bb044314b5",
+      "dependencies": [
+        "jsr:@std/internal"
       ]
     }
   },
@@ -102,5 +113,10 @@
     "https://deno.land/x/plug@1.0.3/mod.ts": "5dec80ee7a3a325be45c03439558531bce7707ac118f4376cebbd6740ff24bfb",
     "https://deno.land/x/plug@1.0.3/types.ts": "0490359117c53783138f2b6692a34f85bca9237314ba8cdef8ad682d81218d21",
     "https://deno.land/x/plug@1.0.3/util.ts": "ded3db6e9bb16b8003899d9073fb310e13231ca617b35d6b7dfd53f38762cc76"
+  },
+  "workspace": {
+    "dependencies": [
+      "jsr:@std/path@1.1.4"
+    ]
   }
 }
