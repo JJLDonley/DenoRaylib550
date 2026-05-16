@@ -1,5 +1,5 @@
 {
-  "name": "@jjldonley/denoraylib",
+  "name": "@jjld/raylib",
   "version": "6.0.0",
   "exports": {
     ".": "./raylib.ts",

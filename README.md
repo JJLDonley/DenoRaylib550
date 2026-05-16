@@ -2,14 +2,14 @@
 
 TypeScript bindings for raylib on Deno with a focus on staying as close to the C API as possible.
 
-[![JSR](https://jsr.io/badges/@jjldonley/denoraylib)](https://jsr.io/@jjldonley/denoraylib)
+[![JSR](https://jsr.io/badges/@jjld/raylib)](https://jsr.io/@jjld/raylib)
 
 ## Quick Start
 
 Initialize your project and download the required native libraries:
 
 ```bash
-deno run -Ar jsr:@jjldonley/denoraylib/init
+deno run -Ar jsr:@jjld/raylib/init
 ```
 
 This script will:
