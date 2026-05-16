@@ -101,6 +101,19 @@ async function downloadBlobs() {
   await Deno.remove(tmpDir, { recursive: true });
 }
 
+async function copyRecursive(src: string, dst: string) {
+  await Deno.mkdir(dst, { recursive: true });
+  for await (const entry of Deno.readDir(src)) {
+    const srcPath = join(src, entry.name);
+    const dstPath = join(dst, entry.name);
+    if (entry.isDirectory) {
+      await copyRecursive(srcPath, dstPath);
+    } else {
+      await Deno.copyFile(srcPath, dstPath);
+    }
+  }
+}
+
 async function setupProject() {
   const tmpDir = await Deno.makeTempDir();
   console.log("Cloning Deno-Raylib repository...");
@@ -132,25 +145,8 @@ async function setupProject() {
     await Deno.copyFile(join(tmpDir, file), join("raylib", file));
   }
 
-  // Copy bindings directory
-  const copyBindingsCommand = Deno.build.os === "windows"
-    ? new Deno.Command("powershell", {
-      args: [
-        "-Command",
-        `Copy-Item -Path "${
-          join(tmpDir, "bindings")
-        }" -Destination "raylib" -Recurse -Force`,
-      ],
-    })
-    : new Deno.Command("cp", {
-      args: ["-r", join(tmpDir, "bindings"), "raylib/"],
-    });
-
-  const { success: copySuccess, stderr: copyStderr } = await copyBindingsCommand
-    .output();
-  if (!copySuccess) {
-    throw new Error(`Copy failed: ${new TextDecoder().decode(copyStderr)}`);
-  }
+  // Copy bindings directory recursively (OS-agnostic)
+  await copyRecursive(join(tmpDir, "bindings"), join("raylib", "bindings"));
 
   // Remove generators from copied bindings
   try {
