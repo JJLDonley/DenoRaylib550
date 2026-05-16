@@ -1,6 +1,7 @@
 {
   "name": "@jjld/raylib",
   "version": "6.0.0",
+  "license": "MIT",
   "exports": {
     ".": "./raylib.ts",
     "./init": "./tools/init.ts"
