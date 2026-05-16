@@ -2,6 +2,25 @@
 
 TypeScript bindings for raylib on Deno with a focus on staying as close to the C API as possible.
 
+[![JSR](https://jsr.io/badges/@jjldonley/DenoRaylib)](https://jsr.io/@jjldonley/DenoRaylib)
+
+## Quick Start
+
+Initialize your project and download the required native libraries:
+
+```bash
+deno run -Ar jsr:@jjldonley/DenoRaylib/init
+```
+
+This script will:
+* Detect your platform and architecture.
+* Download the correct raylib 6.0 release.
+* Extract the native library into `./blobs/`.
+* Copy the raylib bindings into `./raylib/`.
+* Create a `main.ts` example and a `deno.json` configuration.
+
+---
+
 ## Versions
 
 * Deno: `v2.7.14+`
@@ -9,94 +28,51 @@ TypeScript bindings for raylib on Deno with a focus on staying as close to the C
 
 ---
 
-## Install
+## Manual Installation (Optional)
 
-Clone the repository and rename it to what you'd like.
+If you prefer to set up manually, clone the repository:
 
-```bash id="x95j2v"
-git clone https://github.com/JJLDonley/Deno-Raylib
-mv Deno-Raylib <project_name>
+```bash
+git clone https://github.com/JJLDonley/Deno-Raylib raylib
 ```
 
-alternatively:
-```bash id="x95j2v"
-git clone https://github.com/JJLDonley/Deno-Raylib <project_name>
+### Native Blobs (Required)
 
-```
-
-
-Project layout:
-
-```text id="20jrzh"
-raylib/
-  blobs/
-  hotreload/
-  raylib/
-  deno.jsonc
-```
-
----
-
-## Native Blobs (Required)
-
-Raylib requires native shared libraries at runtime.
-
-You must have the correct platform library inside `./blobs/`.
+Raylib requires native shared libraries at runtime. You must have the correct platform library inside `./blobs/`.
 
 Expected layout:
 
-```text id="2wdf5h"
+```text
 ./blobs/
   raylib.dll          (Windows)
   libraylib.so        (Linux)
   libraylib.dylib     (macOS)
 ```
 
----
+#### Download Blobs
 
-## Download Blobs
-
-### Linux / macOS
-
-```bash id="c5h5d2"
+**Linux / macOS**
+```bash
 chmod +x tools/blobs.sh
 ./tools/blobs.sh
 ```
 
-### Windows
-
-```powershell id="i7ph3n"
+**Windows**
+```powershell
 powershell -ExecutionPolicy Bypass -File .\tools\blobs.ps1
 ```
-
-These scripts:
-
-* Detect your platform and architecture
-* Download the correct raylib 6.0 release
-* Extract the native library
-* Copy it into `./blobs/`
-
-Recommended to just extract the libraries yourself.
 
 ---
 
 ## Configuration
 
-Create `deno.json`:
+If you didn't use the `init` script, ensure your `deno.json` is configured:
 
-```json id="cr75u2"
+```json
 {
-  "tasks": {
-    "dev": "deno run -Ar main.ts",
-    "build:win": "deno compile --target x86_64-pc-windows-msvc --no-terminal -Ar -o game.exe main.ts",
-    "build:linux": "deno compile --target x86_64-unknown-linux-gnu -Ar -o game main.ts",
-    "build:mac": "deno compile --target x86_64-apple-darwin -Ar -o game main.ts"
-  },
-
   "compilerOptions": {
     "types": ["./raylib/global.d.ts"]
   },
-
   "imports": {
     "raylib": "./raylib/raylib.ts"
   }
@@ -109,15 +85,13 @@ Create `deno.json`:
 
 Import raylib:
 
-```ts id="0vd34h"
+```ts
 import * as raylib from "raylib";
 ```
 
----
+### Example
 
-## Example
-
-```ts id="h61o38"
+```ts
 import * as raylib from "raylib";
 
 function main() {
@@ -148,25 +122,9 @@ main();
 
 ---
 
-Recommended project structure:
-
-```text id="4l7fdd"
-main.ts
-raylib/
-blobs/
-```
-
----
-
 ## Runtime Library Mapping
 
-Libraries are loaded from:
-
-```text id="mchv3r"
-./blobs/
-```
-
-Platform mapping:
+Libraries are loaded from `./blobs/`.
 
 * Windows → `raylib.dll`
 * Linux → `libraylib.so`

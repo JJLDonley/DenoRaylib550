@@ -79,6 +79,11 @@ export {
   Wave,
 };
 
+export type float = number;
+export type int = number;
+export type bool = boolean;
+export type char = string;
+
 const lib = DLL.symbols;
 export type Camera = Camera3D;
 
@@ -139,7 +144,7 @@ export const RAYLIB_VERSION_PATCH = 0;
 export const RAYLIB_VERSION = "6.0";
 
 /** Whether or not this computer is little or big endian */
-export const littleEndian = (() => {
+export const littleEndian: bool = (() => {
   // Stolen from: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/DataView
   const buffer = new ArrayBuffer(2);
   new DataView(buffer).setInt16(0, 256, true);
@@ -576,38 +581,38 @@ export enum NPatchLayout {
 // struct types (imported)
 // consts
 
-export const LightGray = new Color(200, 200, 200, 255);
-export const Gray = new Color(130, 130, 130, 255);
-export const DarkGray = new Color(80, 80, 80, 255);
+export const LightGray: Color = new Color(200, 200, 200, 255);
+export const Gray: Color = new Color(130, 130, 130, 255);
+export const DarkGray: Color = new Color(80, 80, 80, 255);
 
-export const Yellow = new Color(253, 249, 0, 255);
-export const Gold = new Color(255, 203, 0, 255);
-export const Orange = new Color(255, 161, 0, 255);
-export const Pink = new Color(255, 109, 194, 255);
-export const Red = new Color(230, 41, 55, 255);
-export const Maroon = new Color(190, 33, 55, 255);
+export const Yellow: Color = new Color(253, 249, 0, 255);
+export const Gold: Color = new Color(255, 203, 0, 255);
+export const Orange: Color = new Color(255, 161, 0, 255);
+export const Pink: Color = new Color(255, 109, 194, 255);
+export const Red: Color = new Color(230, 41, 55, 255);
+export const Maroon: Color = new Color(190, 33, 55, 255);
 
-export const Green = new Color(0, 228, 48, 255);
-export const Lime = new Color(0, 158, 47, 255);
-export const DarkGreen = new Color(0, 117, 44, 255);
+export const Green: Color = new Color(0, 228, 48, 255);
+export const Lime: Color = new Color(0, 158, 47, 255);
+export const DarkGreen: Color = new Color(0, 117, 44, 255);
 
-export const SkyBlue = new Color(102, 191, 255, 255);
-export const Blue = new Color(0, 121, 241, 255);
-export const DarkBlue = new Color(0, 82, 172, 255);
+export const SkyBlue: Color = new Color(102, 191, 255, 255);
+export const Blue: Color = new Color(0, 121, 241, 255);
+export const DarkBlue: Color = new Color(0, 82, 172, 255);
 
-export const Purple = new Color(200, 122, 255, 255);
-export const Violet = new Color(135, 60, 190, 255);
-export const DarkPurple = new Color(112, 31, 126, 255);
+export const Purple: Color = new Color(200, 122, 255, 255);
+export const Violet: Color = new Color(135, 60, 190, 255);
+export const DarkPurple: Color = new Color(112, 31, 126, 255);
 
-export const Beige = new Color(211, 176, 131, 255);
-export const Brown = new Color(127, 106, 79, 255);
-export const DarkBrown = new Color(76, 63, 47, 255);
+export const Beige: Color = new Color(211, 176, 131, 255);
+export const Brown: Color = new Color(127, 106, 79, 255);
+export const DarkBrown: Color = new Color(76, 63, 47, 255);
 
-export const White = new Color(255, 255, 255, 255);
-export const Black = new Color(0, 0, 0, 255);
-export const Blank = new Color(0, 0, 0, 0);
-export const Magenta = new Color(255, 0, 255, 255);
-export const RayWhite = new Color(245, 245, 245, 255);
+export const White: Color = new Color(255, 255, 255, 255);
+export const Black: Color = new Color(0, 0, 0, 255);
+export const Blank: Color = new Color(0, 0, 0, 0);
+export const Magenta: Color = new Color(255, 0, 255, 255);
+export const RayWhite: Color = new Color(245, 245, 245, 255);
 
 // functions
 
@@ -4316,7 +4321,7 @@ export function TextSplit(text: string, delimiter: string): string[] {
 export function TextAppend(
   text: string,
   append: string,
-  position = TextLength(text),
+  position: int = TextLength(text),
 ): { text: string; position: int } {
   const textBytes = cstr(text);
   const appendBytes = cstr(append);
